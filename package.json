@@ -1,0 +1,27 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "libphonenumber-js": "^1.13.10",
+    "lucide-react": "^1.28.0",
+    "next": "^16.2.12",
+    "notiflix": "^3.2.8",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-international-phone": "^4.8.0",
+    "yup": "^1.7.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^10.8.0",
+    "eslint-config-next": "^16.2.12",
+    "tailwindcss": "^4"
+  }
+}
