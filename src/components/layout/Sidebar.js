@@ -13,11 +13,15 @@ import {
   BookOpen, 
   Shield,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  CreditCard,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { logoutAction, getSessionAction } from '@/actions/authActions';
 import { getStudentsAction } from '@/actions/studentActions';
 import { getTeachersAction } from '@/actions/teacherActions';
+import SidebarNavPopover from '@/components/ui/SidebarNavPopover';
 
 /**
  * Dynamic Sidebar Component with Collapsible Icon-Only Mode
@@ -88,12 +92,24 @@ export default function Sidebar({
     { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null },
     { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Active' },
     { label: 'Attendance', href: '/attendance', icon: Calendar },
+    { label: 'Billing & Plans', href: '/billing', icon: CreditCard },
     { label: 'Settings', href: '/settings', icon: Settings }
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full glass-sidebar">
-      {/* Brand Header with Desktop Collapse Button in Red Box Position */}
+    <div className="relative flex flex-col h-full glass-sidebar">
+      {/* Floating Toggle Button centered directly on the border line (Like Admin) */}
+      {!mobileOpen && onToggleCollapse && (
+        <button 
+          onClick={onToggleCollapse}
+          className="absolute -right-3.5 top-[26px] z-40 w-7 h-7 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-primary-600 hover:bg-slate-50 flex items-center justify-center shadow-md cursor-pointer transition-all duration-200 active:scale-90"
+          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {collapsed ? <ChevronsRight size={14} className="text-primary-500" /> : <ChevronsLeft size={14} />}
+        </button>
+      )}
+
+      {/* Brand Header */}
       <div className={`h-20 flex items-center border-b border-slate-200/80 ${
         collapsed ? 'justify-center px-2' : 'px-4 justify-between'
       }`}>
@@ -123,18 +139,6 @@ export default function Sidebar({
             </div>
           )}
         </div>
-
-        {/* Desktop Sidebar Collapse Toggle Button */}
-        {onToggleCollapse && (
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className="hidden md:flex items-center justify-center p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-all duration-200 cursor-pointer shrink-0 ml-1 shadow-2xs"
-            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar (Icon Only Mode)"}
-          >
-            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-          </button>
-        )}
       </div>
 
       {/* Navigation Items */}
@@ -149,12 +153,11 @@ export default function Sidebar({
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
-          return (
+          const linkEl = (
             <Link
-              key={item.label}
               href={item.href}
               onClick={onClose}
-              title={item.label}
+              title={collapsed ? item.label : undefined}
               className={`flex items-center ${
                 collapsed ? 'justify-center px-2 py-3' : 'justify-between px-3.5 py-3'
               } rounded-xl transition-all duration-200 group ${
@@ -167,7 +170,7 @@ export default function Sidebar({
                 <Icon size={20} className={`transition-colors shrink-0 ${isActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
                 {!collapsed && <span className="text-sm truncate">{item.label}</span>}
               </div>
-              
+
               {!collapsed && item.badge && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                   isActive ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-600 border border-slate-200'
@@ -181,21 +184,39 @@ export default function Sidebar({
               )}
             </Link>
           );
+
+          return (
+            <div key={item.label} className="relative">
+              {collapsed ? (
+                <SidebarNavPopover icon={Icon} label={item.label} badge={item.badge} isActive={isActive}>
+                  {linkEl}
+                </SidebarNavPopover>
+              ) : linkEl}
+            </div>
+          );
         })}
       </nav>
 
       {/* Logout Action Footer */}
       <div className={`p-4 border-t border-slate-200 ${collapsed ? 'px-2' : 'px-4'}`}>
-        <button
-          onClick={handleLogout}
-          title="Sign Out"
-          className={`w-full flex items-center ${
-            collapsed ? 'justify-center px-2 py-3' : 'space-x-3 px-3.5 py-3'
-          } rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer`}
-        >
-          <LogOut size={20} className="shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
-        </button>
+        {collapsed ? (
+          <SidebarNavPopover icon={LogOut} label="Sign Out" isActive={false}>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center px-2 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
+            >
+              <LogOut size={20} className="shrink-0" />
+            </button>
+          </SidebarNavPopover>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
+          >
+            <LogOut size={20} className="shrink-0" />
+            <span>Sign Out</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -205,7 +226,7 @@ export default function Sidebar({
       {/* Desktop Sidebar with Dynamic Width */}
       <aside className={`${
         collapsed ? 'w-20' : 'w-64'
-      } hidden md:block shrink-0 h-screen sticky top-0 z-30 transition-all duration-300 ease-in-out`}>
+      } hidden md:block shrink-0 h-screen sticky top-0 z-50 transition-all duration-300 ease-in-out`}>
         {sidebarContent}
       </aside>
 

@@ -33,6 +33,7 @@ export default function Header({
   if (pathname === '/profile') pageTitle = 'My School Profile';
   else if (pathname === '/students') pageTitle = 'Students Directory';
   else if (pathname === '/teachers') pageTitle = 'Teachers Directory';
+  else if (pathname === '/billing') pageTitle = 'Billing & Plans';
   else if (pathname === '/dashboard') pageTitle = 'Overview';
   
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -94,10 +95,10 @@ export default function Header({
   };
 
   return (
-    <header className="h-20 glass-panel border border-slate-200/80 flex items-center justify-between px-6 md:px-8 sticky top-0 z-40 backdrop-blur-xl rounded-b-2xl mx-4 mt-2 shadow-sm transition-all duration-300">
+    <header className="h-20 shrink-0 min-h-[80px] bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 sticky top-0 z-40 shadow-xs transition-all duration-250">
       
-      {/* 🌟 Left Section: Mobile Toggle */}
-      <div className="flex items-center space-x-3">
+      {/* 🌟 Left Section: Mobile Toggle & Desktop Page Title */}
+      <div className="flex items-center space-x-4">
         {/* Mobile Menu Toggle */}
         <button 
           onClick={onMobileMenuToggle} 
@@ -105,6 +106,10 @@ export default function Header({
         >
           <Menu size={22} />
         </button>
+        {/* Desktop Page Title */}
+        <span className="hidden md:inline-block text-xs font-black text-slate-800 uppercase tracking-widest bg-slate-100 border border-slate-200/60 px-3 py-1.5 rounded-xl">
+          {pageTitle}
+        </span>
       </div>
 
       {/* 🔍 Center Search Bar with Keyboard Badge */}
