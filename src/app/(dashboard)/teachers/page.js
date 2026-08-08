@@ -17,6 +17,7 @@ import {
   X, 
   Sparkles,
   ShieldCheck,
+  Eye,
   Award
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
@@ -26,6 +27,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import FormPhoneInput from '@/components/FormPhoneInput';
 import Switch from '@/components/ui/Switch';
+import { useRouter } from 'next/navigation';
 import DataTable from '@/components/ui/DataTable';
 import { SkeletonTableRow } from '@/components/ui/Skeleton';
 import { 
@@ -33,6 +35,7 @@ import {
   createTeacherAction, 
   updateTeacherAction 
 } from '@/actions/teacherActions';
+import { getClassesAction } from '@/actions/classActions';
 import { handleConfirmDelete, handleStatusToggle, formatPhoneNumber } from '@/lib/commonHandlers';
 import { teacherSchema } from '@/validators/teacherSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -41,46 +44,18 @@ import { notifySuccess, notifyError } from '@/lib/notify';
  * Teachers Directory & Profile Management Workspace
  */
 export default function TeachersPage() {
+  const router = useRouter();
   const fileInputRef = useRef(null);
 
-  // Data States
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
-
-  // Modal States
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
-
-  // Form Field States
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    gender: 'male',
-    qualification: 'M.Sc, B.Ed',
-    subject: 'Mathematics',
-    class_assigned: 'Grade 10-A',
-    employee_id: '',
-    nfc_card_uid: ''
-  });
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedSubject, selectedStatusFilter, pageSize]);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const subjectOptions = [
     { label: 'Mathematics', value: 'Mathematics' },
@@ -109,13 +84,50 @@ export default function TeachersPage() {
     { label: 'Other', value: 'other' }
   ];
 
-  const classOptions = [
-    { label: 'Grade 10-A', value: 'Grade 10-A' },
-    { label: 'Grade 9-B', value: 'Grade 9-B' },
-    { label: 'Grade 8-A', value: 'Grade 8-A' },
-    { label: 'Grade 5-B', value: 'Grade 5-B' },
-    { label: 'Grade 1-A', value: 'Grade 1-A' }
-  ];
+  // Modal States
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+
+  // Form Field States
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    gender: 'male',
+    qualification: '',
+    subject: '',
+    class_assigned: '',
+    employee_id: '',
+    nfc_card_uid: ''
+  });
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [dynamicClasses, setDynamicClasses] = useState([]);
+
+  const fetchDynamicClasses = async () => {
+    try {
+      const res = await getClassesAction({ status: 'active' });
+      if (res.success && Array.isArray(res.data)) {
+        const formatted = res.data.map(c => ({
+          label: `${c.class_name}-${c.section}`,
+          value: `${c.class_name}-${c.section}`
+        }));
+        setDynamicClasses(formatted);
+      } else {
+        setDynamicClasses([]);
+      }
+    } catch (e) {
+      console.error('Failed to load dynamic classes', e);
+      setDynamicClasses([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchDynamicClasses();
+  }, []);
 
   const fetchTeachers = async () => {
     setLoading(true);
@@ -153,9 +165,9 @@ export default function TeachersPage() {
       email: '',
       phone: '',
       gender: 'male',
-      qualification: 'M.Sc, B.Ed',
-      subject: 'Mathematics',
-      class_assigned: 'Grade 10-A',
+      qualification: '',
+      subject: '',
+      class_assigned: '',
       employee_id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
       nfc_card_uid: ''
     });
@@ -318,10 +330,24 @@ export default function TeachersPage() {
       )
     },
     {
-      header: 'Class Assigned',
-      render: (teacher) => (
-        <span className="font-medium text-slate-800">{teacher.classAssigned || 'Unassigned'}</span>
-      )
+      header: 'Assigned Classes',
+      render: (teacher) => {
+        const classes = (Array.isArray(teacher.assignedClasses) && teacher.assignedClasses.length > 0)
+          ? teacher.assignedClasses.map(c => typeof c === 'string' ? c : (c.class_name || c))
+          : (teacher.classAssigned ? teacher.classAssigned.split(',').map(c => c.trim()).filter(Boolean) : []);
+
+        return classes.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {classes.map((cls, idx) => (
+              <span key={idx} className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                {cls}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-slate-400 text-[11px] italic">Unassigned</span>
+        );
+      }
     },
     {
       header: 'NFC Card UID',
@@ -360,6 +386,14 @@ export default function TeachersPage() {
       className: 'text-right',
       render: (teacher) => (
         <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => router.push(`/teachers/${teacher.id}`)}
+            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+            title="View Full Profile Details"
+          >
+            <Eye size={14} />
+          </button>
           <button
             type="button"
             onClick={() => handleOpenEditModal(teacher)}
@@ -650,13 +684,47 @@ export default function TeachersPage() {
                   placeholder="e.g. M.Sc, B.Ed"
                 />
 
-                <Select
-                  label="Assigned Class / Grade"
-                  value={formData.class_assigned}
-                  onChange={(e) => setFormData({ ...formData, class_assigned: e.target.value })}
-                  options={classOptions}
-                  searchable={true}
-                />
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Assigned Classes (Select Multiple)
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                    {dynamicClasses.map((cls) => {
+                      const selectedList = formData.class_assigned ? formData.class_assigned.split(',').map(c => c.trim()) : [];
+                      const isChecked = selectedList.includes(cls.value);
+
+                      return (
+                        <label 
+                          key={cls.value} 
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                            isChecked 
+                              ? 'bg-primary-600 text-white border-primary-600 shadow-2xs' 
+                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              let current = formData.class_assigned ? formData.class_assigned.split(',').map(c => c.trim()).filter(Boolean) : [];
+                              if (e.target.checked) {
+                                if (!current.includes(cls.value)) current.push(cls.value);
+                              } else {
+                                current = current.filter(c => c !== cls.value);
+                              }
+                              setFormData({ ...formData, class_assigned: current.join(', ') });
+                            }}
+                          />
+                          <span>{cls.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <Input
                   label="Employee ID Code"

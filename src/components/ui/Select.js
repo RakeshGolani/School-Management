@@ -130,17 +130,17 @@ export default function Select({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-slate-50/70 border ${
+        className={`w-full bg-slate-50/70 dark:bg-slate-800/50 border ${
           error 
             ? 'border-rose-500/50 focus:border-rose-500' 
             : isOpen 
-              ? 'border-primary-500 ring-2 ring-primary-500/20 bg-white' 
-              : 'border-slate-200 hover:border-slate-300'
-        } rounded-xl py-2 ${
+              ? 'border-primary-500 ring-2 ring-primary-500/20 bg-white dark:bg-slate-900' 
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+        } rounded-xl py-2.5 ${
           Icon ? 'pl-9' : 'pl-3.5'
-        } pr-8 text-xs sm:text-sm text-left transition-all duration-200 ${
+        } pr-10 text-xs sm:text-sm text-left transition-all duration-200 ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-        } flex items-center justify-between shadow-xs`}
+        } flex items-center justify-between shadow-xs relative`}
       >
         {Icon && (
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
@@ -148,20 +148,21 @@ export default function Select({
           </span>
         )}
 
-        <span className={`block truncate ${isCustomSelected ? 'text-slate-900 font-semibold' : 'text-slate-500 font-normal'}`}>
+        <span className={`block truncate ${isCustomSelected ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 font-normal'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
 
-        <span className="absolute inset-y-0 right-0 pr-2.5 flex items-center space-x-1">
+        <span className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1.5 pointer-events-none">
           {clearable && isCustomSelected && (
             <span
               onClick={handleClear}
-              className="p-0.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer pointer-events-auto flex items-center justify-center"
+              title="Clear selection"
             >
-              <X size={11} />
+              <X size={12} />
             </span>
           )}
-          <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary-600' : ''}`} />
+          <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary-600' : ''}`} />
         </span>
       </button>
 

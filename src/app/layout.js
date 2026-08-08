@@ -1,5 +1,6 @@
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
+import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -34,9 +35,10 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" suppressHydrationWarning style={htmlStyle}>
-      <head>
-        {/* Inline blocking script: also restore from localStorage for very first visit before cookie exists */}
-        <script
+      <body className={inter.className} suppressHydrationWarning>
+        <Script
+          id="theme-restore-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -57,8 +59,6 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
         {children}
       </body>
     </html>

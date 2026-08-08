@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Search, 
@@ -17,6 +17,9 @@ import {
 import { getSessionAction, logoutAction } from '@/actions/authActions';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import { usePathname } from 'next/navigation';
+import AcademicYearHeaderDropdown from '@/components/layout/AcademicYearHeaderDropdown';
+import { useClickOutside } from '@/hooks/useClickOutside';
+
 
 /**
  * Ultra-Premium Top Header Bar Component
@@ -39,6 +42,9 @@ export default function Header({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [userSession, setUserSession] = useState(null);
+
+  const notifRef = useClickOutside(() => setNotificationsOpen(false));
+  const profileRef = useClickOutside(() => setProfileOpen(false));
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -132,15 +138,12 @@ export default function Header({
       {/* ⚡ Right Controls: Quick Pill, Notifications, User Profile */}
       <div className="flex items-center space-x-3.5">
         
-        {/* Quick Academic Year Pill */}
-        <div className="hidden xl:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-          <span className="w-2 h-2 rounded-full bg-primary-500"></span>
-          <span className="text-slate-500">Academic Year:</span>
-          <span className="font-bold text-slate-900">2026</span>
-        </div>
+        {/* Quick Academic Year Dropdown Selector */}
+        <AcademicYearHeaderDropdown />
+
 
         {/* Notifications Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button 
             onClick={() => {
               setNotificationsOpen(!notificationsOpen);
@@ -183,7 +186,7 @@ export default function Header({
         </div>
 
         {/* Dynamic User Profile Pill & Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button 
             onClick={() => {
               setProfileOpen(!profileOpen);

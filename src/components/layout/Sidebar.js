@@ -8,6 +8,7 @@ import {
   GraduationCap, 
   Bus, 
   Calendar, 
+  CalendarDays,
   Settings, 
   LogOut, 
   BookOpen, 
@@ -18,6 +19,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
+
 import { logoutAction, getSessionAction } from '@/actions/authActions';
 import { getStudentsAction } from '@/actions/studentActions';
 import { getTeachersAction } from '@/actions/teacherActions';
@@ -88,13 +90,16 @@ export default function Sidebar({
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: Activity },
+    { label: 'Classes & Sections', href: '/classes', icon: BookOpen },
     { label: 'Students', href: '/students', icon: Users, badge: studentCount !== null ? studentCount.toString() : null },
     { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null },
     { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Active' },
     { label: 'Attendance', href: '/attendance', icon: Calendar },
+    { label: 'Academic Year', href: '/academic-years', icon: CalendarDays },
     { label: 'Billing & Plans', href: '/billing', icon: CreditCard },
     { label: 'Settings', href: '/settings', icon: Settings }
   ];
+
 
   const sidebarContent = (
     <div className="relative flex flex-col h-full glass-sidebar">

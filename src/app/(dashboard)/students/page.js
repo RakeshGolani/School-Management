@@ -15,7 +15,8 @@ import {
   Upload, 
   X, 
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Eye
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -28,6 +29,7 @@ import {
   createStudentAction, 
   updateStudentAction 
 } from '@/actions/studentActions';
+import { useRouter } from 'next/navigation';
 import Switch from '@/components/ui/Switch';
 import { handleConfirmDelete, handleStatusToggle, formatPhoneNumber } from '@/lib/commonHandlers';
 import { studentSchema } from '@/validators/studentSchemas';
@@ -39,6 +41,7 @@ import { SkeletonTableRow } from '@/components/ui/Skeleton';
  * Complete Students Management Workspace
  */
 export default function StudentsPage() {
+  const router = useRouter();
   const fileInputRef = useRef(null);
 
   // Data States
@@ -371,6 +374,14 @@ export default function StudentsPage() {
       className: 'text-right',
       render: (student) => (
         <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => router.push(`/students/${student.id}`)}
+            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+            title="View Full Profile Details"
+          >
+            <Eye size={14} />
+          </button>
           <button
             type="button"
             onClick={() => handleOpenEditModal(student)}
