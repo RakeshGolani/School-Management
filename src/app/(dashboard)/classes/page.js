@@ -1,5 +1,8 @@
 'use client';
+
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { 
   BookOpen, 
@@ -15,7 +18,9 @@ import {
   Check, 
   Building2,
   DoorOpen,
-  UserCheck
+  UserCheck,
+  Eye,
+  School
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -23,7 +28,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import DataTable from '@/components/ui/DataTable';
-import { SkeletonTableRow } from '@/components/ui/Skeleton';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { SkeletonClassRow } from '@/components/ui/Skeleton';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { 
   getClassesAction, 
@@ -189,20 +195,39 @@ export default function ClassesPage() {
     }
   };
 
-  const handleDelete = async (cls) => {
-    if (!confirm(`Are you sure you want to delete '${cls.class_name}-${cls.section}'?`)) return;
-    try {
-      const res = await deleteClassAction(cls.id);
-      if (res.success) {
-        notifySuccess('Class deleted successfully');
-        fetchClasses();
-      } else {
-        notifyError(res.message || 'Delete failed');
+  // Confirm Modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    loading: false
+  });
+
+  const handleDelete = (cls) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Class Deletion',
+      message: `Are you sure you want to delete '${cls.class_name}-${cls.section}'? All student class mappings will be removed.`,
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+          const res = await deleteClassAction(cls.id);
+          if (res.success) {
+            notifySuccess('Class deleted successfully');
+            fetchClasses();
+          } else {
+            notifyError(res.message || 'Delete failed');
+          }
+        } catch (err) {
+          console.error(err);
+          notifyError('Error deleting class');
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        }
       }
-    } catch (err) {
-      console.error(err);
-      notifyError('Error deleting class');
-    }
+    });
   };
 
   // Metrics
@@ -244,7 +269,7 @@ export default function ClassesPage() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-md shadow-primary-600/20 active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-white" />
-            <span>+ Add New Class</span>
+            <span>Add New Class</span>
           </button>
         </div>
       </div>
@@ -339,8 +364,11 @@ export default function ClassesPage() {
             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
               {loading ? (
                 <>
-                  <SkeletonTableRow columns={7} />
-                  <SkeletonTableRow columns={7} />
+                  <SkeletonClassRow />
+                  <SkeletonClassRow />
+                  <SkeletonClassRow />
+                  <SkeletonClassRow />
+                  <SkeletonClassRow />
                 </>
               ) : classes.length === 0 ? (
                 <tr>
@@ -352,7 +380,14 @@ export default function ClassesPage() {
                 classes.map((cls) => (
                   <tr key={cls.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-4 font-extrabold text-slate-900 dark:text-white">
-                      {cls.class_name}
+                      <Link 
+                        href={`/classes/${cls.id}`} 
+                        className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2 group"
+                        title="Click to open visual classroom layout"
+                      >
+                        <span>{cls.class_name}</span>
+                        <Eye size={14} className="opacity-0 group-hover:opacity-100 text-primary-500 transition-opacity" />
+                      </Link>
                     </td>
                     <td className="px-6 py-4">
                       <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-md">
@@ -374,6 +409,15 @@ export default function ClassesPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      <Link href={`/classes/${cls.id}`}>
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+                          title="View Classroom Layout & Seating"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </Link>
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(cls)}
@@ -402,7 +446,7 @@ export default function ClassesPage() {
       {/* CREATE / EDIT CLASS DRAWER MODAL */}
       {modalOpen && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-xs animate-fadeIn"
+          className="fixed inset-0 z-[100] flex justify-end bg-slate-900/50 backdrop-blur-sm animate-fadeIn"
           onClick={() => setModalOpen(false)}
         >
           <div 
@@ -500,6 +544,18 @@ export default function ClassesPage() {
         </div>,
         document.body
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        loading={confirmModal.loading}
+        type="danger"
+        confirmText="Yes, Delete"
+      />
     </div>
   );
 }

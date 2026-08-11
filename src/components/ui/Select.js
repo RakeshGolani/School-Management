@@ -94,6 +94,8 @@ export default function Select({
 
   const handleSelectOption = (optValue) => {
     if (onChange) {
+      // Support both direct string value callback and event object callback
+      onChange(optValue);
       onChange({
         target: {
           name: name || id,
@@ -108,10 +110,11 @@ export default function Select({
   const handleClear = (e) => {
     e.stopPropagation();
     if (onChange) {
+      onChange('');
       onChange({
         target: {
           name: name || id,
-          value: 'all'
+          value: ''
         }
       });
     }
@@ -168,7 +171,7 @@ export default function Select({
 
       {/* Floating Searchable Dropdown Menu */}
       {isOpen && (
-        <div className={`absolute left-0 right-0 ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 space-y-1.5 animate-fadeIn min-w-[200px]`}>
+        <div className={`absolute right-0 min-w-full ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} z-[100] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 space-y-1.5 animate-fadeIn`}>
           
           {/* Search Box inside dropdown */}
           {searchable && (

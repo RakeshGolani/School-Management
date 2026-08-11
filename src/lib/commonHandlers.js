@@ -51,7 +51,6 @@ export const handleConfirmDelete = (module, id, onSuccess) => {
     'Yes, Delete',
     'Cancel',
     async () => {
-      // Confirmed
       try {
         const result = await deleteEntityAction(module, id);
         if (result.success) {
@@ -64,9 +63,27 @@ export const handleConfirmDelete = (module, id, onSuccess) => {
         notifyError('An unexpected error occurred.');
       }
     },
-    () => {
-      // Canceled (Do nothing)
-    }
+    () => {}
+  );
+};
+
+/**
+ * Custom Confirmation Dialog with Notiflix
+ * @param {string} title 
+ * @param {string} message 
+ * @param {Function} onConfirm 
+ * @param {string} confirmText 
+ */
+export const confirmCustomAction = (title, message, onConfirm, confirmText = 'Yes, Delete') => {
+  Notiflix.Confirm.show(
+    title,
+    message,
+    confirmText,
+    'Cancel',
+    async () => {
+      if (onConfirm) await onConfirm();
+    },
+    () => {}
   );
 };
 

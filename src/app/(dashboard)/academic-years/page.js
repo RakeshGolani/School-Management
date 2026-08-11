@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   CalendarDays, 
   Plus, 
@@ -16,7 +17,9 @@ import {
 } from 'lucide-react';
 import { useAcademicYear } from '@/context/AcademicYearContext';
 import DataTable from '@/components/ui/DataTable';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import Skeleton from '@/components/ui/Skeleton';
+import Input from '@/components/ui/Input';
 
 export default function AcademicYearsPage() {
   const { academicYears, activeYear, loading: contextLoading, fetchAcademicYears, changeActiveYear } = useAcademicYear();
@@ -127,31 +130,49 @@ export default function AcademicYearsPage() {
     }
   };
 
-  const handleDelete = async (year) => {
+  // Confirm Modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    loading: false
+  });
+
+  const handleDelete = (year) => {
     const isProtected = year.is_active || year.status === 'ACTIVE' || year.status === 'COMPLETED';
     if (isProtected) {
       showNotify('Cannot delete ACTIVE or COMPLETED academic sessions to preserve historical data!', 'error');
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete '${year.year_name}'?`)) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Session Deletion',
+      message: `Are you sure you want to delete '${year.year_name}'? This action cannot be undone.`,
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+          const res = await fetch(`http://localhost:5000/api/school/academic-years/${year.id}`, {
+            method: 'DELETE'
+          });
+          const data = await res.json();
 
-    try {
-      const res = await fetch(`http://localhost:5000/api/school/academic-years/${year.id}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        showNotify('Academic year deleted successfully');
-        await fetchAcademicYears();
-      } else {
-        showNotify(data.message || 'Failed to delete', 'error');
+          if (data.success) {
+            showNotify('Academic year deleted successfully');
+            await fetchAcademicYears();
+          } else {
+            showNotify(data.message || 'Failed to delete', 'error');
+          }
+        } catch (err) {
+          console.error('Delete error:', err);
+          showNotify('Error deleting academic year', 'error');
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        }
       }
-    } catch (err) {
-      console.error('Delete error:', err);
-      showNotify('Error deleting academic year', 'error');
-    }
+    });
   };
 
   // Filter & Search Logic
@@ -303,7 +324,7 @@ export default function AcademicYearsPage() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-md shadow-primary-600/20 active:scale-95 cursor-pointer shrink-0"
         >
           <Plus size={16} className="text-white" />
-          <span>+ Add Academic Year</span>
+          <span>Add Academic Year</span>
         </button>
       </div>
 
@@ -424,10 +445,10 @@ export default function AcademicYearsPage() {
       </div>
 
       {/* Add / Edit Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-scaleUp">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      {modalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg animate-scaleUp">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-3xl">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <CalendarDays size={18} className="text-primary-600" />
                 <span>{editingYear ? 'Edit Academic Year' : 'Create New Academic Year'}</span>
@@ -454,27 +475,21 @@ export default function AcademicYearsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Start Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-primary-500 focus:bg-white transition"
-                  />
-                </div>
+                <Input
+                  label="Start Date"
+                  type="date"
+                  required
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">End Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-primary-500 focus:bg-white transition"
-                  />
-                </div>
+                <Input
+                  label="End Date"
+                  type="date"
+                  required
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
               </div>
 
               <div>
@@ -534,8 +549,21 @@ export default function AcademicYearsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        loading={confirmModal.loading}
+        type="danger"
+        confirmText="Yes, Delete"
+      />
     </div>
   );
 }

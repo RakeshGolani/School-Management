@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { AcademicYearProvider } from '@/context/AcademicYearContext';
+import AcademicYearGuard from '@/components/layout/AcademicYearGuard';
 
 /**
  * School Dashboard Client Layout
@@ -13,6 +15,7 @@ import { AcademicYearProvider } from '@/context/AcademicYearContext';
 export default function SchoolClientLayout({ initialCollapsed = false, children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialCollapsed);
+  const pathname = usePathname();
 
   const handleToggleCollapse = () => {
     setSidebarCollapsed((prev) => {
@@ -22,6 +25,16 @@ export default function SchoolClientLayout({ initialCollapsed = false, children 
       return nextState;
     });
   };
+
+  const isPrintPage = pathname?.endsWith('/print');
+
+  if (isPrintPage) {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <AcademicYearProvider>
@@ -44,8 +57,10 @@ export default function SchoolClientLayout({ initialCollapsed = false, children 
           />
 
           {/* Dynamic Page View */}
-          <main className="flex-1 px-4 md:px-8 py-6">
-            {children}
+          <main className="flex-1 px-4 md:px-8 py-6 relative">
+            <AcademicYearGuard>
+              {children}
+            </AcademicYearGuard>
           </main>
 
           {/* Footer */}

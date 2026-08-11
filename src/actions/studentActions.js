@@ -31,6 +31,7 @@ export async function getStudentsAction(params = {}) {
     if (params.grade && params.grade !== 'all') query.append('grade', params.grade);
     if (params.is_bus && params.is_bus !== 'all') query.append('is_bus', params.is_bus);
     if (params.status) query.append('status', params.status);
+    if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
     const response = await fetch(`http://localhost:5000/api/students?${query.toString()}`, {
       method: 'GET',
@@ -199,5 +200,54 @@ export async function deleteStudentAction(id) {
       success: false,
       message: 'Server error: ' + error.message
     };
+  }
+}
+
+/**
+ * Get students enrolled in a specific academic session.
+ * @param {number|string} academic_year_id
+ */
+export async function getStudentSessionsAction(academic_year_id) {
+  try {
+    const schoolId = await getSchoolIdFromSession();
+    const query = new URLSearchParams();
+    if (schoolId) query.append('school_id', schoolId);
+    if (academic_year_id) query.append('academic_year_id', academic_year_id);
+
+    const response = await fetch(`http://localhost:5000/api/school/student-sessions?${query.toString()}`, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+
+    const data = await response.json();
+    if (!response.ok) return { success: false, message: data.message || 'Failed to fetch session students', data: [] };
+    return { success: true, data: data.data || [] };
+  } catch (error) {
+    console.warn('Error in getStudentSessionsAction:', error.message);
+    return { success: false, message: 'Server error: ' + error.message, data: [] };
+  }
+}
+
+/**
+ * Promote students from one academic year to the next.
+ * @param {object} payload - { from_academic_year_id, to_academic_year_id, students[] }
+ */
+export async function promoteStudentsAction(payload) {
+  try {
+    const schoolId = await getSchoolIdFromSession();
+
+    const response = await fetch('http://localhost:5000/api/school/student-sessions/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, school_id: schoolId }),
+      cache: 'no-store'
+    });
+
+    const data = await response.json();
+    if (!response.ok) return { success: false, message: data.message || 'Promotion failed' };
+    return { success: true, message: data.message, data: data.data };
+  } catch (error) {
+    console.warn('Error in promoteStudentsAction:', error.message);
+    return { success: false, message: 'Server error: ' + error.message };
   }
 }

@@ -18,10 +18,13 @@ import {
   Sparkles,
   ShieldCheck,
   Eye,
-  Award
+  Award,
+  CalendarDays
 } from 'lucide-react';
+import { useAcademicYear } from '@/context/AcademicYearContext';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Tooltip from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -46,6 +49,7 @@ import { notifySuccess, notifyError } from '@/lib/notify';
 export default function TeachersPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
+  const { activeYear } = useAcademicYear();
 
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +60,8 @@ export default function TeachersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [activeTeachersCount, setActiveTeachersCount] = useState(0);
+  const [nfcAssignedCount, setNfcAssignedCount] = useState(0);
 
   const subjectOptions = [
     { label: 'Mathematics', value: 'Mathematics' },
@@ -136,7 +142,8 @@ export default function TeachersPage() {
       limit: pageSize,
       search: searchQuery,
       subject: selectedSubject,
-      status: selectedStatusFilter
+      status: selectedStatusFilter,
+      academic_year_id: activeYear?.id
     });
 
     if (result.success) {
@@ -144,12 +151,20 @@ export default function TeachersPage() {
       if (result.meta) {
         setTotalRecords(result.meta.total || 0);
         setTotalPages(result.meta.totalPages || 1);
+        setActiveTeachersCount(result.meta.active_count ?? (result.data || []).filter(t => t.status === 'active').length);
+        setNfcAssignedCount(result.meta.nfc_count ?? (result.data || []).filter(t => t.nfcCardUid).length);
       }
     } else {
       notifyError(result.message || 'Failed to load teacher records');
     }
     setLoading(false);
   };
+
+  // Re-fetch when academic year changes
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchTeachers();
+  }, [activeYear?.id]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -315,17 +330,20 @@ export default function TeachersPage() {
     {
       header: 'Employee ID',
       render: (teacher) => (
-        <span className="font-mono font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-          {teacher.employeeId}
+        <span className="inline-flex items-center gap-1 font-mono font-semibold text-slate-700 bg-slate-100/90 hover:bg-slate-200/80 px-2.5 py-1 rounded-md border border-slate-200/80 text-[11px] shadow-2xs">
+          {teacher.employeeId || 'N/A'}
         </span>
       )
     },
     {
       header: 'Subject & Qualification',
       render: (teacher) => (
-        <div>
-          <Badge variant="primary" icon={BookOpen}>{teacher.subject || 'N/A'}</Badge>
-          <p className="text-[10px] text-slate-500 mt-0.5">{teacher.qualification || 'Educator'}</p>
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-1 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/80 text-teal-700 font-semibold text-[11px] px-2.5 py-0.5 rounded-full shadow-2xs">
+            <BookOpen size={11} className="text-teal-600 shrink-0" />
+            {teacher.subject || 'General Educator'}
+          </span>
+          <p className="text-[11px] text-slate-500 font-medium pl-0.5">{teacher.qualification || 'Educator'}</p>
         </div>
       )
     },
@@ -337,15 +355,17 @@ export default function TeachersPage() {
           : (teacher.classAssigned ? teacher.classAssigned.split(',').map(c => c.trim()).filter(Boolean) : []);
 
         return classes.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
             {classes.map((cls, idx) => (
-              <span key={idx} className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              <span key={idx} className="bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200/80 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs">
                 {cls}
               </span>
             ))}
           </div>
         ) : (
-          <span className="text-slate-400 text-[11px] italic">Unassigned</span>
+          <span className="inline-block text-slate-400 text-[11px] italic bg-slate-50 border border-dashed border-slate-200 px-2 py-0.5 rounded-md">
+            Unassigned
+          </span>
         );
       }
     },
@@ -386,38 +406,39 @@ export default function TeachersPage() {
       className: 'text-right',
       render: (teacher) => (
         <div className="flex justify-end space-x-2">
-          <button
-            type="button"
-            onClick={() => router.push(`/teachers/${teacher.id}`)}
-            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
-            title="View Full Profile Details"
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenEditModal(teacher)}
-            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
-            title="Edit Teacher Profile"
-          >
-            <Edit3 size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDeleteTeacher(teacher)}
-            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-rose-500 text-slate-600 hover:text-rose-600 transition cursor-pointer"
-            title="Delete Teacher Record"
-          >
-            <Trash2 size={14} />
-          </button>
+          <Tooltip content="View Profile" position="top">
+            <button
+              type="button"
+              onClick={() => router.push(`/teachers/${teacher.id}`)}
+              className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+            >
+              <Eye size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Edit Teacher" position="top">
+            <button
+              type="button"
+              onClick={() => handleOpenEditModal(teacher)}
+              className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+            >
+              <Edit3 size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip content="Delete Teacher" position="top">
+            <button
+              type="button"
+              onClick={() => handleDeleteTeacher(teacher)}
+              className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-rose-500 text-slate-600 hover:text-rose-600 transition cursor-pointer"
+            >
+              <Trash2 size={14} />
+            </button>
+          </Tooltip>
         </div>
       )
     }
   ];
 
   const totalTeachers = totalRecords || teachers.length;
-  const activeTeachersCount = teachers.filter((t) => t.status === 'active').length;
-  const nfcAssignedCount = teachers.filter((t) => t.nfcCardUid).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 animate-fadeIn text-xs sm:text-sm">
@@ -425,9 +446,16 @@ export default function TeachersPage() {
       {/* 🌟 Header Banner & Quick Actions */}
       <div className="glass-panel rounded-2xl p-5 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-50 via-white to-primary-50/40">
         <div className="space-y-1">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-1">
             <Badge variant="emerald" dot>Faculty & Staff Directory</Badge>
-            <Badge variant="primary">Academic Year 2026</Badge>
+            {activeYear ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-violet-50 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full">
+                <CalendarDays size={10} />
+                Session: {activeYear.year_name}
+              </span>
+            ) : (
+              <Badge variant="primary">All Sessions</Badge>
+            )}
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-wide flex items-center gap-2">
             <GraduationCap className="text-primary-600" size={24} /> Teacher Directory & Staff Portal
@@ -442,7 +470,7 @@ export default function TeachersPage() {
           icon={UserPlus}
           onClick={handleOpenAddModal}
         >
-          + Add New Teacher
+          Add New Teacher
         </Button>
       </div>
 
@@ -522,7 +550,7 @@ export default function TeachersPage() {
       </div>
 
       {/* 📋 Teachers Directory Table */}
-      <Card title={`Teacher Records (${totalRecords})`} icon={GraduationCap} subtitle="Real-time list of faculty members">
+      <Card title={`Teacher Records (${totalRecords})`} icon={GraduationCap} subtitle={activeYear ? `Session: ${activeYear.year_name}` : 'Real-time list of faculty members'}>
         <DataTable
           columns={teacherColumns}
           data={teachers}
@@ -545,7 +573,7 @@ export default function TeachersPage() {
       {/* 📥 ADD / EDIT TEACHER OFFCANVAS DRAWER (PORTAL) */}
       {modalOpen && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-xs animate-fadeIn"
+          className="fixed inset-0 z-[100] flex justify-end bg-slate-900/50 backdrop-blur-sm animate-fadeIn"
           onClick={() => setModalOpen(false)}
         >
           <div 

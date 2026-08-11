@@ -134,7 +134,7 @@ export default function StudentDetailsPage() {
                   {student.grade || `Class ${student.class_id || 'N/A'}`}
                 </span>
                 <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
-                  Roll No: {student.roll_number || 'N/A'}
+                  Roll No: {student.rollNumber || student.roll_number || 'N/A'}
                 </span>
               </div>
             </div>

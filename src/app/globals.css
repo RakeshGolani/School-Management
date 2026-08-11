@@ -54,6 +54,17 @@
                       radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.05), transparent 25%);
     background-attachment: fixed;
   }
+
+  button,
+  a,
+  select,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"] {
+    cursor: pointer !important;
+  }
 }
 
 @layer utilities {

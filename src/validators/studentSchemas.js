@@ -14,6 +14,9 @@ export const studentSchema = Yup.object().shape({
   admission_number: Yup.string()
     .nullable()
     .transform((value) => (value === '' ? null : value)),
+  roll_number: Yup.string()
+    .nullable()
+    .transform((value) => (value === '' ? null : value)),
   grade: Yup.string()
     .required('Grade / Class assignment is required.'),
   section: Yup.string()

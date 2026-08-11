@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import BillingPageSkeleton from '@/components/skeletons/BillingPageSkeleton';
 import { 
   CreditCard, 
@@ -13,7 +14,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Download,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -295,7 +297,11 @@ export default function BillingPage() {
                   <tbody>
                     {invoices.map((inv) => (
                       <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
-                        <td className="p-4 font-bold text-slate-800">{inv.invoice_number}</td>
+                        <td className="p-4 font-bold text-slate-800">
+                          <Link href={`/billing/invoices/${inv.id}`} className="hover:text-primary-600 transition-colors">
+                            {inv.invoice_number}
+                          </Link>
+                        </td>
                         <td className="p-4 text-slate-500 font-semibold">{new Date(inv.billing_date).toLocaleDateString()}</td>
                         <td className="p-4 font-extrabold text-slate-800">₹{Number(inv.amount_paid).toLocaleString()}</td>
                         <td className="p-4">
@@ -305,9 +311,12 @@ export default function BillingPage() {
                           </span>
                         </td>
                         <td className="p-4 text-right">
-                          <button className="text-primary-600 hover:text-primary-700 font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95">
-                            <Download size={14} /> Download PDF
-                          </button>
+                          <Link 
+                            href={`/billing/invoices/${inv.id}`} 
+                            className="text-primary-600 hover:text-primary-700 font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
+                          >
+                            <Eye size={14} /> View Invoice
+                          </Link>
                         </td>
                       </tr>
                     ))}

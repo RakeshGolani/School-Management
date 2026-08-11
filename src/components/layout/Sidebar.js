@@ -17,13 +17,16 @@ import {
   PanelLeftOpen,
   CreditCard,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Landmark,
+  Clock
 } from 'lucide-react';
 
 import { logoutAction, getSessionAction } from '@/actions/authActions';
 import { getStudentsAction } from '@/actions/studentActions';
 import { getTeachersAction } from '@/actions/teacherActions';
 import SidebarNavPopover from '@/components/ui/SidebarNavPopover';
+import { useAcademicYear } from '@/context/AcademicYearContext';
 
 /**
  * Dynamic Sidebar Component with Collapsible Icon-Only Mode
@@ -36,6 +39,7 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { activeYear } = useAcademicYear();
   const [studentCount, setStudentCount] = useState(null);
   const [teacherCount, setTeacherCount] = useState(null);
   const [userSession, setUserSession] = useState(null);
@@ -43,12 +47,16 @@ export default function Sidebar({
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const studentRes = await getStudentsAction({ limit: 1 });
+        // Pass active academic year so counts are session-scoped
+        const params = { limit: 1 };
+        if (activeYear?.id) params.academic_year_id = activeYear.id;
+
+        const studentRes = await getStudentsAction(params);
         if (studentRes?.success && studentRes.meta?.total !== undefined) {
           setStudentCount(studentRes.meta.total);
         }
 
-        const teacherRes = await getTeachersAction({ limit: 1 });
+        const teacherRes = await getTeachersAction(params);
         if (teacherRes?.success && teacherRes.meta?.total !== undefined) {
           setTeacherCount(teacherRes.meta.total);
         }
@@ -81,7 +89,7 @@ export default function Sidebar({
 
     window.addEventListener('sessionUpdated', fetchSession);
     return () => window.removeEventListener('sessionUpdated', fetchSession);
-  }, []);
+  }, [activeYear?.id]); // re-fetch counts whenever active academic year changes
 
   const handleLogout = async () => {
     await logoutAction();
@@ -95,6 +103,8 @@ export default function Sidebar({
     { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null },
     { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Active' },
     { label: 'Attendance', href: '/attendance', icon: Calendar },
+    { label: 'Timetable & Periods', href: '/timetable', icon: Clock },
+    { label: 'Student Fees', href: '/fees', icon: Landmark },
     { label: 'Academic Year', href: '/academic-years', icon: CalendarDays },
     { label: 'Billing & Plans', href: '/billing', icon: CreditCard },
     { label: 'Settings', href: '/settings', icon: Settings }
@@ -238,7 +248,7 @@ export default function Sidebar({
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={onClose}></div>
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose}></div>
           <div className="relative w-64 max-w-xs h-full z-10">
             {sidebarContent}
           </div>

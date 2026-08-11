@@ -30,6 +30,7 @@ export async function getTeachersAction(params = {}) {
     if (params.search) query.append('search', params.search);
     if (params.subject && params.subject !== 'all') query.append('subject', params.subject);
     if (params.status && params.status !== 'all') query.append('status', params.status);
+    if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
     const response = await fetch(`http://localhost:5000/api/teachers?${query.toString()}`, {
       method: 'GET',
