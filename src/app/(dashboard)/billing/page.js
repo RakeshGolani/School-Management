@@ -62,21 +62,28 @@ export default function BillingPage() {
     return <BillingPageSkeleton />;
   }
 
-  const { subscription, usage, transactions, invoices, billingConfig } = data || {};
+  const { 
+    subscription = { status: 'inactive', plan_type: 'monthly', starts_at: new Date().toISOString(), ends_at: new Date().toISOString() }, 
+    usage = { students: { current: 0, limit: 0 }, buses: { current: 0, limit: 0 } }, 
+    transactions = [], 
+    invoices = [], 
+    billingConfig 
+  } = data || {};
+  const config = billingConfig || {};
 
   // Calculator
   const isYearly = planType === 'yearly';
-  const baseFee = isYearly ? billingConfig.base_fee_yearly : billingConfig.base_fee_monthly;
-  const studentFee = isYearly ? billingConfig.student_fee_yearly : billingConfig.student_fee_monthly;
-  const busFee = isYearly ? billingConfig.bus_fee_yearly : billingConfig.bus_fee_monthly;
+  const baseFee = isYearly ? (config.base_fee_yearly || 0) : (config.base_fee_monthly || 0);
+  const studentFee = isYearly ? (config.student_fee_yearly || 0) : (config.student_fee_monthly || 0);
+  const busFee = isYearly ? (config.bus_fee_yearly || 0) : (config.bus_fee_monthly || 0);
 
   const subtotal = Number(baseFee) + (Number(studentFee) * studentsLimit) + (Number(busFee) * busesLimit);
   let discountAmount = 0;
   if (isYearly) {
-    discountAmount = (subtotal * Number(billingConfig.yearly_discount_percent)) / 100;
+    discountAmount = (subtotal * Number(config.yearly_discount_percent || 0)) / 100;
   }
   const preTaxTotal = subtotal - discountAmount;
-  const taxAmount = (preTaxTotal * Number(billingConfig.tax_rate_percent)) / 100;
+  const taxAmount = (preTaxTotal * Number(config.tax_rate_percent || 0)) / 100;
   const finalPrice = preTaxTotal + taxAmount;
 
   // Checkout process simulation
@@ -367,7 +374,7 @@ export default function BillingPage() {
                 >
                   Yearly
                   <span className="bg-primary-100 text-primary-800 text-[9px] px-1.5 py-0.5 rounded-md font-extrabold">
-                    -{Number(billingConfig.yearly_discount_percent)}%
+                    -{Number(config.yearly_discount_percent || 0)}%
                   </span>
                 </button>
               </div>
@@ -433,12 +440,12 @@ export default function BillingPage() {
               </div>
               {isYearly && (
                 <div className="flex justify-between text-emerald-600">
-                  <span>Yearly Discount ({Number(billingConfig.yearly_discount_percent)}%)</span>
+                  <span>Yearly Discount ({Number(config.yearly_discount_percent || 0)}%)</span>
                   <span>-₹{discountAmount.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-slate-400">Tax / GST ({Number(billingConfig.tax_rate_percent)}%)</span>
+                <span className="text-slate-400">Tax / GST ({Number(config.tax_rate_percent || 0)}%)</span>
                 <span className="font-bold text-slate-700">₹{taxAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-t border-slate-200/60 pt-4 text-xs font-black text-slate-800">

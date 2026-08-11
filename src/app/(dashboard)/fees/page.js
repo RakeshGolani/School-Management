@@ -92,6 +92,7 @@ export default function StudentFeesPage() {
   const [allocateModalOpen, setAllocateModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null, loading: false });
 
   // Form States
   const [categoryForm, setCategoryForm] = useState({
@@ -1217,8 +1218,9 @@ export default function StudentFeesPage() {
                   label="Payment Channel"
                   value={paymentForm.payment_mode}
                   error={paymentErrors.payment_mode}
-                  onChange={(e) => {
-                    setPaymentForm(prev => ({ ...prev, payment_mode: e.target.value, reference_number: '' }));
+                  onChange={(val) => {
+                    const newValue = val?.target ? val.target.value : val;
+                    setPaymentForm(prev => ({ ...prev, payment_mode: newValue, reference_number: '' }));
                     setPaymentErrors(prev => ({ ...prev, payment_mode: '', reference_number: '' }));
                   }}
                   options={[
