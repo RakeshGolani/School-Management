@@ -35,7 +35,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" suppressHydrationWarning style={htmlStyle}>
-      <body className={inter.className} suppressHydrationWarning>
+      <head>
         <Script
           id="theme-restore-script"
           strategy="beforeInteractive"
@@ -59,6 +59,8 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
+      </head>
+      <body className={inter.className} suppressHydrationWarning>
         {children}
       </body>
     </html>

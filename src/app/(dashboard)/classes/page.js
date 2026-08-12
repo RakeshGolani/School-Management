@@ -29,6 +29,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import DataTable from '@/components/ui/DataTable';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import Tooltip from '@/components/ui/Tooltip';
 import { SkeletonClassRow } from '@/components/ui/Skeleton';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { 
@@ -63,6 +64,9 @@ export default function ClassesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -109,6 +113,7 @@ export default function ClassesPage() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     fetchClasses();
   }, [searchQuery, statusFilter]);
 
@@ -230,10 +235,106 @@ export default function ClassesPage() {
     });
   };
 
-  // Metrics
+  // DataTable Columns Definition
+  const classColumns = [
+    {
+      header: 'CLASS / GRADE',
+      accessor: 'class_name',
+      className: 'font-extrabold text-slate-900 dark:text-white',
+      render: (cls) => (
+        <Link 
+          href={`/classes/${cls.id}`} 
+          className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2 group"
+          title="Click to open visual classroom layout"
+        >
+          <span>{cls.class_name}</span>
+          <Eye size={14} className="opacity-0 group-hover:opacity-100 text-primary-500 transition-opacity" />
+        </Link>
+      )
+    },
+    {
+      header: 'SECTION',
+      accessor: 'section',
+      render: (cls) => (
+        <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-md">
+          Section {cls.section}
+        </span>
+      )
+    },
+    {
+      header: 'CLASS TEACHER',
+      accessor: 'classTeacher',
+      className: 'font-semibold text-slate-700 dark:text-slate-300',
+      render: (cls) => cls.classTeacher ? cls.classTeacher.name : <span className="text-slate-400 italic">Unassigned</span>
+    },
+    {
+      header: 'ROOM #',
+      accessor: 'room_number',
+      className: 'font-medium text-slate-600 dark:text-slate-400',
+      render: (cls) => cls.room_number ? `Room ${cls.room_number}` : 'N/A'
+    },
+    {
+      header: 'MAX CAPACITY',
+      accessor: 'capacity',
+      className: 'font-semibold text-slate-600 dark:text-slate-400',
+      render: (cls) => `${cls.capacity || 40} Students`
+    },
+    {
+      header: 'STATUS',
+      accessor: 'status',
+      render: (cls) => (
+        <Badge variant={cls.status === 'active' ? 'success' : 'neutral'} className="font-bold uppercase text-[10px]">
+          {cls.status}
+        </Badge>
+      )
+    },
+    {
+      header: 'ACTIONS',
+      className: 'text-right',
+      render: (cls) => (
+        <div className="flex items-center justify-end space-x-2">
+          <Tooltip content="View Layout" position="top">
+            <Link href={`/classes/${cls.id}`}>
+              <button
+                type="button"
+                className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+              >
+                <Eye size={14} />
+              </button>
+            </Link>
+          </Tooltip>
+
+          <Tooltip content="Edit Class" position="top">
+            <button
+              type="button"
+              onClick={() => handleOpenEdit(cls)}
+              className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
+            >
+              <Edit3 size={14} />
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Delete Class" position="top" variant="danger">
+            <button
+              type="button"
+              onClick={() => handleDelete(cls)}
+              className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-rose-500 text-slate-600 hover:text-rose-600 transition cursor-pointer"
+            >
+              <Trash2 size={14} />
+            </button>
+          </Tooltip>
+        </div>
+      )
+    }
+  ];
+
+  // Metrics & Pagination calculation
   const totalClassesCount = classes.length;
   const totalSectionsCount = classes.reduce((acc, curr) => acc + 1, 0);
   const assignedTeachersCount = classes.filter(c => c.class_teacher_id || c.classTeacher).length;
+
+  const totalPages = Math.ceil(totalClassesCount / pageSize) || 1;
+  const paginatedClasses = classes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const teacherOptions = [
     { label: 'Unassigned (No Class Teacher)', value: '' },
@@ -255,73 +356,61 @@ export default function ClassesPage() {
         </div>
 
         <div className="flex items-center gap-3 relative z-10 shrink-0">
-          <button 
-            type="button"
-            onClick={fetchClasses} 
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
+          <Button 
+            variant="outline"
+            onClick={fetchClasses}
+            title="Refresh List"
+            icon={RefreshCw}
           >
-            <RefreshCw className={`w-4 h-4 text-slate-600 dark:text-slate-300 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-          <button 
-            type="button"
+            Refresh
+          </Button>
+          <Button 
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-md shadow-primary-600/20 active:scale-95 cursor-pointer"
+            icon={Plus}
+            className="shadow-md shadow-primary-500/20"
           >
-            <Plus className="w-4 h-4 text-white" />
-            <span>Add New Class</span>
-          </button>
+            Add New Class
+          </Button>
         </div>
       </div>
 
-      {/* Analytics Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card className="p-4 border border-slate-100 dark:border-slate-800 shadow-xs rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Class Units</p>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                {totalClassesCount}
-              </h3>
-            </div>
-            <div className="p-3 bg-primary-50 text-primary-600 rounded-xl dark:bg-primary-950/50 dark:text-primary-400">
-              <BookOpen className="w-6 h-6" />
-            </div>
+      {/* Analytics Counter Banner Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-5 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Class Units</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{loading ? '...' : totalClassesCount}</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+            <BookOpen size={20} />
+          </div>
+        </Card>
+        
+        <Card className="p-5 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Class Teachers</p>
+            <h3 className="text-2xl font-black text-emerald-600 mt-1">{loading ? '...' : assignedTeachersCount}</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <UserCheck size={20} />
           </div>
         </Card>
 
-        <Card className="p-4 border border-slate-100 dark:border-slate-800 shadow-xs rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Assigned Class Teachers</p>
-              <h3 className="text-2xl font-black text-emerald-600 mt-1">
-                {assignedTeachersCount}
-              </h3>
-            </div>
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl dark:bg-emerald-950/50 dark:text-emerald-400">
-              <UserCheck className="w-6 h-6" />
-            </div>
+        <Card className="p-5 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Sections</p>
+            <h3 className="text-2xl font-black text-indigo-600 mt-1">{loading ? '...' : totalSectionsCount}</h3>
           </div>
-        </Card>
-
-        <Card className="p-4 border border-slate-100 dark:border-slate-800 shadow-xs rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sections</p>
-              <h3 className="text-2xl font-black text-indigo-600 mt-1">
-                {totalSectionsCount}
-              </h3>
-            </div>
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl dark:bg-indigo-950/50 dark:text-indigo-400">
-              <Building2 className="w-6 h-6" />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <School size={20} />
           </div>
         </Card>
       </div>
 
-      {/* Control Panel & Table */}
-      <Card className="p-6 space-y-6 shadow-xs rounded-2xl border border-slate-100 dark:border-slate-800">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* 📋 Classes Directory Table */}
+      <Card title={`Class Records (${totalClassesCount})`} icon={BookOpen} subtitle="Real-time list of grades, sections, and class teachers">
+        {/* Search & Filter bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <Input
@@ -347,100 +436,23 @@ export default function ClassesPage() {
           </div>
         </div>
 
-        {/* Classes Listing Table */}
-        <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-xs sm:text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-900/60">
-              <tr>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Class / Grade</th>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Section</th>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Class Teacher</th>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Room #</th>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Max Capacity</th>
-                <th className="px-6 py-3.5 text-left font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3.5 text-right font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
-              {loading ? (
-                <>
-                  <SkeletonClassRow />
-                  <SkeletonClassRow />
-                  <SkeletonClassRow />
-                  <SkeletonClassRow />
-                  <SkeletonClassRow />
-                </>
-              ) : classes.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
-                    No classes found. Click "+ Add New Class" to create one.
-                  </td>
-                </tr>
-              ) : (
-                classes.map((cls) => (
-                  <tr key={cls.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-4 font-extrabold text-slate-900 dark:text-white">
-                      <Link 
-                        href={`/classes/${cls.id}`} 
-                        className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2 group"
-                        title="Click to open visual classroom layout"
-                      >
-                        <span>{cls.class_name}</span>
-                        <Eye size={14} className="opacity-0 group-hover:opacity-100 text-primary-500 transition-opacity" />
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-md">
-                        Section {cls.section}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">
-                      {cls.classTeacher ? cls.classTeacher.name : <span className="text-slate-400 italic">Unassigned</span>}
-                    </td>
-                    <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-400">
-                      {cls.room_number ? `Room ${cls.room_number}` : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400">
-                      {cls.capacity || 40} Students
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={cls.status === 'active' ? 'success' : 'neutral'} className="font-bold uppercase text-[10px]">
-                        {cls.status}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <Link href={`/classes/${cls.id}`}>
-                        <button
-                          type="button"
-                          className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
-                          title="View Classroom Layout & Seating"
-                        >
-                          <Eye size={14} />
-                        </button>
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(cls)}
-                        className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
-                        title="Edit Class Details"
-                      >
-                        <Edit3 size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(cls)}
-                        className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-rose-500 text-slate-600 hover:text-rose-600 transition cursor-pointer"
-                        title="Delete Class Record"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={classColumns}
+          data={paginatedClasses}
+          loading={loading}
+          skeletonRow={SkeletonClassRow}
+          skeletonRows={5}
+          emptyMessage="No classes found matching your search. Click '+ Add New Class' to create one."
+          emptyIcon={BookOpen}
+          pagination={{
+            currentPage,
+            pageSize,
+            totalRecords: totalClassesCount,
+            totalPages,
+            onPageChange: setCurrentPage,
+            onPageSizeChange: setPageSize
+          }}
+        />
       </Card>
 
       {/* CREATE / EDIT CLASS DRAWER MODAL */}

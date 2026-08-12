@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import DatePicker from './DatePicker';
+import TimePicker from './TimePicker';
 
 /**
  * Dynamic Reusable Input Component
@@ -24,6 +25,24 @@ export default function Input({
   if (type === 'date') {
     return (
       <DatePicker
+        id={id}
+        name={name}
+        label={label}
+        error={error}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        disabled={disabled}
+        required={required}
+        className={className}
+        {...props}
+      />
+    );
+  }
+
+  if (type === 'time') {
+    return (
+      <TimePicker
         id={id}
         name={name}
         label={label}

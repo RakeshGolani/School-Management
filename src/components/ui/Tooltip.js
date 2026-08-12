@@ -6,7 +6,8 @@ export default function Tooltip({
   content,
   children,
   position = 'top', // 'top' | 'bottom' | 'left' | 'right'
-  delay = 150
+  delay = 150,
+  variant = 'default' // 'default' | 'danger'
 }) {
   const [active, setActive] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -71,11 +72,9 @@ export default function Tooltip({
   const showTip = () => {
     if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
     timeoutRef.current = setTimeout(() => {
-      // Calculate coordinates BEFORE showing state
       const initialCoords = calculateCoords();
       setCoords(initialCoords);
       setActive(true);
-      // Double rAF ensures coordinates apply in DOM BEFORE transition starts
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setVisible(true);
@@ -87,7 +86,6 @@ export default function Tooltip({
   const hideTip = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setVisible(false);
-    // Wait for exit animation duration before unmounting
     animationTimerRef.current = setTimeout(() => {
       setActive(false);
     }, 150);
@@ -105,20 +103,41 @@ export default function Tooltip({
     }
   }, [active, position]);
 
-  // Caret position mapper
-  const getArrowClasses = () => {
-    switch (position) {
-      case 'bottom':
-        return 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-900 border-x-transparent border-t-transparent';
-      case 'left':
-        return 'left-full top-1/2 -translate-y-1/2 border-l-slate-900 border-y-transparent border-r-transparent';
-      case 'right':
-        return 'right-full top-1/2 -translate-y-1/2 border-r-slate-900 border-y-transparent border-l-transparent';
-      case 'top':
-      default:
-        return 'top-full left-1/2 -translate-x-1/2 border-t-slate-900 border-x-transparent border-b-transparent';
+  // Variant styles
+  const variantStyles = {
+    default: {
+      bubble: 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-black/50',
+      arrow: {
+        top:    'border-t-slate-900 border-x-transparent border-b-transparent',
+        bottom: 'border-b-slate-900 border-x-transparent border-t-transparent',
+        left:   'border-l-slate-900 border-y-transparent border-r-transparent',
+        right:  'border-r-slate-900 border-y-transparent border-l-transparent',
+      }
+    },
+    danger: {
+      bubble: 'bg-rose-600 border-rose-700/80 text-white shadow-rose-900/40',
+      arrow: {
+        top:    'border-t-rose-600 border-x-transparent border-b-transparent',
+        bottom: 'border-b-rose-600 border-x-transparent border-t-transparent',
+        left:   'border-l-rose-600 border-y-transparent border-r-transparent',
+        right:  'border-r-rose-600 border-y-transparent border-l-transparent',
+      }
     }
   };
+
+  // Caret position mapper
+  const getArrowClasses = () => {
+    const arrows = variantStyles[variant]?.arrow || variantStyles.default.arrow;
+    switch (position) {
+      case 'bottom': return `bottom-full left-1/2 -translate-x-1/2 ${arrows.bottom}`;
+      case 'left':   return `left-full top-1/2 -translate-y-1/2 ${arrows.left}`;
+      case 'right':  return `right-full top-1/2 -translate-y-1/2 ${arrows.right}`;
+      case 'top':
+      default:       return `top-full left-1/2 -translate-x-1/2 ${arrows.top}`;
+    }
+  };
+
+  const bubbleClasses = variantStyles[variant]?.bubble || variantStyles.default.bubble;
 
   if (!content) return children;
 
@@ -131,11 +150,11 @@ export default function Tooltip({
     >
       {children}
       {active && mounted && createPortal(
-        <div 
+        <div
           style={coords}
-          className={`absolute z-50 whitespace-nowrap bg-slate-900/95 backdrop-blur-md border border-slate-700/80 px-2.5 py-1.5 rounded-xl text-[10px] font-bold text-slate-100 shadow-2xl shadow-black/50 pointer-events-none transition-all duration-150 ease-out ${
-            visible 
-              ? 'opacity-100 translate-y-0 scale-100' 
+          className={`absolute z-50 whitespace-nowrap backdrop-blur-md border px-2.5 py-1.5 rounded-xl text-[10px] font-bold shadow-2xl pointer-events-none transition-all duration-150 ease-out ${bubbleClasses} ${
+            visible
+              ? 'opacity-100 translate-y-0 scale-100'
               : 'opacity-0 translate-y-2 scale-95'
           }`}
         >
