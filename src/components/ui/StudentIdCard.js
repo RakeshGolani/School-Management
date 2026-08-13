@@ -74,7 +74,7 @@ export default function StudentIdCard({ student, schoolInfo, activeYear, teacher
             </div>
             <div>
               <span className="block text-[9px] text-slate-400 font-bold uppercase">Date of Birth</span>
-              <span className="font-bold text-slate-800 text-[11px]">{student.dob ? new Date(student.dob).toLocaleDateString() : 'N/A'}</span>
+              <span className="font-bold text-slate-800 text-[11px]">{student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : 'N/A'}</span>
             </div>
             <div>
               <span className="block text-[9px] text-slate-400 font-bold uppercase">Gender</span>
@@ -104,6 +104,10 @@ export default function StudentIdCard({ student, schoolInfo, activeYear, teacher
             <div className="flex items-center justify-between px-1 text-[11px]">
               <span className="text-slate-500 font-semibold">Contact Phone:</span>
               <span className="font-bold text-slate-900">{student.guardian_phone || student.parent?.phone || 'N/A'}</span>
+            </div>
+            <div className="px-1 text-[11px] pt-0.5 leading-tight flex items-start gap-1">
+              <span className="text-slate-500 font-semibold whitespace-nowrap">Address:</span>
+              <span className="font-bold text-slate-900 text-left line-clamp-2">{student.guardian_address || student.parent?.address || 'N/A'}</span>
             </div>
           </div>
         </div>

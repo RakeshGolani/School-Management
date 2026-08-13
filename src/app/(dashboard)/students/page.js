@@ -113,6 +113,7 @@ export default function StudentsPage() {
     gender: 'male',
     dob: '',
     guardian_name: '',
+    guardian_address: '',
     guardian_email: '',
     guardian_phone: '',
     alternate_phone: '',
@@ -308,7 +309,7 @@ export default function StudentsPage() {
       section: initialSection,
       gender: 'male',
       dob: '2012-05-15',
-      guardian_name: '', guardian_email: '', guardian_phone: '',
+      guardian_name: '', guardian_address: '', guardian_email: '', guardian_phone: '',
       alternate_phone: '', nfc_card_uid: '',
       is_bus_service_enabled: false, bus_route_id: '', bus_stop_id: ''
     });
@@ -341,6 +342,7 @@ export default function StudentsPage() {
       gender: student.gender || 'male',
       dob: student.dob || '',
       guardian_name: student.guardianName || '',
+      guardian_address: student.parent?.address || student.guardian_address || '',
       guardian_email: student.guardianEmail || '',
       guardian_phone: student.guardianPhone || '',
       alternate_phone: student.alternatePhone || '',
@@ -763,19 +765,21 @@ export default function StudentsPage() {
                   <Input label="Last Name" required value={formData.last_name} error={formErrors.last_name} onChange={(e) => { setFormData({ ...formData, last_name: e.target.value }); setFormErrors(p => ({ ...p, last_name: '' })); }} placeholder="e.g. Sharma" />
                   <Input label="Admission Number" value={formData.admission_number} onChange={(e) => setFormData({ ...formData, admission_number: e.target.value })} placeholder="ADM-1001" />
                   <Input label="Roll Number" value={formData.roll_number} error={formErrors.roll_number} onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })} placeholder="e.g. 101" />
-                  <div className="sm:col-span-2">
-                    <Select label="Grade / Class" value={formData.class_id || formData.grade} onChange={(e) => setFormData({ ...formData, grade: e.target.value, class_id: e.target.value })} options={gradeOptions} error={formErrors.grade} searchable={true} />
-                  </div>
+                  <Select label="Grade / Class" value={formData.class_id || formData.grade} onChange={(e) => setFormData({ ...formData, grade: e.target.value, class_id: e.target.value })} options={gradeOptions} error={formErrors.grade} searchable={true} />
+                  <Input type="date" required label="Date of Birth" value={formData.dob} error={formErrors.dob} onChange={(e) => { setFormData({ ...formData, dob: e.target.value }); setFormErrors(p => ({ ...p, dob: '' })); }} />
                 </div>
 
                 {/* Guardian Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input label="Guardian Name" required value={formData.guardian_name} error={formErrors.guardian_name} onChange={(e) => { setFormData({ ...formData, guardian_name: e.target.value }); setFormErrors(p => ({ ...p, guardian_name: '' })); }} placeholder="e.g. Ramesh Sharma" />
                   <Input label="Guardian Email" required type="email" value={formData.guardian_email} error={formErrors.guardian_email} onChange={(e) => { setFormData({ ...formData, guardian_email: e.target.value }); setFormErrors(p => ({ ...p, guardian_email: '' })); }} placeholder="e.g. ramesh@example.com" />
-                  <FormPhoneInput label="Guardian Phone" required defaultCountry="in" value={formData.guardian_phone} error={formErrors.guardian_phone} onChange={(phone) => { setFormData({ ...formData, guardian_phone: phone }); setFormErrors(p => ({ ...p, guardian_phone: '' })); }} />
-                  <FormPhoneInput label="Alternate Phone" defaultCountry="in" value={formData.alternate_phone} error={formErrors.alternate_phone} onChange={(phone) => { setFormData({ ...formData, alternate_phone: phone }); setFormErrors(p => ({ ...p, alternate_phone: '' })); }} />
                   <Select label="Gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} options={genderOptions} searchable={false} />
                   <Input label="NFC Card Identifier UID" icon={CreditCard} value={formData.nfc_card_uid} error={formErrors.nfc_card_uid} onChange={(e) => { setFormData({ ...formData, nfc_card_uid: e.target.value }); setFormErrors(p => ({ ...p, nfc_card_uid: '' })); }} placeholder="e.g. 8F3C910B" />
+                  <FormPhoneInput label="Guardian Phone" required defaultCountry="in" value={formData.guardian_phone} error={formErrors.guardian_phone} onChange={(phone) => { setFormData({ ...formData, guardian_phone: phone }); setFormErrors(p => ({ ...p, guardian_phone: '' })); }} />
+                  <FormPhoneInput label="Alternate Phone" defaultCountry="in" value={formData.alternate_phone} error={formErrors.alternate_phone} onChange={(phone) => { setFormData({ ...formData, alternate_phone: phone }); setFormErrors(p => ({ ...p, alternate_phone: '' })); }} />
+                  <div className="sm:col-span-2">
+                    <Input type="textarea" required label="Guardian Address" value={formData.guardian_address} error={formErrors.guardian_address} onChange={(e) => { setFormData({ ...formData, guardian_address: e.target.value }); setFormErrors(p => ({ ...p, guardian_address: '' })); }} placeholder="e.g. 123 Main St, Apartment 4B" />
+                  </div>
                 </div>
 
                 {/* Smart Bus Toggle */}

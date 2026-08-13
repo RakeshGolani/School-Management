@@ -268,7 +268,7 @@ export default function StudentDetailsPage() {
               </div>
               <div>
                 <span className="block text-slate-400 font-bold uppercase text-[10px]">Date of Birth</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{student.dob ? new Date(student.dob).toLocaleDateString() : 'N/A'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : 'N/A'}</span>
               </div>
               <div>
                 <span className="block text-slate-400 font-bold uppercase text-[10px]">Smart Bus Service</span>

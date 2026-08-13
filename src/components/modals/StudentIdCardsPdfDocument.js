@@ -281,7 +281,7 @@ export default function StudentIdCardsPdfDocument({ students, classData, teacher
                   </View>
                   <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Date of Birth</Text>
-                    <Text style={styles.detailValue}>{st.dob ? new Date(st.dob).toLocaleDateString() : 'N/A'}</Text>
+                    <Text style={styles.detailValue}>{st.dob ? new Date(st.dob).toLocaleDateString('en-GB') : 'N/A'}</Text>
                   </View>
                   <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Gender</Text>
@@ -308,6 +308,10 @@ export default function StudentIdCardsPdfDocument({ students, classData, teacher
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Contact:</Text>
                     <Text style={styles.infoValue}>{st.guardian_phone || 'N/A'}</Text>
+                  </View>
+                  <View style={[styles.infoRow, { justifyContent: 'flex-start', alignItems: 'flex-start' }]}>
+                    <Text style={[styles.infoLabel, { marginRight: 2 }]}>Address:</Text>
+                    <Text style={[styles.infoValue, { flex: 1, textAlign: 'left', lineHeight: 1.15 }]}>{st.guardian_address || st.parent?.address || 'N/A'}</Text>
                   </View>
                 </View>
               </View>

@@ -58,8 +58,45 @@ export default function Input({
     );
   }
 
-  const [showPassword, setShowPassword] = useState(false);
   const inputId = id || name || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+
+  if (type === 'textarea') {
+    return (
+      <div className={`space-y-1.5 w-full ${className}`}>
+        {label && (
+          <label 
+            htmlFor={inputId} 
+            className="block text-xs font-semibold text-slate-700 uppercase tracking-wider"
+          >
+            {label} {required && <span className="text-rose-500">*</span>}
+          </label>
+        )}
+        <div className="relative">
+          <textarea
+            id={inputId}
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            required={required}
+            rows={props.rows || 3}
+            className={`w-full bg-slate-50/70 border ${
+              error ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-primary-500'
+            } rounded-xl py-2.5 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 ${
+              error ? 'focus:ring-rose-500/20' : 'focus:ring-primary-500/20'
+            } transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed resize-y`}
+            {...props}
+          />
+        </div>
+        {error && (
+          <p className="text-xs text-rose-500 font-medium pl-1">{error}</p>
+        )}
+      </div>
+    );
+  }
+
+  const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const computedType = isPassword ? (showPassword ? 'text' : 'password') : type;
 

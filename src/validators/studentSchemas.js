@@ -24,8 +24,13 @@ export const studentSchema = Yup.object().shape({
     .transform((value) => (value === '' ? null : value)),
   gender: Yup.string()
     .required('Gender selection is required.'),
+  dob: Yup.date()
+    .required('Date of birth is required.')
+    .typeError('Please enter a valid date of birth.'),
   guardian_name: Yup.string()
     .required('Guardian name is required.'),
+  guardian_address: Yup.string()
+    .required('Guardian address is required.'),
   guardian_email: Yup.string()
     .required('Guardian email is required.')
     .email('Must be a valid email address.'),
