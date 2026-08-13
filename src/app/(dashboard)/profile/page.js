@@ -76,7 +76,8 @@ export default function SchoolProfilePage() {
 
           if (session.user.id) {
             try {
-              const res = await fetch(`http://localhost:5000/api/school/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+              const res = await fetch(`${apiUrl}/school/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
               const profileRes = await res.json();
               if (profileRes.success && profileRes.data) {
                 u = profileRes.data;
@@ -97,7 +98,8 @@ export default function SchoolProfilePage() {
           });
 
           if (currentLogo) {
-            const fullLogo = currentLogo.startsWith('/uploads/') ? `http://localhost:5000${currentLogo}` : currentLogo;
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
+            const fullLogo = currentLogo.startsWith('/uploads/') ? `${baseUrl}${currentLogo}` : currentLogo;
             setPreviewUrl(fullLogo);
           } else {
             setPreviewUrl('');

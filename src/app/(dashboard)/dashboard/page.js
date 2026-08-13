@@ -37,7 +37,8 @@ export default function Dashboard() {
   const [autoSmsChecked, setAutoSmsChecked] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/health')
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    fetch(`${apiUrl}/health`)
       .then((res) => res.json())
       .then((data) => setHealth(data))
       .catch(() => setHealth({ status: 'Error', message: 'Backend is offline' }));

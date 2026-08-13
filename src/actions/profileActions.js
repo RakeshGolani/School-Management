@@ -19,7 +19,8 @@ export async function updateProfileAction(profileData) {
       body = JSON.stringify(profileData);
     }
 
-    const response = await fetch('http://localhost:5000/api/school/profile/update', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/school/profile/update`, {
       method: 'POST',
       headers,
       body,
@@ -39,18 +40,13 @@ export async function updateProfileAction(profileData) {
     // Read current encrypted session & update payload
     const currentSession = await getEncryptedCookie('school_session');
     
-    let logoUrl = data.data.logo;
-    if (logoUrl && logoUrl.startsWith('/uploads/')) {
-      logoUrl = `http://localhost:5000${logoUrl}`;
-    }
-
     const updatedUser = {
       ...currentSession?.user,
       schoolName: data.data.schoolName,
       email: data.data.email,
       phone: data.data.phone,
       address: data.data.address,
-      logo: logoUrl
+      logo: data.data.logo_url || data.data.logo
     };
 
     await setEncryptedCookie('school_session', {
@@ -99,7 +95,8 @@ export async function changePasswordAction(passwordData) {
     const session = await getEncryptedCookie('school_session');
     const schoolId = session?.user?.id || 1;
 
-    const response = await fetch('http://localhost:5000/api/school/change-password', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/school/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...passwordData, schoolId }),

@@ -55,7 +55,8 @@ export default function Header({
           applyDynamicTheme(sessionData.user.primaryColor);
 
           if (sessionData.user.id) {
-            const res = await fetch(`http://localhost:5000/api/school/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${apiUrl}/school/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
             const profileRes = await res.json();
             if (profileRes.success && profileRes.data) {
               applyDynamicTheme(profileRes.data.primaryColor);
@@ -83,11 +84,7 @@ export default function Header({
   };
 
   const getLogoUrl = () => {
-    if (!userSession?.logo) return null;
-    if (userSession.logo.startsWith('/uploads/')) {
-      return `http://localhost:5000${userSession.logo}`;
-    }
-    return userSession.logo;
+    return userSession?.logo_url || userSession?.logo || null;
   };
 
   const displayName = userSession?.schoolName || userSession?.name || 'Greenwood Intl';

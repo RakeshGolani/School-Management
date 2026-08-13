@@ -28,6 +28,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Checkbox from '@/components/ui/Checkbox';
 import Select from '@/components/ui/Select';
 import DataTable from '@/components/ui/DataTable';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -931,18 +932,13 @@ export default function TimetablePage() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="is_break"
-                  checked={slotForm.is_break}
-                  onChange={(e) => setSlotForm({ ...slotForm, is_break: e.target.checked })}
-                  className="w-4 h-4 text-primary-600 rounded border-slate-300"
-                />
-                <label htmlFor="is_break" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                  Mark as Break / Lunch
-                </label>
-              </div>
+              <Checkbox
+                id="is_break"
+                label="Mark as Break / Lunch"
+                checked={slotForm.is_break}
+                onChange={(e) => setSlotForm({ ...slotForm, is_break: e.target.checked })}
+                className="pt-2"
+              />
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setShowSlotModal(false)}>

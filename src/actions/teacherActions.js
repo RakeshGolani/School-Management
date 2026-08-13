@@ -32,7 +32,8 @@ export async function getTeachersAction(params = {}) {
     if (params.status && params.status !== 'all') query.append('status', params.status);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const response = await fetch(`http://localhost:5000/api/teachers?${query.toString()}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/teachers?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -84,7 +85,8 @@ export async function createTeacherAction(teacherData) {
       body = JSON.stringify({ ...teacherData, school_id: schoolId });
     }
 
-    const response = await fetch('http://localhost:5000/api/teachers', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/teachers`, {
       method: 'POST',
       headers,
       body,
@@ -136,7 +138,8 @@ export async function updateTeacherAction(id, teacherData) {
       body = JSON.stringify({ ...teacherData, school_id: schoolId });
     }
 
-    const response = await fetch(`http://localhost:5000/api/teachers/${id}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/teachers/${id}`, {
       method: 'PUT',
       headers,
       body,
@@ -176,7 +179,8 @@ export async function deleteTeacherAction(id) {
     const schoolId = await getSchoolIdFromSession();
     const query = schoolId ? `?schoolId=${schoolId}` : '';
 
-    const response = await fetch(`http://localhost:5000/api/teachers/${id}${query}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/teachers/${id}${query}`, {
       method: 'DELETE',
       cache: 'no-store'
     });

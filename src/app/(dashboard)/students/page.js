@@ -27,6 +27,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
+import Checkbox from '@/components/ui/Checkbox';
 import Badge from '@/components/ui/Badge';
 import Tooltip from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
@@ -49,6 +50,7 @@ import { notifySuccess, notifyError } from '@/lib/notify';
 import DataTable from '@/components/ui/DataTable';
 import { SkeletonTableRow } from '@/components/ui/Skeleton';
 import { useAcademicYear } from '@/context/AcademicYearContext';
+import PromoteStudentsModal from '@/components/modals/PromoteStudentsModal';
 
 const SESSION_STATUS_CONFIG = {
   ENROLLED:   { label: 'Enrolled',   color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   border: 'rgba(22,163,74,0.25)'   },
@@ -443,23 +445,35 @@ export default function StudentsPage() {
   const studentColumns = [
     {
       header: 'Student Profile',
-      render: (student) => (
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shrink-0 overflow-hidden">
-            <div className="w-full h-full rounded-[10px] bg-slate-100 flex items-center justify-center font-bold text-slate-800 overflow-hidden">
-              {student.photo ? (
-                <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
-              ) : (
-                <span>{student.firstName?.[0]}{student.lastName?.[0]}</span>
+      render: (student) => {
+        const studentPhoto = student.image_url || student.photo;
+        const hasPhoto = studentPhoto && !studentPhoto.includes('ui-avatars.com');
+        return (
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-9 h-9 rounded-xl border-2 border-primary-500/30 shadow-xs flex items-center justify-center shrink-0 overflow-hidden relative"
+              style={{
+                backgroundColor: 'var(--theme-primary-50)',
+                color: 'var(--theme-primary-500)'
+              }}
+            >
+              <span className="text-sm font-black">{student.firstName?.[0]?.toUpperCase() || student.fullName?.[0]?.toUpperCase() || 'S'}</span>
+              {hasPhoto && (
+                <img 
+                  src={studentPhoto} 
+                  alt={student.fullName} 
+                  className="absolute inset-0 w-full h-full object-cover rounded-xl z-10" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
             </div>
+            <div>
+              <p className="font-bold text-slate-900">{student.fullName}</p>
+              <p className="text-[10px] text-slate-500 capitalize">{student.gender || 'student'}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-slate-900">{student.fullName}</p>
-            <p className="text-[10px] text-slate-500 capitalize">{student.gender || 'student'}</p>
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
       header: 'Admission / Roll #',
@@ -597,16 +611,15 @@ export default function StudentsPage() {
 
         <div className="flex items-center gap-3 flex-wrap">
           {/* Promote Students Button */}
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            icon={GraduationCap}
             onClick={handleOpenPromoteModal}
             disabled={!activeYear}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 4px 14px rgba(124,58,237,0.3)' }}
+            className="font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80"
           >
-            <GraduationCap size={16} />
             Promote Students
-          </button>
+          </Button>
 
           <Button variant="primary" icon={UserPlus} onClick={handleOpenAddModal}>
             + New Admission
@@ -675,221 +688,18 @@ export default function StudentsPage() {
         />
       </Card>
 
-      {/* ─── PROMOTE STUDENTS MODAL ───────────────────────────────────────── */}
-      {promoteModalOpen && typeof document !== 'undefined' && createPortal(
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fadeIn p-4"
-          onClick={() => setPromoteModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Promote Modal Header */}
-            <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4 bg-gradient-to-r from-violet-50 to-indigo-50">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
-                    <GraduationCap size={16} className="text-white" />
-                  </div>
-                  <h2 className="text-lg font-black text-slate-900">Promote Students</h2>
-                </div>
-                <p className="text-xs text-slate-500 pl-10">
-                  Move students from <strong>{activeYear?.year_name}</strong> to the next academic session
-                </p>
-              </div>
-              <button type="button" onClick={() => setPromoteModalOpen(false)} className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer">
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Promote Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-
-              {/* Promotion result summary */}
-              {promotionResult && (
-                <div className="rounded-2xl p-4 border border-emerald-200 bg-emerald-50 space-y-2">
-                  <p className="font-bold text-emerald-700 text-sm flex items-center gap-2"><CheckCircle2 size={16} /> Promotion Completed!</p>
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <span className="bg-white border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full font-semibold">✓ Promoted: {promotionResult.summary?.promoted}</span>
-                    <span className="bg-white border border-amber-200 text-amber-700 px-3 py-1 rounded-full font-semibold">⚠ Detained: {promotionResult.summary?.detained}</span>
-                    <span className="bg-white border border-violet-200 text-violet-700 px-3 py-1 rounded-full font-semibold">⬆ Passed Out: {promotionResult.summary?.passedOut}</span>
-                    {promotionResult.summary?.skipped > 0 && <span className="bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-full font-semibold">— Skipped: {promotionResult.summary?.skipped}</span>}
-                  </div>
-                </div>
-              )}
-
-              {/* Filter & Target Session Controls Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
-                <div>
-                  <Select
-                    label="Target Academic Session"
-                    required
-                    value={targetYearId}
-                    onChange={e => setTargetYearId(e.target.value)}
-                    options={[
-                      { label: '— Select target session —', value: '' },
-                      ...targetYearOptions
-                    ]}
-                    placeholder="Select target session"
-                  />
-                  {targetYearOptions.length === 0 && (
-                    <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1"><AlertCircle size={10} /> Create another academic session first.</p>
-                  )}
-                </div>
-
-                <div>
-                  <Select
-                    label="Filter By Current Class / Grade"
-                    value={promoteGradeFilter}
-                    onChange={e => setPromoteGradeFilter(e.target.value)}
-                    options={[
-                      { label: 'All Classes / Grades', value: 'all' },
-                      ...gradeOptions
-                    ]}
-                    placeholder="Filter by class"
-                  />
-                </div>
-              </div>
-
-              {/* Students list */}
-              {loadingSessionStudents ? (
-                <div className="space-y-2">
-                  {[1,2,3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}
-                </div>
-              ) : sessionStudents.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                  <GraduationCap size={32} className="mx-auto mb-2 opacity-40" />
-                  No students found in this session.
-                </div>
-              ) : (
-                <>
-                  {/* Select all & Bulk Action Row */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-violet-50/60 border border-violet-100">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const visibleIds = visiblePromotionList.map(s => s.student_id);
-                          const shouldCheck = !visiblePromotionList.every(s => s.checked);
-                          setPromotionList(prev => prev.map(s => visibleIds.includes(s.student_id) ? { ...s, checked: shouldCheck } : s));
-                        }}
-                        className="text-slate-700 hover:text-violet-700 cursor-pointer flex items-center gap-2 font-bold text-xs"
-                      >
-                        {visiblePromotionList.length > 0 && visiblePromotionList.every(s => s.checked) ? (
-                          <CheckSquare size={16} className="text-violet-600" />
-                        ) : (
-                          <Square size={16} className="text-slate-400" />
-                        )}
-                        <span>Select All ({visiblePromotionList.filter(s => s.checked).length}/{visiblePromotionList.length})</span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <span className="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Set New Class for Selected:</span>
-                      <div className="w-40 shrink-0">
-                        <select
-                          value={bulkTargetGrade}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setBulkTargetGrade(val);
-                            if (val) {
-                              const visibleIds = visiblePromotionList.filter(s => s.checked).map(s => s.student_id);
-                              setPromotionList(prev => prev.map(s => visibleIds.includes(s.student_id) ? { ...s, new_grade: val } : s));
-                            }
-                          }}
-                          className="w-full bg-white border border-violet-200 rounded-xl py-1 px-2 text-xs font-semibold text-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                        >
-                          <option value="">— Set New Grade —</option>
-                          {gradeOptions.map(opt => (
-                            <option key={opt.label} value={opt.label}>{opt.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Student promotion rows */}
-                  <div className="space-y-2.5 max-h-80 overflow-y-auto px-1 pb-20 pt-1">
-                    {visiblePromotionList.map((s) => (
-                      <div
-                        key={s.student_id}
-                        className="flex items-center gap-3 p-3 rounded-xl border transition-all"
-                        style={{ background: s.checked ? 'rgba(124,58,237,0.03)' : '#f8fafc', borderColor: s.checked ? 'rgba(124,58,237,0.2)' : '#e2e8f0' }}
-                      >
-                        {/* Checkbox */}
-                        <button type="button" onClick={() => handleToggleStudent(s.student_id, !s.checked)} className="shrink-0 cursor-pointer">
-                          {s.checked ? <CheckSquare size={16} className="text-violet-600" /> : <Square size={16} className="text-slate-400" />}
-                        </button>
-
-                        {/* Avatar */}
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-500 to-indigo-400 flex items-center justify-center text-white font-bold text-xs shrink-0">
-                          {s.student_name?.[0]}
-                        </div>
-
-                        {/* Name + current grade */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 text-xs truncate">{s.student_name}</p>
-                          <p className="text-[10px] text-slate-500">{s.admission_number} · {s.current_grade}</p>
-                        </div>
-
-                        {/* New grade select dropdown using UI Select component */}
-                        <div className="w-40 shrink-0">
-                          <Select
-                            value={s.new_grade}
-                            onChange={e => handlePromotionFieldChange(s.student_id, 'new_grade', e.target.value)}
-                            disabled={!s.checked}
-                            options={gradeOptions.map(opt => ({ label: opt.label, value: opt.label }))}
-                            searchable={true}
-                            clearable={false}
-                            placeholder="Select Grade"
-                          />
-                        </div>
-
-                        {/* Status selector using UI Select component */}
-                        <div className="w-36 shrink-0">
-                          <Select
-                            value={s.status}
-                            onChange={e => handlePromotionFieldChange(s.student_id, 'status', e.target.value)}
-                            disabled={!s.checked}
-                            options={[
-                              { label: 'Promoted', value: 'PROMOTED' },
-                              { label: 'Detained', value: 'DETAINED' },
-                              { label: 'Passed Out', value: 'PASSED_OUT' }
-                            ]}
-                            searchable={false}
-                            clearable={false}
-                            placeholder="Status"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Promote Modal Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50">
-              <Button type="button" variant="secondary" onClick={() => setPromoteModalOpen(false)}>Cancel</Button>
-              <button
-                type="button"
-                onClick={handleSubmitPromotion}
-                disabled={submittingPromotion || !targetYearId || promotionList.filter(s => s.checked).length === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 4px 14px rgba(124,58,237,0.3)' }}
-              >
-                {submittingPromotion ? (
-                  <>Processing...</>
-                ) : (
-                  <><GraduationCap size={15} /> Promote {promotionList.filter(s => s.checked).length} Students <ArrowRight size={14} /></>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* ─── PROMOTE STUDENTS REUSABLE MODAL ───────────────────────────────── */}
+      <PromoteStudentsModal
+        isOpen={promoteModalOpen}
+        onClose={() => setPromoteModalOpen(false)}
+        activeYear={activeYear}
+        academicYears={academicYears}
+        initialStudents={sessionStudents}
+        classOptions={gradeOptions}
+        title="Promote Students"
+        subtitle={`Move students from ${activeYear?.year_name || 'current session'} to the next academic session`}
+        onSuccess={() => fetchStudents()}
+      />
 
       {/* ─── NEW ADMISSION / EDIT OFFCANVAS DRAWER ────────────────────────── */}
       {modalOpen && typeof document !== 'undefined' && createPortal(
@@ -898,22 +708,24 @@ export default function StudentsPage() {
           onClick={() => setModalOpen(false)}
         >
           <div 
-            className="bg-white border-l border-slate-200 w-full max-w-2xl h-full overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl animate-slideInRight"
+            className="bg-white border-l border-slate-200 w-full max-w-2xl h-full flex flex-col shadow-2xl animate-slideInRight"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            {/* Modal Header (Fixed) */}
+            <div className="flex items-center justify-between border-b border-slate-100 p-6 sm:p-8 pb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles size={18} className="text-primary-600" />
-                  {editingStudent ? 'Edit Student Profile' : 'New Student Admission'}
-                </h2>
-                {activeYear && (
-                  <p className="text-[10px] text-violet-600 font-semibold mt-0.5 flex items-center gap-1">
-                    <CalendarDays size={10} /> Session: {activeYear.year_name}
-                  </p>
-                )}
-                <p className="text-xs text-slate-500">Fill in campus details, assign NFC card UID, and configure bus transport.</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles size={18} className="text-primary-600" />
+                    {editingStudent ? 'Edit Student Profile' : 'New Student Admission'}
+                  </h2>
+                  {activeYear && (
+                    <span className="text-[11px] bg-violet-50 text-violet-700 border border-violet-200 font-semibold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <CalendarDays size={11} /> Session: {activeYear.year_name}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Fill in campus details, assign NFC card UID, and configure bus transport.</p>
               </div>
               <button type="button" onClick={() => setModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 rounded-xl bg-slate-100 border border-slate-200 cursor-pointer transition-colors">
                 <X size={16} />
@@ -921,59 +733,68 @@ export default function StudentsPage() {
             </div>
 
             {/* Modal Form */}
-            <form noValidate onSubmit={handleSubmit} className="space-y-6">
+            <form noValidate onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
               
-              {/* Photo Upload Picker */}
-              <div className="flex items-center space-x-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="relative group shrink-0">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shadow-md overflow-hidden">
-                    <div className="w-full h-full rounded-[14px] bg-slate-100 flex items-center justify-center text-slate-800 font-bold overflow-hidden">
-                      {previewUrl ? <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" /> : <Camera size={20} className="text-slate-400" />}
+              {/* Scrollable Content Body */}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+                
+                {/* Photo Upload Picker */}
+                <div className="flex items-center space-x-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="relative group shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shadow-md overflow-hidden">
+                      <div className="w-full h-full rounded-[14px] bg-slate-100 flex items-center justify-center text-slate-800 font-bold overflow-hidden">
+                        {previewUrl ? <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" /> : <Camera size={20} className="text-slate-400" />}
+                      </div>
                     </div>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white cursor-pointer">
+                      <Upload size={16} />
+                    </button>
                   </div>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white cursor-pointer">
-                    <Upload size={16} />
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
-                  <Button type="button" variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()}>Select Photo File</Button>
-                  <p className="text-[10px] text-slate-500">Saved to <code className="text-primary-600 font-medium">backend/uploads/students/</code></p>
-                </div>
-              </div>
-
-              {/* Personal Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="First Name" required value={formData.first_name} error={formErrors.first_name} onChange={(e) => { setFormData({ ...formData, first_name: e.target.value }); setFormErrors(p => ({ ...p, first_name: '' })); }} placeholder="e.g. Rahul" />
-                <Input label="Last Name" required value={formData.last_name} error={formErrors.last_name} onChange={(e) => { setFormData({ ...formData, last_name: e.target.value }); setFormErrors(p => ({ ...p, last_name: '' })); }} placeholder="e.g. Sharma" />
-                <Input label="Admission Number" value={formData.admission_number} onChange={(e) => setFormData({ ...formData, admission_number: e.target.value })} placeholder="ADM-1001" />
-                <Input label="Roll Number" value={formData.roll_number} error={formErrors.roll_number} onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })} placeholder="e.g. 101" />
-                <Select label="Grade / Class" value={formData.class_id || formData.grade} onChange={(e) => setFormData({ ...formData, grade: e.target.value, class_id: e.target.value })} options={gradeOptions} error={formErrors.grade} searchable={true} />
-              </div>
-
-              {/* Guardian Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="Guardian Name" required value={formData.guardian_name} error={formErrors.guardian_name} onChange={(e) => { setFormData({ ...formData, guardian_name: e.target.value }); setFormErrors(p => ({ ...p, guardian_name: '' })); }} placeholder="e.g. Ramesh Sharma" />
-                <Input label="Guardian Email" required type="email" value={formData.guardian_email} error={formErrors.guardian_email} onChange={(e) => { setFormData({ ...formData, guardian_email: e.target.value }); setFormErrors(p => ({ ...p, guardian_email: '' })); }} placeholder="e.g. ramesh@example.com" />
-                <FormPhoneInput label="Guardian Phone" required defaultCountry="in" value={formData.guardian_phone} error={formErrors.guardian_phone} onChange={(phone) => { setFormData({ ...formData, guardian_phone: phone }); setFormErrors(p => ({ ...p, guardian_phone: '' })); }} />
-                <FormPhoneInput label="Alternate Phone" defaultCountry="in" value={formData.alternate_phone} error={formErrors.alternate_phone} onChange={(phone) => { setFormData({ ...formData, alternate_phone: phone }); setFormErrors(p => ({ ...p, alternate_phone: '' })); }} />
-                <Select label="Gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} options={genderOptions} searchable={false} />
-                <Input label="NFC Card Identifier UID" icon={CreditCard} value={formData.nfc_card_uid} error={formErrors.nfc_card_uid} onChange={(e) => { setFormData({ ...formData, nfc_card_uid: e.target.value }); setFormErrors(p => ({ ...p, nfc_card_uid: '' })); }} placeholder="e.g. 8F3C910B" />
-              </div>
-
-              {/* Smart Bus Toggle */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="block text-xs font-bold text-slate-900 flex items-center gap-1.5"><Bus size={14} className="text-amber-600" /> Smart Bus Transport Service</span>
-                    <span className="text-[10px] text-slate-500">Enable automatic bus boarding &amp; deboarding scanning.</span>
+                  <div className="space-y-1">
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                    <Button type="button" variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()}>Select Photo File</Button>
+                    <p className="text-[10px] text-slate-500">Saved to <code className="text-primary-600 font-medium">backend/uploads/students/</code></p>
                   </div>
-                  <input type="checkbox" checked={formData.is_bus_service_enabled} onChange={(e) => setFormData({ ...formData, is_bus_service_enabled: e.target.checked })} className="w-5 h-5 accent-primary-600 rounded cursor-pointer" />
+                </div>
+
+                {/* Personal Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="First Name" required value={formData.first_name} error={formErrors.first_name} onChange={(e) => { setFormData({ ...formData, first_name: e.target.value }); setFormErrors(p => ({ ...p, first_name: '' })); }} placeholder="e.g. Rahul" />
+                  <Input label="Last Name" required value={formData.last_name} error={formErrors.last_name} onChange={(e) => { setFormData({ ...formData, last_name: e.target.value }); setFormErrors(p => ({ ...p, last_name: '' })); }} placeholder="e.g. Sharma" />
+                  <Input label="Admission Number" value={formData.admission_number} onChange={(e) => setFormData({ ...formData, admission_number: e.target.value })} placeholder="ADM-1001" />
+                  <Input label="Roll Number" value={formData.roll_number} error={formErrors.roll_number} onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })} placeholder="e.g. 101" />
+                  <div className="sm:col-span-2">
+                    <Select label="Grade / Class" value={formData.class_id || formData.grade} onChange={(e) => setFormData({ ...formData, grade: e.target.value, class_id: e.target.value })} options={gradeOptions} error={formErrors.grade} searchable={true} />
+                  </div>
+                </div>
+
+                {/* Guardian Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="Guardian Name" required value={formData.guardian_name} error={formErrors.guardian_name} onChange={(e) => { setFormData({ ...formData, guardian_name: e.target.value }); setFormErrors(p => ({ ...p, guardian_name: '' })); }} placeholder="e.g. Ramesh Sharma" />
+                  <Input label="Guardian Email" required type="email" value={formData.guardian_email} error={formErrors.guardian_email} onChange={(e) => { setFormData({ ...formData, guardian_email: e.target.value }); setFormErrors(p => ({ ...p, guardian_email: '' })); }} placeholder="e.g. ramesh@example.com" />
+                  <FormPhoneInput label="Guardian Phone" required defaultCountry="in" value={formData.guardian_phone} error={formErrors.guardian_phone} onChange={(phone) => { setFormData({ ...formData, guardian_phone: phone }); setFormErrors(p => ({ ...p, guardian_phone: '' })); }} />
+                  <FormPhoneInput label="Alternate Phone" defaultCountry="in" value={formData.alternate_phone} error={formErrors.alternate_phone} onChange={(phone) => { setFormData({ ...formData, alternate_phone: phone }); setFormErrors(p => ({ ...p, alternate_phone: '' })); }} />
+                  <Select label="Gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} options={genderOptions} searchable={false} />
+                  <Input label="NFC Card Identifier UID" icon={CreditCard} value={formData.nfc_card_uid} error={formErrors.nfc_card_uid} onChange={(e) => { setFormData({ ...formData, nfc_card_uid: e.target.value }); setFormErrors(p => ({ ...p, nfc_card_uid: '' })); }} placeholder="e.g. 8F3C910B" />
+                </div>
+
+                {/* Smart Bus Toggle */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="block text-xs font-bold text-slate-900 flex items-center gap-1.5"><Bus size={14} className="text-amber-600" /> Smart Bus Transport Service</span>
+                      <span className="text-[10px] text-slate-500">Enable automatic bus boarding &amp; deboarding scanning.</span>
+                    </div>
+                    <Checkbox 
+                      checked={formData.is_bus_service_enabled} 
+                      onChange={(e) => setFormData({ ...formData, is_bus_service_enabled: e.target.checked })} 
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Form Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+              {/* Fixed Footer */}
+              <div className="flex items-center justify-end space-x-3 p-4 sm:px-8 bg-white border-t border-slate-200 shrink-0">
                 <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
                 <Button type="submit" variant="primary" loading={submitting} icon={ShieldCheck}>
                   {editingStudent ? 'Update Profile' : 'Save Student Admission'}

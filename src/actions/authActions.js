@@ -14,7 +14,8 @@ export async function loginAction(credentials) {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/school/login', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/school/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -66,7 +67,8 @@ export async function adminLoginAction(credentials) {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/admin/login', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),

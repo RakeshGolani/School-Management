@@ -11,7 +11,8 @@ export function AcademicYearProvider({ children }) {
   const fetchAcademicYears = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/school/academic-years', { cache: 'no-store' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/school/academic-years`, { cache: 'no-store' });
       const data = await res.json();
       
       if (data.success && Array.isArray(data.data)) {
@@ -68,7 +69,13 @@ export function AcademicYearProvider({ children }) {
 export function useAcademicYear() {
   const context = useContext(AcademicYearContext);
   if (!context) {
-    throw new Error('useAcademicYear must be used within an AcademicYearProvider');
+    return {
+      academicYears: [],
+      activeYear: null,
+      loading: false,
+      fetchAcademicYears: () => {},
+      changeActiveYear: () => {}
+    };
   }
   return context;
 }

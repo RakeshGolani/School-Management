@@ -46,8 +46,8 @@ export default function InvoiceDetailPage() {
       
       const schoolId = session.user.id;
 
-      // 2. Fetch school profile for billed to details
-      const profileResponse = await fetch(`http://localhost:5000/api/school/profile?schoolId=${schoolId}`, { cache: 'no-store' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const profileResponse = await fetch(`${apiUrl}/school/profile?schoolId=${schoolId}`, { cache: 'no-store' });
       const profileData = await profileResponse.json();
       let fetchedSchool = {};
       if (profileData.success && profileData.data) {

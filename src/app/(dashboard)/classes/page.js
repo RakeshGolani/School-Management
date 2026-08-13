@@ -336,13 +336,20 @@ export default function ClassesPage() {
   const totalPages = Math.ceil(totalClassesCount / pageSize) || 1;
   const paginatedClasses = classes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Extract IDs of teachers who are already assigned as Class Teacher in other classes
+  const assignedTeacherIds = classes
+    .filter(c => c.class_teacher_id && (!editingClass || c.id !== editingClass.id))
+    .map(c => c.class_teacher_id.toString());
+
+  const availableTeachers = teachers.filter(t => !assignedTeacherIds.includes(t.id.toString()));
+
   const teacherOptions = [
     { label: 'Unassigned (No Class Teacher)', value: '' },
-    ...teachers.map(t => ({ label: `${t.name} (${t.subject || 'Faculty'})`, value: t.id.toString() }))
+    ...availableTeachers.map(t => ({ label: `${t.name} (${t.subject || 'Faculty'})`, value: t.id.toString() }))
   ];
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 animate-fadeIn text-xs sm:text-sm">
       {/* Top Banner - Single Primary Light/Soft Card Theme */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/40 border border-primary-100 dark:border-primary-900/60 text-slate-900 dark:text-white p-6 rounded-2xl shadow-2xs relative overflow-hidden">
         <div className="relative z-10">
@@ -462,10 +469,11 @@ export default function ClassesPage() {
           onClick={() => setModalOpen(false)}
         >
           <div 
-            className="bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 w-full max-w-lg h-full overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl animate-slideInRight"
+            className="bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 w-full max-w-lg h-full flex flex-col shadow-2xl animate-slideInRight"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            {/* Fixed Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-6 sm:p-8 pb-4 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Sparkles size={18} className="text-primary-600" />
@@ -482,60 +490,64 @@ export default function ClassesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
-              <Input
-                label="Class / Grade Name"
-                placeholder="e.g. Grade 10 or Class 9"
-                value={formData.class_name}
-                error={formErrors.class_name}
-                onChange={(e) => {
-                  setFormData({ ...formData, class_name: e.target.value });
-                  setFormErrors((prev) => ({ ...prev, class_name: '' }));
-                }}
-              />
+            <form onSubmit={handleSubmit} noValidate className="flex flex-col flex-1 min-h-0">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4">
+                <Input
+                  label="Class / Grade Name"
+                  placeholder="e.g. Grade 10 or Class 9"
+                  value={formData.class_name}
+                  error={formErrors.class_name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, class_name: e.target.value });
+                    setFormErrors((prev) => ({ ...prev, class_name: '' }));
+                  }}
+                />
 
-              <Input
-                label="Section"
-                placeholder="e.g. A, B, C"
-                value={formData.section}
-                error={formErrors.section}
-                onChange={(e) => {
-                  setFormData({ ...formData, section: e.target.value });
-                  setFormErrors((prev) => ({ ...prev, section: '' }));
-                }}
-              />
+                <Input
+                  label="Section"
+                  placeholder="e.g. A, B, C"
+                  value={formData.section}
+                  error={formErrors.section}
+                  onChange={(e) => {
+                    setFormData({ ...formData, section: e.target.value });
+                    setFormErrors((prev) => ({ ...prev, section: '' }));
+                  }}
+                />
 
-              <Select
-                label="Assigned Class Teacher"
-                value={formData.class_teacher_id}
-                onChange={(e) => setFormData({ ...formData, class_teacher_id: e.target.value })}
-                options={teacherOptions}
-                searchable={true}
-              />
+                <Select
+                  label="Assigned Class Teacher"
+                  value={formData.class_teacher_id}
+                  onChange={(e) => setFormData({ ...formData, class_teacher_id: e.target.value })}
+                  options={teacherOptions}
+                  searchable={true}
+                />
 
-              <Input
-                label="Room Number"
-                placeholder="e.g. Room 204"
-                value={formData.room_number}
-                error={formErrors.room_number}
-                onChange={(e) => {
-                  setFormData({ ...formData, room_number: e.target.value });
-                  setFormErrors((prev) => ({ ...prev, room_number: '' }));
-                }}
-              />
+                <Input
+                  label="Room Number"
+                  placeholder="e.g. Room 204"
+                  value={formData.room_number}
+                  error={formErrors.room_number}
+                  onChange={(e) => {
+                    setFormData({ ...formData, room_number: e.target.value });
+                    setFormErrors((prev) => ({ ...prev, room_number: '' }));
+                  }}
+                />
 
-              <Input
-                label="Student Capacity"
-                type="number"
-                value={formData.capacity}
-                error={formErrors.capacity}
-                onChange={(e) => {
-                  setFormData({ ...formData, capacity: e.target.value });
-                  setFormErrors((prev) => ({ ...prev, capacity: '' }));
-                }}
-              />
+                <Input
+                  label="Student Capacity"
+                  type="number"
+                  value={formData.capacity}
+                  error={formErrors.capacity}
+                  onChange={(e) => {
+                    setFormData({ ...formData, capacity: e.target.value });
+                    setFormErrors((prev) => ({ ...prev, capacity: '' }));
+                  }}
+                />
+              </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              {/* Fixed Footer */}
+              <div className="flex items-center justify-end space-x-3 p-4 sm:px-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
                 <Button
                   type="button"
                   variant="secondary"

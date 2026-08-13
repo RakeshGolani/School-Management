@@ -2,7 +2,8 @@
 
 export async function updateStatusAction(module, id, status) {
   try {
-    const response = await fetch(`http://localhost:5000/api/common/status`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/common/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ module, id, status })
@@ -15,7 +16,8 @@ export async function updateStatusAction(module, id, status) {
 
 export async function deleteEntityAction(module, id) {
   try {
-    const response = await fetch(`http://localhost:5000/api/common/delete`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/common/delete`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ module, id })

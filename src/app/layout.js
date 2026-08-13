@@ -30,6 +30,7 @@ export default async function RootLayout({ children }) {
         '--theme-primary-900': color,
         '--theme-primary-50':  color + '1a',
         '--theme-primary-100': color + '26',
+        '--theme-primary-200': color + '40',
       }
     : {};
 
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }) {
                     r.style.setProperty('--theme-primary-900', color);
                     r.style.setProperty('--theme-primary-50', color + '1a');
                     r.style.setProperty('--theme-primary-100', color + '26');
+                    r.style.setProperty('--theme-primary-200', color + '40');
                   }
                 } catch(e) {}
               })();

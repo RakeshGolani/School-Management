@@ -20,6 +20,7 @@ import DataTable from '@/components/ui/DataTable';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import Skeleton from '@/components/ui/Skeleton';
 import Input from '@/components/ui/Input';
+import Checkbox from '@/components/ui/Checkbox';
 
 export default function AcademicYearsPage() {
   const { academicYears, activeYear, loading: contextLoading, fetchAcademicYears, changeActiveYear } = useAcademicYear();
@@ -80,9 +81,10 @@ export default function AcademicYearsPage() {
     setLoadingSubmit(true);
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const url = editingYear
-        ? `http://localhost:5000/api/school/academic-years/${editingYear.id}`
-        : 'http://localhost:5000/api/school/academic-years';
+        ? `${apiUrl}/school/academic-years/${editingYear.id}`
+        : `${apiUrl}/school/academic-years`;
 
       const method = editingYear ? 'PUT' : 'POST';
 
@@ -111,7 +113,8 @@ export default function AcademicYearsPage() {
 
   const handleSetActive = async (year) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/school/academic-years/${year.id}/active`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/school/academic-years/${year.id}/active`, {
         method: 'PATCH'
       });
       const data = await res.json();
@@ -154,7 +157,8 @@ export default function AcademicYearsPage() {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, loading: true }));
         try {
-          const res = await fetch(`http://localhost:5000/api/school/academic-years/${year.id}`, {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+          const res = await fetch(`${apiUrl}/school/academic-years/${year.id}`, {
             method: 'DELETE'
           });
           const data = await res.json();
@@ -295,7 +299,7 @@ export default function AcademicYearsPage() {
 
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn pb-12 text-xs sm:text-sm">
       {/* Toast Notification */}
       {notification && (
         <div className={`fixed top-24 right-8 z-50 px-4 py-3 rounded-2xl shadow-2xl border flex items-center space-x-3 text-xs font-bold animate-slideDown ${
@@ -517,18 +521,13 @@ export default function AcademicYearsPage() {
                 ></textarea>
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="is_active_check"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300"
-                />
-                <label htmlFor="is_active_check" className="font-semibold text-slate-800 cursor-pointer">
-                  Set as Active Academic Year for School
-                </label>
-              </div>
+              <Checkbox
+                id="is_active_check"
+                label="Set as Active Academic Year for School"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="pt-2"
+              />
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
                 <button

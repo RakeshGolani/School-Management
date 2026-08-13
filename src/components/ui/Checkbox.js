@@ -1,8 +1,8 @@
 'use client';
-import { Check } from 'lucide-react';
+import React from 'react';
 
 /**
- * Dynamic Reusable Checkbox Component
+ * Enterprise-Grade Professional Dynamic Checkbox Component
  */
 export default function Checkbox({
   label,
@@ -12,41 +12,95 @@ export default function Checkbox({
   id,
   name,
   disabled = false,
+  size = 'md', // 'sm', 'md', 'lg'
   className = ''
 }) {
-  const checkboxId = id || name || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+  const checkboxId = id || name || (typeof label === 'string' ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+
+  const sizeClasses = {
+    sm: 'w-4 h-4 rounded-[4px]',
+    md: 'w-[18px] h-[18px] rounded-[5px]',
+    lg: 'w-5 h-5 rounded-md',
+  }[size] || 'w-[18px] h-[18px] rounded-[5px]';
+
+  const iconSizes = {
+    sm: 10,
+    md: 12,
+    lg: 14,
+  }[size] || 12;
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (disabled || !onChange) return;
+    onChange({
+      target: {
+        checked: !checked,
+        name: name || id,
+        type: 'checkbox'
+      }
+    });
+  };
 
   return (
-    <div className={`flex items-start space-x-3 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
-      <div className="relative flex items-center mt-0.5">
+    <div 
+      className={`inline-flex items-start gap-2.5 select-none cursor-pointer ${
+        disabled ? 'opacity-50 cursor-not-allowed' : ''
+      } ${className}`}
+      onClick={handleClick}
+    >
+      <div className="relative flex items-center shrink-0 mt-0.5">
         <input
           type="checkbox"
           id={checkboxId}
           name={name}
           checked={checked}
-          onChange={onChange}
+          onChange={() => {}}
           disabled={disabled}
-          className="sr-only peer"
+          className="sr-only"
         />
         <div 
-          onClick={() => !disabled && onChange && onChange({ target: { checked: !checked, name } })}
-          className={`w-5 h-5 rounded-md border transition-all duration-200 flex items-center justify-center cursor-pointer ${
+          className={`${sizeClasses} border transition-colors duration-150 flex items-center justify-center relative ${
             checked 
-              ? 'bg-primary-600 border-primary-500 text-white shadow-md shadow-primary-500/20' 
-              : 'bg-slate-900/80 border-white/15 hover:border-slate-400'
+              ? 'bg-primary-600 border-primary-600 text-white shadow-2xs' 
+              : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
           }`}
+          style={checked ? {
+            backgroundColor: 'var(--theme-primary-500)',
+            borderColor: 'var(--theme-primary-500)'
+          } : {}}
         >
-          {checked && <Check size={14} strokeWidth={3} />}
+          {checked && (
+            <svg 
+              className="text-white" 
+              style={{ width: iconSizes, height: iconSizes }}
+              viewBox="0 0 14 14" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M2.5 7.5L5.5 10.5L11.5 3.5" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+              />
+            </svg>
+          )}
         </div>
       </div>
 
       {(label || description) && (
-        <div 
-          onClick={() => !disabled && onChange && onChange({ target: { checked: !checked, name } })}
-          className="select-none cursor-pointer"
-        >
-          {label && <p className="text-sm font-medium text-slate-200">{label}</p>}
-          {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
+        <div className="flex flex-col">
+          {label && (
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight">
+              {label}
+            </span>
+          )}
+          {description && (
+            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-normal">
+              {description}
+            </span>
+          )}
         </div>
       )}
     </div>

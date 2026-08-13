@@ -309,23 +309,35 @@ export default function TeachersPage() {
   const teacherColumns = [
     {
       header: 'Teacher Profile',
-      render: (teacher) => (
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shrink-0 overflow-hidden">
-            <div className="w-full h-full rounded-[10px] bg-slate-100 flex items-center justify-center font-bold text-slate-800 overflow-hidden">
-              {teacher.photo ? (
-                <img src={teacher.photo} alt={teacher.name} className="w-full h-full object-cover" />
-              ) : (
-                <span>{teacher.name ? teacher.name.slice(0, 2).toUpperCase() : 'TC'}</span>
+      render: (teacher) => {
+        const teacherPhoto = teacher.image_url || teacher.photo;
+        const hasPhoto = teacherPhoto && !teacherPhoto.includes('ui-avatars.com');
+        return (
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-9 h-9 rounded-xl border-2 border-primary-500/30 shadow-xs flex items-center justify-center shrink-0 overflow-hidden relative"
+              style={{
+                backgroundColor: 'var(--theme-primary-50)',
+                color: 'var(--theme-primary-500)'
+              }}
+            >
+              <span className="text-sm font-black">{teacher.name ? teacher.name[0].toUpperCase() : 'T'}</span>
+              {hasPhoto && (
+                <img 
+                  src={teacherPhoto} 
+                  alt={teacher.name} 
+                  className="absolute inset-0 w-full h-full object-cover rounded-xl z-10" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
             </div>
+            <div>
+              <p className="font-bold text-slate-900">{teacher.name}</p>
+              <p className="text-[10px] text-slate-500">{teacher.email}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-slate-900">{teacher.name}</p>
-            <p className="text-[10px] text-slate-500">{teacher.email}</p>
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
       header: 'Employee ID',
@@ -348,20 +360,14 @@ export default function TeachersPage() {
       )
     },
     {
-      header: 'Assigned Classes',
+      header: 'Assigned Class',
       render: (teacher) => {
-        const classes = (Array.isArray(teacher.assignedClasses) && teacher.assignedClasses.length > 0)
-          ? teacher.assignedClasses.map(c => typeof c === 'string' ? c : (c.class_name || c))
-          : (teacher.classAssigned ? teacher.classAssigned.split(',').map(c => c.trim()).filter(Boolean) : []);
+        const classVal = teacher.classAssigned || (Array.isArray(teacher.assignedClasses) && teacher.assignedClasses.length > 0 ? (typeof teacher.assignedClasses[0] === 'string' ? teacher.assignedClasses[0] : teacher.assignedClasses[0].class_name) : null);
 
-        return classes.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-            {classes.map((cls, idx) => (
-              <span key={idx} className="bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200/80 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs">
-                {cls}
-              </span>
-            ))}
-          </div>
+        return classVal ? (
+          <span className="bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200/80 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-md shadow-2xs inline-block">
+            {classVal}
+          </span>
         ) : (
           <span className="inline-block text-slate-400 text-[11px] italic bg-slate-50 border border-dashed border-slate-200 px-2 py-0.5 rounded-md">
             Unassigned
@@ -577,12 +583,12 @@ export default function TeachersPage() {
           onClick={() => setModalOpen(false)}
         >
           <div 
-            className="bg-white border-l border-slate-200 w-full max-w-2xl h-full overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl animate-slideInRight"
+            className="bg-white border-l border-slate-200 w-full max-w-2xl h-full flex flex-col shadow-2xl animate-slideInRight"
             onClick={(e) => e.stopPropagation()}
           >
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6 sm:p-8 pb-4 shrink-0 bg-white z-10">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Sparkles size={18} className="text-primary-600" />
@@ -600,185 +606,160 @@ export default function TeachersPage() {
             </div>
 
             {/* Modal Form */}
-            <form noValidate onSubmit={handleSubmit} className="space-y-6">
+            <form noValidate onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
               
-              {/* Photo Upload Picker */}
-              <div className="flex items-center space-x-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="relative group shrink-0">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shadow-md overflow-hidden">
-                    <div className="w-full h-full rounded-[14px] bg-slate-100 flex items-center justify-center text-slate-800 font-bold overflow-hidden">
-                      {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <Camera size={20} className="text-slate-400" />
-                      )}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+                {/* Photo Upload Picker */}
+                <div className="flex items-center space-x-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="relative group shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shadow-md overflow-hidden">
+                      <div className="w-full h-full rounded-[14px] bg-slate-100 flex items-center justify-center text-slate-800 font-bold overflow-hidden">
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <Camera size={20} className="text-slate-400" />
+                        )}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white cursor-pointer"
+                    >
+                      <Upload size={16} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white cursor-pointer"
-                  >
-                    <Upload size={16} />
-                  </button>
+
+                  <div className="space-y-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      icon={Upload}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Select Photo File
+                    </Button>
+                    <p className="text-[10px] text-slate-500">Saved to <code className="text-primary-600 font-medium">backend/uploads/teachers/</code></p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
+                {/* Personal Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Full Name"
+                    required
+                    value={formData.name}
+                    error={formErrors.name}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setFormErrors((prev) => ({ ...prev, name: '' }));
+                    }}
+                    placeholder="e.g. Vikram Mehta"
                   />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    icon={Upload}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Select Photo File
-                  </Button>
-                  <p className="text-[10px] text-slate-500">Saved to <code className="text-primary-600 font-medium">backend/uploads/teachers/</code></p>
+
+                  <Input
+                    label="Email Address"
+                    required
+                    type="email"
+                    value={formData.email}
+                    error={formErrors.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setFormErrors((prev) => ({ ...prev, email: '' }));
+                    }}
+                    placeholder="e.g. vikram@school.com"
+                  />
+
+                  <FormPhoneInput
+                    label="Phone Contact"
+                    required
+                    defaultCountry="in"
+                    value={formData.phone}
+                    error={formErrors.phone}
+                    onChange={(phone) => {
+                      setFormData({ ...formData, phone: phone });
+                      setFormErrors((prev) => ({ ...prev, phone: '' }));
+                    }}
+                  />
+
+                  <Select
+                    label="Gender"
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    options={genderOptions}
+                    searchable={false}
+                  />
+                </div>
+
+                {/* Academic Details & Identifiers */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Select
+                    label="Primary Teaching Subject"
+                    value={formData.subject}
+                    onChange={(e) => {
+                      setFormData({ ...formData, subject: e.target.value });
+                      setFormErrors((prev) => ({ ...prev, subject: '' }));
+                    }}
+                    options={subjectOptions}
+                    error={formErrors.subject}
+                    searchable={true}
+                  />
+
+                  <Input
+                    label="Qualifications"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                    placeholder="e.g. M.Sc, B.Ed"
+                  />
+
+                  <Select
+                    label="Assigned Class (As Class Teacher)"
+                    value={formData.class_assigned}
+                    onChange={(e) => {
+                      setFormData({ ...formData, class_assigned: e.target.value });
+                      setFormErrors((prev) => ({ ...prev, class_assigned: '' }));
+                    }}
+                    options={[
+                      { label: 'Select Class', value: '' },
+                      ...dynamicClasses
+                    ]}
+                    error={formErrors.class_assigned}
+                    searchable={true}
+                  />
+
+                  <Input
+                    label="Employee ID Code"
+                    value={formData.employee_id}
+                    onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+                    placeholder="EMP-1001"
+                  />
+                </div>
+
+                {/* NFC Card UID */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <Input
+                    label="NFC Staff Pass UID (Gate Check-In & Attendance)"
+                    icon={CreditCard}
+                    value={formData.nfc_card_uid}
+                    error={formErrors.nfc_card_uid}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nfc_card_uid: e.target.value });
+                      setFormErrors((prev) => ({ ...prev, nfc_card_uid: '' }));
+                    }}
+                    placeholder="e.g. TEACHER_CARD_001"
+                  />
                 </div>
               </div>
 
-              {/* Personal Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Full Name"
-                  required
-                  value={formData.name}
-                  error={formErrors.name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value });
-                    setFormErrors((prev) => ({ ...prev, name: '' }));
-                  }}
-                  placeholder="e.g. Vikram Mehta"
-                />
-
-                <Input
-                  label="Email Address"
-                  required
-                  type="email"
-                  value={formData.email}
-                  error={formErrors.email}
-                  onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    setFormErrors((prev) => ({ ...prev, email: '' }));
-                  }}
-                  placeholder="e.g. vikram@school.com"
-                />
-
-                <FormPhoneInput
-                  label="Phone Contact"
-                  required
-                  defaultCountry="in"
-                  value={formData.phone}
-                  error={formErrors.phone}
-                  onChange={(phone) => {
-                    setFormData({ ...formData, phone: phone });
-                    setFormErrors((prev) => ({ ...prev, phone: '' }));
-                  }}
-                />
-
-                <Select
-                  label="Gender"
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  options={genderOptions}
-                  searchable={false}
-                />
-              </div>
-
-              {/* Academic Details & Identifiers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                  label="Primary Teaching Subject"
-                  value={formData.subject}
-                  onChange={(e) => {
-                    setFormData({ ...formData, subject: e.target.value });
-                    setFormErrors((prev) => ({ ...prev, subject: '' }));
-                  }}
-                  options={subjectOptions}
-                  error={formErrors.subject}
-                  searchable={true}
-                />
-
-                <Input
-                  label="Qualifications"
-                  value={formData.qualification}
-                  onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                  placeholder="e.g. M.Sc, B.Ed"
-                />
-
-                <div className="sm:col-span-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Assigned Classes (Select Multiple)
-                    </label>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                    {dynamicClasses.map((cls) => {
-                      const selectedList = formData.class_assigned ? formData.class_assigned.split(',').map(c => c.trim()) : [];
-                      const isChecked = selectedList.includes(cls.value);
-
-                      return (
-                        <label 
-                          key={cls.value} 
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                            isChecked 
-                              ? 'bg-primary-600 text-white border-primary-600 shadow-2xs' 
-                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-primary-300'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              let current = formData.class_assigned ? formData.class_assigned.split(',').map(c => c.trim()).filter(Boolean) : [];
-                              if (e.target.checked) {
-                                if (!current.includes(cls.value)) current.push(cls.value);
-                              } else {
-                                current = current.filter(c => c !== cls.value);
-                              }
-                              setFormData({ ...formData, class_assigned: current.join(', ') });
-                            }}
-                          />
-                          <span>{cls.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <Input
-                  label="Employee ID Code"
-                  value={formData.employee_id}
-                  onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                  placeholder="EMP-1001"
-                />
-              </div>
-
-              {/* NFC Card UID */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <Input
-                  label="NFC Staff Pass UID (Gate Check-In & Attendance)"
-                  icon={CreditCard}
-                  value={formData.nfc_card_uid}
-                  error={formErrors.nfc_card_uid}
-                  onChange={(e) => {
-                    setFormData({ ...formData, nfc_card_uid: e.target.value });
-                    setFormErrors((prev) => ({ ...prev, nfc_card_uid: '' }));
-                  }}
-                  placeholder="e.g. TEACHER_CARD_001"
-                />
-              </div>
-
-              {/* Form Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+              {/* Form Sticky Action Footer */}
+              <div className="p-4 sm:px-8 border-t border-slate-200 bg-slate-50/80 backdrop-blur-md flex items-center justify-end space-x-3 shrink-0">
                 <Button
                   type="button"
                   variant="secondary"

@@ -30,7 +30,9 @@ export function applyDynamicTheme(primaryColor) {
 // ─── Color Utilities ──────────────────────────────────────────────────────────
 
 function hexToRgb(hex) {
-  const clean = hex.replace('#', '');
+  const defaultHex = '#4f46e5';
+  const cleanHex = (hex && typeof hex === 'string' && hex.startsWith('#')) ? hex : defaultHex;
+  const clean = cleanHex.replace('#', '');
   const full = clean.length === 3
     ? clean.split('').map(c => c + c).join('')
     : clean;
@@ -38,7 +40,7 @@ function hexToRgb(hex) {
   return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
-function hexToRgba(hex, alpha) {
+export function hexToRgba(hex, alpha) {
   const { r, g, b } = hexToRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

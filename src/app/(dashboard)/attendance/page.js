@@ -150,7 +150,7 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 animate-fadeIn text-xs sm:text-sm">
       {/* Header Banner - Single Primary Light/Soft Card Theme */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/40 border border-primary-100 dark:border-primary-900/60 text-slate-900 dark:text-white p-6 rounded-2xl shadow-2xs relative overflow-hidden">
         <div className="relative z-10">

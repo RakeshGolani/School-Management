@@ -33,7 +33,8 @@ export async function getStudentsAction(params = {}) {
     if (params.status) query.append('status', params.status);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const response = await fetch(`http://localhost:5000/api/students?${query.toString()}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/students?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -84,7 +85,8 @@ export async function createStudentAction(studentData) {
       body = JSON.stringify({ ...studentData, school_id: schoolId });
     }
 
-    const response = await fetch('http://localhost:5000/api/students', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/students`, {
       method: 'POST',
       headers,
       body,
@@ -136,7 +138,8 @@ export async function updateStudentAction(id, studentData) {
       body = JSON.stringify({ ...studentData, school_id: schoolId });
     }
 
-    const response = await fetch(`http://localhost:5000/api/students/${id}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/students/${id}`, {
       method: 'PUT',
       headers,
       body,
@@ -176,7 +179,8 @@ export async function deleteStudentAction(id) {
     const schoolId = await getSchoolIdFromSession();
     const query = schoolId ? `?schoolId=${schoolId}` : '';
 
-    const response = await fetch(`http://localhost:5000/api/students/${id}${query}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/students/${id}${query}`, {
       method: 'DELETE',
       cache: 'no-store'
     });
@@ -214,7 +218,8 @@ export async function getStudentSessionsAction(academic_year_id) {
     if (schoolId) query.append('school_id', schoolId);
     if (academic_year_id) query.append('academic_year_id', academic_year_id);
 
-    const response = await fetch(`http://localhost:5000/api/school/student-sessions?${query.toString()}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/school/student-sessions?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -236,7 +241,8 @@ export async function promoteStudentsAction(payload) {
   try {
     const schoolId = await getSchoolIdFromSession();
 
-    const response = await fetch('http://localhost:5000/api/school/student-sessions/promote', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/school/student-sessions/promote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...payload, school_id: schoolId }),
