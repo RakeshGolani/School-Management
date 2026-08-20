@@ -236,12 +236,22 @@ export default function LiveTrackingMap({ initialSchoolLocation, initialRoutes }
     };
     fetchLocationsAndSchool();
 
-    // 2. Setup Socket.io connection
+    // 2. Setup Socket.io connection with polling fallback & auto-reconnect
     const socketUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = io(socketUrl, { 
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+      autoConnect: true
+    });
 
     socket.on('connect', () => {
-      console.log('Connected to Live Tracking Socket');
+      console.log('[Socket.IO] Connected to Live Tracking Socket');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[Socket.IO] Connection error (falling back to polling):', err.message);
     });
 
     socket.on('busLocationUpdate', (data) => {

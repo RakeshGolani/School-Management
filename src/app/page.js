@@ -15,12 +15,12 @@ import {
   DollarSign, 
   Bell, 
   Calendar, 
-  AlertCircle,
-  FileText,
-  Phone,
-  Mail,
-  Menu,
-  X
+  AlertCircle, 
+  FileText, 
+  Phone, 
+  Mail, 
+  Menu, 
+  X 
 } from 'lucide-react';
 
 export default function LandingPage() {

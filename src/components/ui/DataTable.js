@@ -87,12 +87,9 @@ export default function DataTable({
               <Select
                 value={pagination.pageSize}
                 onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
-                options={[
-                  { label: '10 per page', value: 10 },
-                  { label: '25 per page', value: 25 },
-                  { label: '50 per page', value: 50 },
-                  { label: '100 per page', value: 100 }
-                ]}
+                options={(pagination.pageSizeOptions || [5, 10, 25, 50]).map((size) => 
+                  typeof size === 'object' ? size : { label: `${size} per page`, value: size }
+                )}
                 searchable={false}
                 clearable={false}
               />

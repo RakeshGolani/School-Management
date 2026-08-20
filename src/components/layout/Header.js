@@ -50,18 +50,27 @@ export default function Header({
     const fetchSession = async () => {
       try {
         const sessionData = await getSessionAction();
-        if (sessionData && sessionData.user) {
-          setUserSession(sessionData.user);
-          applyDynamicTheme(sessionData.user.primaryColor);
+        if (!sessionData || !sessionData.user) {
+          await logoutAction();
+          router.push('/login');
+          return;
+        }
 
-          if (sessionData.user.id) {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-            const res = await fetch(`${apiUrl}/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
-            const profileRes = await res.json();
-            if (profileRes.success && profileRes.data) {
-              setUserSession(profileRes.data);
-              applyDynamicTheme(profileRes.data.primaryColor || profileRes.data.primary_color);
-            }
+        setUserSession(sessionData.user);
+        applyDynamicTheme(sessionData.user.primaryColor);
+
+        if (sessionData.user.id) {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+          const res = await fetch(`${apiUrl}/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
+          if (res.status === 401 || res.status === 403) {
+            await logoutAction();
+            router.push('/login');
+            return;
+          }
+          const profileRes = await res.json();
+          if (profileRes.success && profileRes.data) {
+            setUserSession(profileRes.data);
+            applyDynamicTheme(profileRes.data.primaryColor || profileRes.data.primary_color);
           }
         }
       } catch (err) {

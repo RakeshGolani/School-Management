@@ -1,12 +1,19 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getEncryptedCookie, deleteEncryptedCookie } from '@/lib/cookieHelper';
 import SchoolClientLayout from '@/components/layout/SchoolClientLayout';
 
 /**
- * Server Component: Reads the sidebar collapsed state from cookie on the server
- * so that the correct initial state is passed to the client layout — 
- * preventing any layout flash (FOUC) on page refresh.
+ * Server Component: Validates school_session on the server.
+ * If session is expired, invalid, or missing, immediately logs out and redirects to /login.
  */
 export default async function DashboardLayout({ children }) {
+  const session = await getEncryptedCookie('school_session');
+
+  if (!session || !session.user || !session.user.id) {
+    redirect('/login');
+  }
+
   const cookieStore = await cookies();
   const initialCollapsed = cookieStore.get('school_sidebar_collapsed')?.value === 'true';
 
