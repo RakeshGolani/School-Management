@@ -104,23 +104,74 @@ export default function BillingPage() {
       return;
     }
 
-    const { transaction } = checkoutRes.data;
+    const { transaction, checkoutDetails } = checkoutRes.data;
 
-    const paymentRes = await triggerMockPaymentAction({
-      gateway_transaction_id: transaction.gateway_transaction_id,
-      max_students_limit: studentsLimit,
-      max_buses_limit: busesLimit,
-      plan_type: planType
-    });
-
-    if (paymentRes.success) {
-      setSuccessMsg('Payment Successful! Your subscription plan has been upgraded instantly.');
-      await fetchBillingData();
-      setTimeout(() => setSuccessMsg(''), 5000);
-    } else {
-      setErrorMsg(paymentRes.message || 'Payment capture failed.');
+    // Load Razorpay Script if not loaded
+    const resScript = await loadRazorpayScript();
+    if (!resScript) {
+      setErrorMsg('Razorpay SDK failed to load. Are you online?');
+      setProcessing(false);
+      return;
     }
-    setProcessing(false);
+
+    const options = {
+      key: checkoutDetails.razorpay_key || 'rzp_test_placeholder',
+      amount: transaction.amount * 100,
+      currency: transaction.currency,
+      name: 'School Management SaaS',
+      description: `Upgrade to ${checkoutDetails.plan_type} plan`,
+      order_id: transaction.gateway_transaction_id,
+      handler: async function (response) {
+        // Send success to backend webhook simulator
+        const paymentRes = await triggerMockPaymentAction({
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+          max_students_limit: studentsLimit,
+          max_buses_limit: busesLimit,
+          plan_type: planType
+        });
+
+        if (paymentRes.success) {
+          setSuccessMsg('Payment Successful! Your subscription plan has been upgraded instantly.');
+          await fetchBillingData();
+          setTimeout(() => setSuccessMsg(''), 5000);
+        } else {
+          setErrorMsg(paymentRes.message || 'Payment capture failed.');
+        }
+        setProcessing(false);
+      },
+      prefill: {
+        name: checkoutDetails.school_name || 'School Admin',
+        email: checkoutDetails.school_email || '',
+        contact: checkoutDetails.school_phone || ''
+      },
+      theme: {
+        color: '#3399cc'
+      },
+      modal: {
+        ondismiss: function() {
+          setProcessing(false);
+        }
+      }
+    };
+
+    const rzp1 = new window.Razorpay(options);
+    rzp1.on('payment.failed', function (response) {
+      setErrorMsg('Payment Failed: ' + response.error.description);
+      setProcessing(false);
+    });
+    rzp1.open();
+  };
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   const getStatusColor = (status) => {
@@ -392,12 +443,20 @@ export default function BillingPage() {
                 max="1000"
                 step="50"
                 value={studentsLimit}
-                onChange={(e) => setStudentsLimit(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val >= usage.students.current) {
+                    setStudentsLimit(val);
+                  } else {
+                    setErrorMsg(`Cannot downgrade below current active students (${usage.students.current}).`);
+                    setTimeout(() => setErrorMsg(''), 3000);
+                  }
+                }}
                 className="w-full h-1 bg-slate-100 rounded-lg cursor-pointer transition"
                 style={{ accentColor: 'var(--theme-primary-500, #94a3b8)' }}
               />
               <div className="flex justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                <span>Min: 50</span>
+                <span>Min: {Math.max(50, usage.students.current)}</span>
                 <span>Max: 1000</span>
               </div>
             </div>
@@ -414,12 +473,20 @@ export default function BillingPage() {
                 max="50"
                 step="1"
                 value={busesLimit}
-                onChange={(e) => setBusesLimit(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val >= usage.buses.current) {
+                    setBusesLimit(val);
+                  } else {
+                    setErrorMsg(`Cannot downgrade below current active buses (${usage.buses.current}).`);
+                    setTimeout(() => setErrorMsg(''), 3000);
+                  }
+                }}
                 className="w-full h-1 bg-slate-100 rounded-lg cursor-pointer transition"
                 style={{ accentColor: 'var(--theme-primary-500, #94a3b8)' }}
               />
               <div className="flex justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                <span>Min: 2</span>
+                <span>Min: {Math.max(2, usage.buses.current)}</span>
                 <span>Max: 50</span>
               </div>
             </div>
