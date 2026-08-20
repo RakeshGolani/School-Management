@@ -55,11 +55,12 @@ export default function Header({
           applyDynamicTheme(sessionData.user.primaryColor);
 
           if (sessionData.user.id) {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-            const res = await fetch(`${apiUrl}/school/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+            const res = await fetch(`${apiUrl}/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
             const profileRes = await res.json();
             if (profileRes.success && profileRes.data) {
-              applyDynamicTheme(profileRes.data.primaryColor);
+              setUserSession(profileRes.data);
+              applyDynamicTheme(profileRes.data.primaryColor || profileRes.data.primary_color);
             }
           }
         }

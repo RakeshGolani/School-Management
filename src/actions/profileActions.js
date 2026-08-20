@@ -2,6 +2,8 @@
 
 import { setEncryptedCookie, getEncryptedCookie } from '@/lib/cookieHelper';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 /**
  * Server Action: Update School Profile & Logo
  * @param {object} profileData - { school_name, email, phone, address, logo, schoolId }
@@ -19,8 +21,7 @@ export async function updateProfileAction(profileData) {
       body = JSON.stringify(profileData);
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/profile/update`, {
+    const response = await fetch(`${API_URL}/profile/update`, {
       method: 'POST',
       headers,
       body,
@@ -46,6 +47,8 @@ export async function updateProfileAction(profileData) {
       email: data.data.email,
       phone: data.data.phone,
       address: data.data.address,
+      latitude: data.data.latitude,
+      longitude: data.data.longitude,
       logo: data.data.logo_url || data.data.logo
     };
 
@@ -95,8 +98,7 @@ export async function changePasswordAction(passwordData) {
     const session = await getEncryptedCookie('school_session');
     const schoolId = session?.user?.id || 1;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/change-password`, {
+    const response = await fetch(`${API_URL}/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...passwordData, schoolId }),

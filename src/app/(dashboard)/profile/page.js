@@ -19,7 +19,8 @@ import {
   ShieldAlert,
   Globe,
   Copy,
-  Check
+  Check,
+  Compass
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -49,6 +50,8 @@ export default function SchoolProfilePage() {
     code: '',
     phone: '',
     address: '',
+    latitude: '',
+    longitude: '',
     logo: ''
   });
 
@@ -63,9 +66,8 @@ export default function SchoolProfilePage() {
     new_password: '',
     confirm_password: ''
   });
-
-  const [pwdErrors, setPwdErrors] = useState({});
-  const [loadingPwd, setLoadingPwd] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [loadingPassword, setLoadingPassword] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -76,8 +78,8 @@ export default function SchoolProfilePage() {
 
           if (session.user.id) {
             try {
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-              const res = await fetch(`${apiUrl}/school/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+              const res = await fetch(`${apiUrl}/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
               const profileRes = await res.json();
               if (profileRes.success && profileRes.data) {
                 u = profileRes.data;
@@ -94,6 +96,8 @@ export default function SchoolProfilePage() {
             code: u.code || 'SCH-1001',
             phone: u.phone || '',
             address: u.address || '',
+            latitude: u.latitude !== undefined && u.latitude !== null ? String(u.latitude) : '',
+            longitude: u.longitude !== undefined && u.longitude !== null ? String(u.longitude) : '',
             logo: currentLogo
           });
 
@@ -606,6 +610,28 @@ export default function SchoolProfilePage() {
                   placeholder="Enter complete physical address details..."
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-1">
+              <Input
+                label="Campus GPS Latitude"
+                type="number"
+                step="any"
+                icon={Compass}
+                value={formData.latitude}
+                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                placeholder="e.g. 19.1136"
+              />
+
+              <Input
+                label="Campus GPS Longitude"
+                type="number"
+                step="any"
+                icon={Compass}
+                value={formData.longitude}
+                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                placeholder="e.g. 72.8697"
+              />
             </div>
 
             <div className="flex justify-end pt-3 border-t border-slate-100">

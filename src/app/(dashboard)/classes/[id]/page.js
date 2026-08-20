@@ -204,8 +204,8 @@ export default function ClassDetailsPage({ params }) {
   useEffect(() => {
     // Fetch School Profile for Logo & Name in batch print preview
     const targetSchoolId = 1;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    fetch(`${apiUrl}/school/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+    fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
       .then(sRes => sRes.json())
       .then(sData => {
         if (sData?.success && sData.data) setSchoolInfo(sData.data);

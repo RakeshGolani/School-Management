@@ -25,8 +25,9 @@ import { busSchema, routeSchema, stopSchema } from '@/validators/transportSchema
 import dynamic from 'next/dynamic';
 import { MapPin as MapPinIcon } from 'lucide-react'; // renamed for tab icon 
 
-// Leaflet doesn't support SSR well, so we dynamically import the map component
+// Leaflet doesn't support SSR well, so we dynamically import the map components
 const LiveTrackingMap = dynamic(() => import('./LiveTrackingMap'), { ssr: false });
+const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false });
 
 export default function TransportManagementPage() {
   const [activeTab, setActiveTab] = useState('buses');
@@ -51,7 +52,7 @@ export default function TransportManagementPage() {
   // Form States
   const [busForm, setBusForm] = useState({ bus_number: '', driver_name: '', driver_phone: '', route_id: '', device_id: '' });
   const [routeForm, setRouteForm] = useState({ route_name: '', route_code: '' });
-  const [stopForm, setStopForm] = useState({ route_id: '', stop_name: '', sequence: 1, pickup_time: '', drop_off_time: '' });
+  const [stopForm, setStopForm] = useState({ route_id: '', stop_name: '', sequence: 1, pickup_time: '', drop_off_time: '', latitude: '', longitude: '' });
   const [studentForm, setStudentForm] = useState({ bus_route_id: '', bus_stop_id: '' });
   const [formErrors, setFormErrors] = useState({});
 
@@ -112,7 +113,15 @@ export default function TransportManagementPage() {
     } else if (type === 'route') {
       setRouteForm({ route_name: item.route_name, route_code: item.route_code });
     } else if (type === 'stop') {
-      setStopForm({ route_id: item.route_id, stop_name: item.stop_name, sequence: item.sequence, pickup_time: item.pickup_time || '', drop_off_time: item.drop_off_time || '' });
+      setStopForm({ 
+        route_id: item.route_id, 
+        stop_name: item.stop_name, 
+        sequence: item.sequence, 
+        pickup_time: item.pickup_time || '', 
+        drop_off_time: item.drop_off_time || '',
+        latitude: item.latitude !== undefined && item.latitude !== null ? String(item.latitude) : '',
+        longitude: item.longitude !== undefined && item.longitude !== null ? String(item.longitude) : ''
+      });
     } else if (type === 'student_transport') {
       setStudentForm({ bus_route_id: item.bus_route_id || '', bus_stop_id: item.bus_stop_id || '' });
     }
@@ -125,7 +134,7 @@ export default function TransportManagementPage() {
     setFormErrors({});
     if (type === 'bus') setBusForm({ bus_number: '', driver_name: '', driver_phone: '', route_id: '', device_id: '' });
     if (type === 'route') setRouteForm({ route_name: '', route_code: '' });
-    if (type === 'stop') setStopForm({ route_id: routes.length ? routes[0].id : '', stop_name: '', sequence: 1, pickup_time: '', drop_off_time: '' });
+    if (type === 'stop') setStopForm({ route_id: routes.length ? routes[0].id : '', stop_name: '', sequence: (stops.length || 0) + 1, pickup_time: '', drop_off_time: '', latitude: '', longitude: '' });
     setModalOpen(true);
   };
 
@@ -273,6 +282,17 @@ export default function TransportManagementPage() {
       }
     },
     { header: 'Sequence', accessor: 'sequence', render: row => <span className="text-slate-500 text-xs">Stop #{row.sequence}</span> },
+    { header: 'GPS Coordinates', accessor: 'latitude', render: row => (
+        row.latitude && row.longitude ? (
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg text-slate-700 font-bold">
+            <MapPin size={11} className="text-primary-600 shrink-0" />
+            {parseFloat(row.latitude).toFixed(4)}, {parseFloat(row.longitude).toFixed(4)}
+          </span>
+        ) : (
+          <span className="text-slate-400 text-xs italic">Not Set</span>
+        )
+      )
+    },
     { header: 'Timings', accessor: 'pickup_time', render: row => (
         <div className="text-xs text-slate-500">
           <div>Pick: <span className="text-slate-700">{row.pickup_time || '--:--'}</span></div>
@@ -498,6 +518,21 @@ export default function TransportManagementPage() {
                     <Input label="Pickup Time" type="time" value={stopForm.pickup_time} error={formErrors.pickup_time} onChange={e => { setStopForm({...stopForm, pickup_time: e.target.value}); setFormErrors({...formErrors, pickup_time: ''}); }} />
                     <Input label="Drop-off Time" type="time" value={stopForm.drop_off_time} error={formErrors.drop_off_time} onChange={e => { setStopForm({...stopForm, drop_off_time: e.target.value}); setFormErrors({...formErrors, drop_off_time: ''}); }} />
                   </div>
+
+                  {/* Interactive Address Search & Pin-Drop Map Picker */}
+                  <LocationPicker 
+                    latitude={stopForm.latitude}
+                    longitude={stopForm.longitude}
+                    onLocationChange={({ latitude, longitude, displayName }) => {
+                      setStopForm(prev => ({
+                        ...prev,
+                        latitude: String(latitude),
+                        longitude: String(longitude),
+                        stop_name: prev.stop_name || (displayName ? displayName.split(',')[0] : '')
+                      }));
+                      setFormErrors(prev => ({ ...prev, latitude: '', longitude: '' }));
+                    }}
+                  />
                 </div>
                 {/* Footer */}
                 <div className="p-4 sm:px-8 border-t border-slate-200 bg-slate-50/80 backdrop-blur-md flex items-center justify-end space-x-3 shrink-0">

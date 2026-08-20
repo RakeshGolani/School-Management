@@ -1,9 +1,10 @@
 'use server';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 export async function updateStatusAction(module, id, status) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/common/status`, {
+    const response = await fetch(`${API_URL}/common/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ module, id, status })
@@ -16,8 +17,7 @@ export async function updateStatusAction(module, id, status) {
 
 export async function deleteEntityAction(module, id) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/common/delete`, {
+    const response = await fetch(`${API_URL}/common/delete`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ module, id })

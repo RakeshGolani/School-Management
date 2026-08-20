@@ -150,3 +150,25 @@
     var(--theme-primary-600, #475569) 100%
   );
 }
+
+/* ========================================= */
+/*   LEAFLET CUSTOM PIN & BUS MARKERS        */
+/* ========================================= */
+.leaflet-div-icon.custom-school-pin-drop,
+.leaflet-div-icon.custom-bus-div-icon,
+.leaflet-div-icon.custom-stop-div-icon,
+.leaflet-div-icon.custom-picker-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Ensure Leaflet popup wrapper does not clip avatar hover popovers */
+.leaflet-popup-content-wrapper {
+  overflow: visible !important;
+  border-radius: 1.25rem !important;
+}
+
+.leaflet-popup-content {
+  overflow: visible !important;
+  margin: 0 !important;
+}

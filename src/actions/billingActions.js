@@ -2,6 +2,8 @@
 
 import { getEncryptedCookie } from '@/lib/cookieHelper';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 async function getSchoolIdFromSession() {
   try {
     const session = await getEncryptedCookie('school_session');
@@ -19,7 +21,7 @@ export async function getSubscriptionDetailsAction() {
       return { success: false, message: 'Active school session not found' };
     }
 
-    const res = await fetch(`http://127.0.0.1:5000/api/school/subscription?schoolId=${schoolId}`, {
+    const res = await fetch(`${API_URL}/subscription?schoolId=${schoolId}`, {
       method: 'GET',
       headers: {
         'x-school-id': String(schoolId)
@@ -41,7 +43,7 @@ export async function checkoutSubscriptionAction(checkoutData) {
       return { success: false, message: 'Active school session not found' };
     }
 
-    const res = await fetch(`http://127.0.0.1:5000/api/school/subscription/checkout`, {
+    const res = await fetch(`${API_URL}/subscription/checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +61,7 @@ export async function checkoutSubscriptionAction(checkoutData) {
 
 export async function triggerMockPaymentAction(payload) {
   try {
-    const res = await fetch(`http://127.0.0.1:5000/api/school/subscription/webhook`, {
+    const res = await fetch(`${API_URL}/subscription/webhook`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

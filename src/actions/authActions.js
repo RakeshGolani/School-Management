@@ -2,6 +2,8 @@
 
 import { setEncryptedCookie, getEncryptedCookie, deleteEncryptedCookie } from '@/lib/cookieHelper';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 /**
  * Server Action: Authenticate school user and set encrypted session cookies.
  * @param {object} credentials - { email, password }
@@ -14,8 +16,7 @@ export async function loginAction(credentials) {
   }
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/login`, {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -67,8 +68,8 @@ export async function adminLoginAction(credentials) {
   }
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/admin/login`, {
+    const apiRoot = API_URL.replace(/\/school$/, '');
+    const response = await fetch(`${apiRoot}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),

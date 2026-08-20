@@ -51,7 +51,7 @@ export default function TeacherDetailsPage() {
     const fetchTeacherAndData = async () => {
       setLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
         const res = await fetch(`${apiUrl}/teachers/${teacherId}`, { cache: 'no-store' });
         const resData = await res.json();
         const teacherInfo = resData.data || resData;
@@ -61,7 +61,7 @@ export default function TeacherDetailsPage() {
 
           // Fetch School Profile for Logo & Name
           const targetSchoolId = teacherInfo.school_id || teacherInfo.schoolId || 1;
-          fetch(`${apiUrl}/school/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
+          fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
             .then(sRes => sRes.json())
             .then(sData => {
               if (sData?.success && sData.data) setSchoolInfo(sData.data);

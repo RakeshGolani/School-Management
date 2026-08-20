@@ -1,5 +1,6 @@
-'use me';
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
+'use server';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
 
 /**
  * Fetch list of all classes for current school
@@ -10,7 +11,7 @@ export async function getClassesAction(params = {}) {
     if (params.search) query.append('search', params.search);
     if (params.status) query.append('status', params.status);
 
-    const response = await fetch(`${BACKEND_URL}/school/classes?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/classes?${query.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store'
@@ -29,7 +30,7 @@ export async function getClassesAction(params = {}) {
  */
 export async function createClassAction(classData) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes`, {
+    const response = await fetch(`${API_URL}/classes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classData)
@@ -48,7 +49,7 @@ export async function createClassAction(classData) {
  */
 export async function updateClassAction(id, classData) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes/${id}`, {
+    const response = await fetch(`${API_URL}/classes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classData)
@@ -67,7 +68,7 @@ export async function updateClassAction(id, classData) {
  */
 export async function getClassDetailsAction(id) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes/${id}`, {
+    const response = await fetch(`${API_URL}/classes/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store'
@@ -86,7 +87,7 @@ export async function getClassDetailsAction(id) {
  */
 export async function assignStudentToClassAction(classId, studentId) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes/${classId}/assign-student`, {
+    const response = await fetch(`${API_URL}/classes/${classId}/assign-student`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ student_id: studentId })
@@ -105,7 +106,7 @@ export async function assignStudentToClassAction(classId, studentId) {
  */
 export async function unassignStudentFromClassAction(classId, studentId) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes/${classId}/students/${studentId}`, {
+    const response = await fetch(`${API_URL}/classes/${classId}/students/${studentId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -123,7 +124,7 @@ export async function unassignStudentFromClassAction(classId, studentId) {
  */
 export async function deleteClassAction(id) {
   try {
-    const response = await fetch(`${BACKEND_URL}/school/classes/${id}`, {
+    const response = await fetch(`${API_URL}/classes/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });

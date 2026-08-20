@@ -11,8 +11,8 @@ export function AcademicYearProvider({ children }) {
   const fetchAcademicYears = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/school/academic-years`, { cache: 'no-store' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+      const res = await fetch(`${apiUrl}/academic-years`, { cache: 'no-store' });
       const data = await res.json();
       
       if (data.success && Array.isArray(data.data)) {

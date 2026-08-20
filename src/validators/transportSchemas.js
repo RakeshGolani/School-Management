@@ -39,5 +39,7 @@ export const stopSchema = Yup.object().shape({
     .required('Sequence number is required.')
     .min(1, 'Sequence must be at least 1.'),
   pickup_time: Yup.string().nullable(),
-  drop_off_time: Yup.string().nullable()
+  drop_off_time: Yup.string().nullable(),
+  latitude: Yup.number().typeError('Must be a valid number').nullable().transform((v, o) => o === '' ? null : v),
+  longitude: Yup.number().typeError('Must be a valid number').nullable().transform((v, o) => o === '' ? null : v)
 });

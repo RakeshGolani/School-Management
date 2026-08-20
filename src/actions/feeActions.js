@@ -2,6 +2,8 @@
 
 import { getEncryptedCookie } from '@/lib/cookieHelper';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 /**
  * Helper to get current logged-in school ID from session cookie
  */
@@ -25,8 +27,7 @@ export async function getFeeCategoriesAction(params = {}) {
     if (schoolId) query.append('school_id', schoolId);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/fees/categories?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/fees/categories?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -63,8 +64,7 @@ export async function createFeeCategoryAction(categoryData) {
   try {
     const schoolId = await getSchoolIdFromSession();
     
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/fees/categories`, {
+    const response = await fetch(`${API_URL}/fees/categories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -106,8 +106,7 @@ export async function updateFeeCategoryAction(id, categoryData) {
   try {
     const schoolId = await getSchoolIdFromSession();
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/fees/categories/${id}`, {
+    const response = await fetch(`${API_URL}/fees/categories/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -146,8 +145,7 @@ export async function updateFeeCategoryAction(id, categoryData) {
  */
 export async function deleteFeeCategoryAction(id) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/fees/categories/${id}`, {
+    const response = await fetch(`${API_URL}/fees/categories/${id}`, {
       method: 'DELETE',
       cache: 'no-store'
     });
@@ -191,8 +189,7 @@ export async function getFeeAllocationsAction(params = {}) {
     if (params.status && params.status !== 'all') query.append('status', params.status);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/school/fees/allocations?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/fees/allocations?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -231,7 +228,7 @@ export async function allocateFeeAction(allocationData) {
   try {
     const schoolId = await getSchoolIdFromSession();
 
-    const response = await fetch('http://localhost:5000/api/school/fees/allocations', {
+    const response = await fetch(`${API_URL}/fees/allocations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -270,7 +267,7 @@ export async function allocateFeeAction(allocationData) {
  */
 export async function deleteFeeAllocationAction(id) {
   try {
-    const response = await fetch(`http://localhost:5000/api/school/fees/allocations/${id}`, {
+    const response = await fetch(`${API_URL}/fees/allocations/${id}`, {
       method: 'DELETE',
       cache: 'no-store'
     });
@@ -305,7 +302,7 @@ export async function recordPaymentAction(paymentData) {
   try {
     const schoolId = await getSchoolIdFromSession();
 
-    const response = await fetch('http://localhost:5000/api/school/fees/payments', {
+    const response = await fetch(`${API_URL}/fees/payments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -354,7 +351,7 @@ export async function getPaymentTransactionsAction(params = {}) {
     if (params.payment_mode && params.payment_mode !== 'all') query.append('payment_mode', params.payment_mode);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const response = await fetch(`http://localhost:5000/api/school/fees/payments?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/fees/payments?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -395,7 +392,7 @@ export async function getFeeStatsAction(params = {}) {
     if (schoolId) query.append('school_id', schoolId);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const response = await fetch(`http://localhost:5000/api/school/fees/stats?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/fees/stats?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -431,7 +428,7 @@ export async function getFeeReceiptAction(id) {
     const schoolId = await getSchoolIdFromSession();
     const query = schoolId ? `?school_id=${schoolId}` : '';
 
-    const response = await fetch(`http://localhost:5000/api/school/fees/payments/${id}${query}`, {
+    const response = await fetch(`${API_URL}/fees/payments/${id}${query}`, {
       method: 'GET',
       cache: 'no-store'
     });

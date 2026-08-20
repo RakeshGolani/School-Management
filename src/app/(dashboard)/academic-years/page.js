@@ -81,10 +81,10 @@ export default function AcademicYearsPage() {
     setLoadingSubmit(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
       const url = editingYear
-        ? `${apiUrl}/school/academic-years/${editingYear.id}`
-        : `${apiUrl}/school/academic-years`;
+        ? `${apiUrl}/academic-years/${editingYear.id}`
+        : `${apiUrl}/academic-years`;
 
       const method = editingYear ? 'PUT' : 'POST';
 
@@ -113,8 +113,8 @@ export default function AcademicYearsPage() {
 
   const handleSetActive = async (year) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/school/academic-years/${year.id}/active`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+      const res = await fetch(`${apiUrl}/academic-years/${year.id}/active`, {
         method: 'PATCH'
       });
       const data = await res.json();
@@ -157,8 +157,8 @@ export default function AcademicYearsPage() {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, loading: true }));
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-          const res = await fetch(`${apiUrl}/school/academic-years/${year.id}`, {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+          const res = await fetch(`${apiUrl}/academic-years/${year.id}`, {
             method: 'DELETE'
           });
           const data = await res.json();

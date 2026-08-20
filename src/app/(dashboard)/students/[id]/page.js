@@ -67,7 +67,7 @@ export default function StudentDetailsPage() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
         const res = await fetch(`${apiUrl}/students/${studentId}`, { cache: 'no-store' });
         const resData = await res.json();
         const studentInfo = resData.data || resData;
@@ -77,7 +77,7 @@ export default function StudentDetailsPage() {
 
           // Fetch School Profile for Logo & Name
           const targetSchoolId = studentInfo.school_id || studentInfo.schoolId || 1;
-          fetch(`${apiUrl}/school/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
+          fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
             .then(sRes => sRes.json())
             .then(sData => {
               if (sData?.success && sData.data) setSchoolInfo(sData.data);

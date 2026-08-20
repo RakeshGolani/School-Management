@@ -2,6 +2,8 @@
 
 import { getEncryptedCookie } from '@/lib/cookieHelper';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
+
 /**
  * Helper to get current logged-in school ID from session cookie
  */
@@ -32,8 +34,7 @@ export async function getTeachersAction(params = {}) {
     if (params.status && params.status !== 'all') query.append('status', params.status);
     if (params.academic_year_id) query.append('academic_year_id', params.academic_year_id);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/teachers?${query.toString()}`, {
+    const response = await fetch(`${API_URL}/teachers?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store'
     });
@@ -85,8 +86,7 @@ export async function createTeacherAction(teacherData) {
       body = JSON.stringify({ ...teacherData, school_id: schoolId });
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/teachers`, {
+    const response = await fetch(`${API_URL}/teachers`, {
       method: 'POST',
       headers,
       body,
@@ -138,8 +138,7 @@ export async function updateTeacherAction(id, teacherData) {
       body = JSON.stringify({ ...teacherData, school_id: schoolId });
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/teachers/${id}`, {
+    const response = await fetch(`${API_URL}/teachers/${id}`, {
       method: 'PUT',
       headers,
       body,
@@ -179,8 +178,7 @@ export async function deleteTeacherAction(id) {
     const schoolId = await getSchoolIdFromSession();
     const query = schoolId ? `?schoolId=${schoolId}` : '';
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(`${apiUrl}/teachers/${id}${query}`, {
+    const response = await fetch(`${API_URL}/teachers/${id}${query}`, {
       method: 'DELETE',
       cache: 'no-store'
     });

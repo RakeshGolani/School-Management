@@ -1,11 +1,12 @@
-'use me';
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
+'use server';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
 
 export async function getPeriodSlotsAction(academicYearId) {
   try {
     const url = academicYearId 
-      ? `${BACKEND_URL}/school/period-slots?academic_year_id=${academicYearId}`
-      : `${BACKEND_URL}/school/period-slots`;
+      ? `${API_URL}/period-slots?academic_year_id=${academicYearId}`
+      : `${API_URL}/period-slots`;
 
     const res = await fetch(url, { cache: 'no-store' });
     return await res.json();
@@ -17,7 +18,7 @@ export async function getPeriodSlotsAction(academicYearId) {
 
 export async function savePeriodSlotAction(slotData) {
   try {
-    const res = await fetch(`${BACKEND_URL}/school/period-slots`, {
+    const res = await fetch(`${API_URL}/period-slots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(slotData)
@@ -31,7 +32,7 @@ export async function savePeriodSlotAction(slotData) {
 
 export async function deletePeriodSlotAction(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/school/period-slots/${id}`, {
+    const res = await fetch(`${API_URL}/period-slots/${id}`, {
       method: 'DELETE'
     });
     return await res.json();
@@ -43,7 +44,7 @@ export async function deletePeriodSlotAction(id) {
 
 export async function allocateSlotAction(allocationData) {
   try {
-    const res = await fetch(`${BACKEND_URL}/school/timetable/allocate`, {
+    const res = await fetch(`${API_URL}/timetable/allocate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(allocationData)
@@ -57,7 +58,7 @@ export async function allocateSlotAction(allocationData) {
 
 export async function deleteAllocationAction(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/school/timetable/allocate/${id}`, {
+    const res = await fetch(`${API_URL}/timetable/allocate/${id}`, {
       method: 'DELETE'
     });
     return await res.json();
@@ -70,8 +71,8 @@ export async function deleteAllocationAction(id) {
 export async function getClassTimetableAction(classId, academicYearId) {
   try {
     const url = academicYearId
-      ? `${BACKEND_URL}/school/timetable/class/${classId}?academic_year_id=${academicYearId}`
-      : `${BACKEND_URL}/school/timetable/class/${classId}`;
+      ? `${API_URL}/timetable/class/${classId}?academic_year_id=${academicYearId}`
+      : `${API_URL}/timetable/class/${classId}`;
 
     const res = await fetch(url, { cache: 'no-store' });
     return await res.json();
@@ -84,8 +85,8 @@ export async function getClassTimetableAction(classId, academicYearId) {
 export async function getTeacherTimetableAction(teacherId, academicYearId) {
   try {
     const url = academicYearId
-      ? `${BACKEND_URL}/school/timetable/teacher/${teacherId}?academic_year_id=${academicYearId}`
-      : `${BACKEND_URL}/school/timetable/teacher/${teacherId}`;
+      ? `${API_URL}/timetable/teacher/${teacherId}?academic_year_id=${academicYearId}`
+      : `${API_URL}/timetable/teacher/${teacherId}`;
 
     const res = await fetch(url, { cache: 'no-store' });
     return await res.json();
@@ -97,7 +98,7 @@ export async function getTeacherTimetableAction(teacherId, academicYearId) {
 
 export async function assignProxyAction(proxyData) {
   try {
-    const res = await fetch(`${BACKEND_URL}/school/timetable/proxy`, {
+    const res = await fetch(`${API_URL}/timetable/proxy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(proxyData)

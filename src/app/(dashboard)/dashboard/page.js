@@ -1,192 +1,572 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { 
   Users, 
-  Bus, 
   GraduationCap, 
+  BookOpen, 
+  Bus, 
+  CreditCard, 
   Activity, 
+  Sparkles, 
   CheckCircle2, 
-  Bell, 
-  Search, 
+  Clock, 
+  AlertCircle, 
+  ArrowUpRight, 
+  ChevronRight, 
+  Radio as RadioIcon, 
   Plus, 
-  Sliders, 
-  Radio as RadioIcon 
+  Calendar,
+  Layers,
+  PhoneCall,
+  ShieldCheck,
+  RefreshCw,
+  Zap,
+  TrendingUp,
+  Sliders
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Checkbox from '@/components/ui/Checkbox';
-import Switch from '@/components/ui/Switch';
-import Select from '@/components/ui/Select';
-import { RadioGroup } from '@/components/ui/Radio';
+import Skeleton from '@/components/ui/Skeleton';
+import Tooltip from '@/components/ui/Tooltip';
+import { useAcademicYear } from '@/context/AcademicYearContext';
+import { getSchoolDashboardAction } from '@/actions/dashboardActions';
+import SchoolDashboardSkeleton from '@/components/skeletons/SchoolDashboardSkeleton';
+
+// Dynamically load the Leaflet Map component with SSR disabled
+const LiveTrackingMap = dynamic(
+  () => import('@/app/(dashboard)/transport/LiveTrackingMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[380px] w-full rounded-2xl bg-slate-100/80 border border-slate-200/80 flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Bus className="w-8 h-8 animate-bounce text-primary-500" />
+        <p className="text-sm font-semibold">Loading Live GPS Campus Map...</p>
+      </div>
+    )
+  }
+);
 
 /**
- * Dashboard Overview Page
- * Showcases statistics, active modules, and dynamic UI control primitives.
+ * Ultra-Premium School Dashboard
+ * Unified Real-Time Command Center with Live Bus GPS Tracking, Attendance Snapshot, and Financial Metrics.
  */
 export default function Dashboard() {
-  const [health, setHealth] = useState({ status: 'Connecting...', message: '' });
-  
-  // Interactive UI Form states
-  const [studentSearch, setStudentSearch] = useState('');
-  const [busServiceEnabled, setBusServiceEnabled] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [selectedGrade, setSelectedGrade] = useState('10');
-  const [selectedRoleOption, setSelectedRoleOption] = useState('student');
-  const [autoSmsChecked, setAutoSmsChecked] = useState(true);
+  const { activeYear } = useAcademicYear();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+
+  const fetchDashboardMetrics = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const params = {};
+      if (activeYear?.id) params.academic_year_id = activeYear.id;
+
+      const res = await getSchoolDashboardAction(params);
+      if (res && res.success && res.data) {
+        setDashboardData(res.data);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard metrics:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [activeYear?.id]);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    fetch(`${apiUrl}/health`)
-      .then((res) => res.json())
-      .then((data) => setHealth(data))
-      .catch(() => setHealth({ status: 'Error', message: 'Backend is offline' }));
-  }, []);
+    fetchDashboardMetrics();
+  }, [fetchDashboardMetrics]);
+
+  if (loading && !dashboardData) {
+    return <SchoolDashboardSkeleton />;
+  }
+
+  const { stats, attendanceToday, fees, buses, recentAdmissions, subscription } = dashboardData || {};
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Top Banner / Welcome Card */}
-      <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/10 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Badge variant="emerald" dot>Campus Online</Badge>
-            <Badge variant="primary">Greenwood Intl</Badge>
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* 1. Ultra-Premium Top Welcome Banner (Rule 3) */}
+      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-slate-50 via-white to-primary-50/40 border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-2 relative z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="emerald" dot font-bold>Campus Live</Badge>
+            {activeYear && (
+              <Badge variant="primary" icon={Calendar}>
+                Academic Year {activeYear.year_name}
+              </Badge>
+            )}
+            <Badge variant="slate" icon={Zap}>IoT Gate Active</Badge>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white">School Management Workspace</h1>
-          <p className="text-slate-400 text-xs md:text-sm max-w-xl leading-relaxed">
-            Welcome back, School Admin. Monitor your live student NFC logs, bus transport alerts, and academic operations.
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            School Command Center
+          </h1>
+          <p className="text-slate-500 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            Real-time overview of student admissions, smart fleet GPS coordinates, daily gate attendance, and fee collections.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3 shrink-0">
-          <Button variant="secondary" icon={Sliders}>
-            Configure
+        {/* Action Shortcuts */}
+        <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            icon={RefreshCw} 
+            loading={refreshing}
+            onClick={() => fetchDashboardMetrics(true)}
+          >
+            Refresh
           </Button>
-          <Button variant="primary" icon={Plus}>
-            New Admission
-          </Button>
+          <Link href="/fees">
+            <Button variant="secondary" size="sm" icon={CreditCard}>
+              Fee Portal
+            </Button>
+          </Link>
+          <Link href="/students">
+            <Button variant="primary" size="sm" icon={Plus}>
+              New Student
+            </Button>
+          </Link>
         </div>
+
+        {/* Subtle Decorative Background Glow */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Overview Metric Cards Grid */}
+      {/* 2. Four Core Metric KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card title="Total Students" icon={Users} action={<Badge variant="emerald">+12%</Badge>}>
-          <p className="text-3xl font-black text-white">1,248</p>
-          <p className="text-xs text-slate-400 mt-1">98.2% Daily Gate Attendance</p>
-        </Card>
+        {/* Total Students Card */}
+        <Link href="/students" className="group block">
+          <Card 
+            title="Total Students" 
+            icon={Users} 
+            action={
+              <span className="w-7 h-7 rounded-lg bg-primary-50 border border-primary-200/60 text-primary-600 flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-all shadow-2xs shrink-0">
+                <ArrowUpRight size={14} />
+              </span>
+            }
+          >
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-black text-slate-900 tracking-tight">
+                  {stats?.totalStudents ?? 0}
+                </p>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+                  Enrolled
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                Across {stats?.totalClasses ?? 0} Class Sections
+              </p>
+            </div>
+          </Card>
+        </Link>
 
-        <Card title="Smart Bus Routes" icon={Bus} action={<Badge variant="amber" dot font-bold>Active</Badge>}>
-          <p className="text-3xl font-black text-white">14 Routes</p>
-          <p className="text-xs text-amber-400 mt-1">324 NFC Cards Swiped Today</p>
-        </Card>
+        {/* Teaching Faculty Card */}
+        <Link href="/teachers" className="group block">
+          <Card 
+            title="Faculty Staff" 
+            icon={GraduationCap} 
+            action={
+              <span className="w-7 h-7 rounded-lg bg-primary-50 border border-primary-200/60 text-primary-600 flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-all shadow-2xs shrink-0">
+                <ArrowUpRight size={14} />
+              </span>
+            }
+          >
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-black text-slate-900 tracking-tight">
+                  {stats?.totalTeachers ?? 0}
+                </p>
+                <span className="text-xs font-bold text-primary-700 bg-primary-50 border border-primary-200/60 px-2 py-0.5 rounded-full">
+                  Certified
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                100% Class Allocation
+              </p>
+            </div>
+          </Card>
+        </Link>
 
-        <Card title="Certified Staff" icon={GraduationCap} action={<Badge variant="blue">Full Staff</Badge>}>
-          <p className="text-3xl font-black text-white">86 Teachers</p>
-          <p className="text-xs text-slate-400 mt-1">Grade 5-A & 10-B active</p>
-        </Card>
+        {/* Daily Gate Attendance Card */}
+        <Link href="/attendance" className="group block">
+          <Card 
+            title="Today's Attendance" 
+            icon={CheckCircle2} 
+            action={
+              <Badge variant={attendanceToday?.attendanceRate >= 90 ? 'emerald' : 'amber'} dot size="sm">
+                {attendanceToday?.attendanceRate ?? 100}%
+              </Badge>
+            }
+          >
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-black text-slate-900 tracking-tight">
+                  {attendanceToday?.present ?? 0}
+                </p>
+                <span className="text-xs text-slate-400 font-medium">
+                  / {attendanceToday?.totalMarked ?? (stats?.totalStudents || 0)} Marked
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                {attendanceToday?.absent ?? 0} Absent • {attendanceToday?.late ?? 0} Late Check-in
+              </p>
+            </div>
+          </Card>
+        </Link>
 
-        <Card title="Backend API Health" icon={Activity} action={<Badge variant={health.status === 'healthy' ? 'emerald' : 'rose'}>{health.status}</Badge>}>
-          <p className="text-sm font-semibold text-white truncate">{health.message || 'Express Node backend'}</p>
-          <p className="text-[10px] text-slate-500 mt-1">Port 5000 Connected</p>
-        </Card>
+        {/* Fee Collection Card */}
+        <Link href="/fees" className="group block">
+          <Card 
+            title="Fee Collections" 
+            icon={CreditCard} 
+            action={
+              <Badge variant="emerald" size="sm">
+                {fees?.collectionRate ?? 0}% Paid
+              </Badge>
+            }
+          >
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-1">
+                <span className="text-sm font-bold text-slate-400">₹</span>
+                <p className="text-3xl font-black text-slate-900 tracking-tight">
+                  {Number(fees?.totalPaid || 0).toLocaleString('en-IN')}
+                </p>
+              </div>
+              <p className="text-xs text-rose-500 font-medium truncate">
+                ₹{Number(fees?.totalPending || 0).toLocaleString('en-IN')} Balance Pending
+              </p>
+            </div>
+          </Card>
+        </Link>
       </div>
 
-      {/* Dynamic UI Primitives Showcase */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Form Controls */}
-        <div className="lg:col-span-7 space-y-6">
-          <Card title="Campus Settings & Quick Form Controls" icon={Sliders} subtitle="Test the newly built dynamic input components">
-            <div className="space-y-5">
-              {/* Input Primitive */}
-              <Input
-                label="Student Search & Filter"
-                placeholder="Type student name or NFC UID (e.g. 8F3C910B)..."
-                icon={Search}
-                value={studentSearch}
-                onChange={(e) => setStudentSearch(e.target.value)}
-              />
-
-              {/* Select Dropdown Primitive */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                  label="Grade Filter"
-                  value={selectedGrade}
-                  onChange={(e) => setSelectedGrade(e.target.value)}
-                  options={[
-                    { label: 'Grade 8 - Primary', value: '8' },
-                    { label: 'Grade 9 - Junior High', value: '9' },
-                    { label: 'Grade 10 - Secondary', value: '10' },
-                    { label: 'Grade 11 - Senior High', value: '11' }
-                  ]}
-                />
-
-                {/* Switch Primitive */}
-                <div className="flex items-center pt-4">
-                  <Switch
-                    label="Optional Bus Service"
-                    description="Enable live GPS & NFC tracking"
-                    checked={busServiceEnabled}
-                    onChange={setBusServiceEnabled}
-                  />
-                </div>
+      {/* 3. Primary Centerpiece Grid: Live Smart Bus GPS Map & Today's Gate Stream */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Live Smart Bus GPS Tracking Map (8 Cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          <Card 
+            title="Smart Bus Fleet & Live GPS Campus Map" 
+            icon={Bus} 
+            subtitle="Real-time vehicle movement, speed telemetry & route stops"
+            action={
+              <div className="flex items-center gap-2">
+                <Badge variant="emerald" dot font-bold>
+                  {stats?.busesOnRoad ?? 0} of {stats?.totalBuses ?? 0} Active
+                </Badge>
+                <Link href="/transport">
+                  <Button variant="outline" size="sm" icon={ArrowUpRight}>
+                    Full Transport
+                  </Button>
+                </Link>
               </div>
-
-              <hr className="border-white/5 my-2" />
-
-              {/* Radio Group Primitive */}
-              <RadioGroup
-                label="Select Access Category"
-                value={selectedRoleOption}
-                onChange={setSelectedRoleOption}
-                options={[
-                  { label: 'Student Profile', value: 'student', description: 'NFC card UID enabled' },
-                  { label: 'Class Teacher', value: 'teacher', description: 'Attendance logging rights' },
-                  { label: 'Parent Account', value: 'parent', description: 'Bus stop SMS notifications' }
-                ]}
+            }
+          >
+            <div className="space-y-4">
+              {/* Interactive Leaflet Map Container */}
+              <LiveTrackingMap 
+                initialSchoolLocation={dashboardData?.schoolLocation} 
+                initialRoutes={dashboardData?.routes} 
               />
 
-              <hr className="border-white/5 my-2" />
+              {/* Fleet Quick Status Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Fleet</p>
+                    <p className="text-lg font-black text-slate-900">{stats?.totalBuses ?? 0} Buses</p>
+                  </div>
+                  <span className="p-2 rounded-xl bg-amber-50 text-amber-600 font-bold text-xs">
+                    {stats?.totalRoutes ?? 0} Routes
+                  </span>
+                </div>
 
-              {/* Checkbox Primitives */}
-              <div className="space-y-3">
-                <Checkbox
-                  label="Automated SMS Check-in Alerts"
-                  description="Send instant parent SMS when student scans NFC card"
-                  checked={autoSmsChecked}
-                  onChange={(e) => setAutoSmsChecked(e.target.checked)}
-                />
-                <Checkbox
-                  label="Enable Live Notifications"
-                  description="Push delayed bus notifications"
-                  checked={notificationsEnabled}
-                  onChange={(e) => setNotificationsEnabled(e.target.checked)}
-                />
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">GPS Live Signal</p>
+                    <p className="text-lg font-black text-emerald-600 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                      Connected
+                    </p>
+                  </div>
+                  <Badge variant="emerald" size="sm">0ms Delay</Badge>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Campus Gate Scan</p>
+                    <p className="text-lg font-black text-primary-600">Active</p>
+                  </div>
+                  <Link href="/attendance">
+                    <span className="text-xs font-bold text-primary-600 hover:underline">
+                      View Logs →
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Right Column: Live NFC Activity Feed */}
-        <div className="lg:col-span-5 space-y-6">
-          <Card title="Live NFC Attendance Feed" icon={RadioIcon} subtitle="Gate & Bus Terminal Stream">
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-primary-500/30 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-400 uppercase font-semibold">UID: 8F3C910B</p>
-                  <p className="text-sm font-bold text-white">Rahul Gupta (Grade 5-A)</p>
-                  <p className="text-[10px] text-primary-400">Stop #2: Kandivali (7:42 AM)</p>
+        {/* Right Column: Live Gate Scan Feed & Attendance Breakdown (4 Cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card 
+            title="Live Gate Attendance Feed" 
+            icon={RadioIcon} 
+            subtitle="Campus terminal RFID / NFC card stream"
+            action={
+              <Badge variant="primary" dot>
+                Live Feed
+              </Badge>
+            }
+          >
+            <div className="space-y-4">
+              {/* Daily Attendance Progress Bar */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary-50/50 to-slate-50 border border-primary-100/60 space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-700">Today&apos;s Gate Completion</span>
+                  <span className="text-primary-700 font-extrabold">{attendanceToday?.attendanceRate ?? 100}%</span>
                 </div>
-                <Badge variant="emerald">Boarded</Badge>
+                <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${attendanceToday?.attendanceRate ?? 100}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-0.5">
+                  <span className="text-emerald-700 font-bold">● {attendanceToday?.present ?? 0} Present</span>
+                  <span className="text-amber-700 font-bold">● {attendanceToday?.late ?? 0} Late</span>
+                  <span className="text-rose-700 font-bold">● {attendanceToday?.absent ?? 0} Absent</span>
+                </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-950/40 border border-white/5 flex items-center justify-between opacity-80">
-                <div>
-                  <p className="text-xs text-slate-500 font-semibold">UID: 2D7B904A</p>
-                  <p className="text-xs font-bold text-slate-300">Priya Patel (Grade 5-A)</p>
-                  <p className="text-[10px] text-slate-500">School Gate scanner (8:05 AM)</p>
+              {/* Real-time NFC Logs List */}
+              <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                {attendanceToday?.recentScans && attendanceToday.recentScans.length > 0 ? (
+                  attendanceToday.recentScans.map((scan) => (
+                    <div 
+                      key={scan.id} 
+                      className="p-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs transition-all flex items-center justify-between gap-3 group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Avatar box (Rule 15) */}
+                        <div className="w-10 h-10 rounded-xl relative shrink-0 overflow-hidden bg-primary-50 text-primary-600 border border-primary-500/20 font-black text-sm flex items-center justify-center">
+                          {scan.photo ? (
+                            <img 
+                              src={scan.photo} 
+                              alt={scan.student_name} 
+                              className="absolute inset-0 w-full h-full object-cover rounded-[inherit] z-10" 
+                            />
+                          ) : (
+                            <span>{scan.student_name?.charAt(0)?.toUpperCase() || 'S'}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate group-hover:text-primary-600 transition-colors">
+                            {scan.student_name}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-medium truncate">
+                            {scan.grade} • {scan.admission_number}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right shrink-0">
+                        <Badge 
+                          variant={scan.status === 'present' ? 'emerald' : scan.status === 'late' ? 'amber' : 'rose'} 
+                          size="sm"
+                        >
+                          {scan.status?.toUpperCase()}
+                        </Badge>
+                        <p className="text-[9px] text-slate-400 mt-1 font-semibold flex items-center justify-end gap-1">
+                          <Clock size={10} />
+                          {scan.check_in ? new Date(scan.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Gate'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-slate-400 space-y-1">
+                    <RadioIcon className="w-7 h-7 mx-auto opacity-50 mb-2" />
+                    <p className="text-xs font-bold text-slate-600">No NFC Swipes Yet Today</p>
+                    <p className="text-[11px]">Gate terminal is online and awaiting check-ins.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* 4. Bottom Grid: Fee Revenue & Recent Admissions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Fee Collection Overview (6 Cols) */}
+        <div className="lg:col-span-6 space-y-6">
+          <Card 
+            title="Fee Revenue & Payment Receipts" 
+            icon={CreditCard} 
+            subtitle="Financial collection tracking & recent transactions"
+            action={
+              <Link href="/fees">
+                <Button variant="outline" size="sm" icon={ArrowUpRight}>
+                  View All Fees
+                </Button>
+              </Link>
+            }
+          >
+            <div className="space-y-4">
+              {/* Fee Target Breakdown Bar */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-600">Total Billed: ₹{Number(fees?.totalAllocated || 0).toLocaleString('en-IN')}</span>
+                  <span className="text-emerald-600 font-extrabold">{fees?.collectionRate ?? 0}% Recovered</span>
                 </div>
-                <Badge variant="slate">Gate Entry</Badge>
+                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" 
+                    style={{ width: `${fees?.collectionRate ?? 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-500 pt-1">
+                  <span className="text-emerald-700">Collected: ₹{Number(fees?.totalPaid || 0).toLocaleString('en-IN')}</span>
+                  <span className="text-rose-600">Pending: ₹{Number(fees?.totalPending || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              {/* Recent Fee Payments Table */}
+              <div className="space-y-2.5">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Transactions</p>
+                {fees?.recentPayments && fees.recentPayments.length > 0 ? (
+                  fees.recentPayments.map((p) => (
+                    <div 
+                      key={p.id} 
+                      className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs transition-all flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-200">
+                          ₹
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {p.student_name}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-medium">
+                            {p.receipt_number} • {p.category_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-black text-emerald-600">
+                          +₹{Number(p.amount_paid).toLocaleString('en-IN')}
+                        </p>
+                        <Badge variant="slate" size="sm" className="mt-0.5">
+                          {p.payment_mode?.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 text-center bg-slate-50 rounded-xl text-slate-400 text-xs font-medium">
+                    No fee payments recorded recently.
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Column: Recent Admissions & Capacity (6 Cols) */}
+        <div className="lg:col-span-6 space-y-6">
+          <Card 
+            title="Recent Student Admissions" 
+            icon={Users} 
+            subtitle="Newly enrolled students in the active academic session"
+            action={
+              <Link href="/students">
+                <Button variant="outline" size="sm" icon={Plus}>
+                  Admit Student
+                </Button>
+              </Link>
+            }
+          >
+            <div className="space-y-4">
+              {/* Subscription Usage Gauge */}
+              {subscription && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-300 flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-emerald-400" />
+                      Plan: {subscription.plan_name}
+                    </span>
+                    <span className="text-amber-400 font-black">
+                      {subscription.current_students_count} / {subscription.max_students_limit} Students
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-700/80 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-primary-400 to-emerald-400 h-2 rounded-full transition-all duration-500" 
+                      style={{ width: `${subscription.usage_percentage}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    {subscription.max_students_limit - subscription.current_students_count} Student slots remaining in current subscription.
+                  </p>
+                </div>
+              )}
+
+              {/* Recent Admissions List */}
+              <div className="space-y-2.5">
+                {recentAdmissions && recentAdmissions.length > 0 ? (
+                  recentAdmissions.map((student) => (
+                    <Link 
+                      key={student.id} 
+                      href={`/students/${student.id}`} 
+                      className="block group"
+                    >
+                      <div className="p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs transition-all flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Avatar box (Rule 15) */}
+                          <div className="w-9 h-9 rounded-xl relative shrink-0 overflow-hidden bg-primary-50 text-primary-600 border border-primary-500/20 font-black text-xs flex items-center justify-center">
+                            {student.image_url || student.photo ? (
+                              <img 
+                                src={student.image_url || student.photo} 
+                                alt={student.name || student.first_name} 
+                                className="absolute inset-0 w-full h-full object-cover rounded-[inherit] z-10" 
+                              />
+                            ) : (
+                              <span>{(student.name || student.first_name || 'S').charAt(0).toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-900 truncate group-hover:text-primary-600 transition-colors">
+                              {student.name || `${student.first_name} ${student.last_name}`}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                              {student.grade || 'Grade 10'} • {student.admission_number}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {student.is_bus_service_enabled && (
+                            <Badge variant="amber" size="sm" icon={Bus}>Bus</Badge>
+                          )}
+                          <ChevronRight size={14} className="text-slate-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="p-6 text-center bg-slate-50 rounded-xl text-slate-400 text-xs font-medium">
+                    No recent admissions found.
+                  </div>
+                )}
               </div>
             </div>
           </Card>
