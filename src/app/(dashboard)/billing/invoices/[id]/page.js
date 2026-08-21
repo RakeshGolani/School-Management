@@ -28,6 +28,7 @@ export default function InvoiceDetailPage() {
   const [invoice, setInvoice] = useState(null);
   const [transaction, setTransaction] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  const [systemSettings, setSystemSettings] = useState(null);
   const [school, setSchool] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ export default function InvoiceDetailPage() {
       // 3. Fetch billing/subscription details
       const billingRes = await getSubscriptionDetailsAction();
       if (billingRes.success && billingRes.data) {
-        const { invoices, transactions, subscription: sub } = billingRes.data;
+        const { invoices, transactions, subscription: sub, systemSettings: sysSettings } = billingRes.data;
         
         // Find matching invoice
         const foundInvoice = invoices.find(
@@ -79,6 +80,7 @@ export default function InvoiceDetailPage() {
             createdAt: foundInvoice.billing_date
           });
           setSubscription(sub || {});
+          setSystemSettings(sysSettings || {});
           setSchool({
             school_name: fetchedSchool.schoolName || fetchedSchool.school_name || fetchedSchool.name || session.user.schoolName || 'N/A',
             code: fetchedSchool.code || 'N/A',
@@ -196,25 +198,29 @@ export default function InvoiceDetailPage() {
       <div className="mx-auto w-full max-w-[794px] bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden flex flex-col print:border-none print:shadow-none print:m-0 print:p-0 print:w-full print:max-w-none print:text-slate-900">
         
         {/* Printable Document Body */}
-        <div id="invoice-document" className="p-10 sm:p-14 bg-white text-slate-800 flex-1 flex flex-col justify-between print:min-h-[262mm] w-full">
+        <div id="invoice-document" className="p-6 sm:p-8 bg-white text-slate-800 flex-1 flex flex-col justify-between print:min-h-[262mm] w-full">
           
           {/* Top Content Group */}
           <div className="space-y-8 print:space-y-5 w-full flex flex-col justify-start pb-8 print:pb-0">
             {/* Company Brand & Invoice Meta Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-200 gap-4">
               <div className="space-y-0.5">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center font-black text-white shadow-sm">
-                    <ShieldCheck size={24} />
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 overflow-hidden">
+                    {systemSettings?.logo_url ? (
+                      <img src={process.env.NEXT_PUBLIC_BASE_URL ? process.env.NEXT_PUBLIC_BASE_URL + systemSettings.logo_url : `http://localhost:5000${systemSettings.logo_url}`} alt="Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <ShieldCheck size={24} />
+                    )}
                   </div>
                   <div>
-                    <h1 className="text-lg font-extrabold tracking-tight text-slate-900">EduSchool SaaS Cloud</h1>
-                    <p className="text-xs text-primary-600 font-bold">Enterprise School Management Suite</p>
+                    <h1 className="text-lg font-extrabold tracking-tight text-slate-900">{systemSettings?.company_name || 'EduManage Cloud Solutions'}</h1>
+                    <p className="text-xs text-primary-600 font-bold">{systemSettings?.tagline || 'Next-Generation School ERP'}</p>
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-500 pt-1">
-                  Tech Park Tower 4, Educational Corridor, Cyber City <br />
-                  GSTIN: 27AAAAA0000A1Z5 | Support: support@eduschool.io
+                  {systemSettings?.address || 'Tech Park Tower 4, Educational Corridor, Cyber City'} <br />
+                  GSTIN: {systemSettings?.gstin || '27AAAAA0000A1Z5'} | Support: {systemSettings?.support_email || 'support@eduschool.io'}
                 </p>
               </div>
 

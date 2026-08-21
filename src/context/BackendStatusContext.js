@@ -67,31 +67,6 @@ export const BackendStatusProvider = ({ children }) => {
     };
   }, [checkHealth]);
 
-  // Intercept fetch network failures globally
-  useEffect(() => {
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-      try {
-        const response = await originalFetch(...args);
-        // If a server response of 502/503/504 Bad Gateway occurs
-        if ([502, 503, 504].includes(response.status)) {
-          setIsOffline(true);
-        }
-        return response;
-      } catch (error) {
-        // If fetch failed due to network / backend down
-        const urlStr = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
-        if (urlStr.includes(apiUrl) || urlStr.includes('5000')) {
-          setIsOffline(true);
-        }
-        throw error;
-      }
-    };
-
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [apiUrl]);
 
   return (
     <BackendStatusContext.Provider value={{ isOffline, isChecking, lastChecked, checkHealth }}>

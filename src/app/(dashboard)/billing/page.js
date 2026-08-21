@@ -295,17 +295,29 @@ export default function BillingPage() {
           color: '#3399cc'
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: async function() {
             setProcessing(false);
+            // Mark the transaction as failed on backend
+            await triggerMockPaymentAction({
+              gateway_transaction_id: transaction.gateway_transaction_id,
+              status: 'failed'
+            });
+            await fetchBillingData();
           }
         }
       };
 
       const rzp1 = new window.Razorpay(options);
       rzp1.on('payment.failed', async function (response) {
-        console.warn('Razorpay payment failed, falling back to simulated completion:', response);
+        console.warn('Razorpay payment failed:', response);
         setErrorMsg('Payment Gateway: ' + (response?.error?.description || 'Gateway error.'));
         setProcessing(false);
+        // Mark the transaction as failed on backend
+        await triggerMockPaymentAction({
+          gateway_transaction_id: transaction.gateway_transaction_id,
+          status: 'failed'
+        });
+        await fetchBillingData();
       });
       rzp1.open();
     } catch (err) {

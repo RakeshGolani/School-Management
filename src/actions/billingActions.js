@@ -67,14 +67,37 @@ export async function triggerMockPaymentAction(payload) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ...payload,
-        status: 'success'
+        status: 'success',
+        ...payload
       })
     });
     const data = await res.json();
     return data;
   } catch (error) {
     console.error('Error triggering webhook:', error);
+    return { success: false, message: 'Failed to connect to backend server' };
+  }
+}
+
+export async function downgradeSubscriptionAction(downgradeData) {
+  try {
+    const schoolId = await getSchoolIdFromSession();
+    if (!schoolId) {
+      return { success: false, message: 'Active school session not found' };
+    }
+
+    const res = await fetch(`${API_URL}/subscription/downgrade`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-school-id': String(schoolId)
+      },
+      body: JSON.stringify(downgradeData)
+    });
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error('Error initiating downgrade:', error);
     return { success: false, message: 'Failed to connect to backend server' };
   }
 }

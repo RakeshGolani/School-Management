@@ -21,6 +21,7 @@ export default function StandalonePrintInvoicePage() {
   const [invoice, setInvoice] = useState(null);
   const [transaction, setTransaction] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  const [systemSettings, setSystemSettings] = useState(null);
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,7 @@ export default function StandalonePrintInvoicePage() {
         // 3. Fetch billing/subscription details
         const billingRes = await getSubscriptionDetailsAction();
         if (billingRes.success && billingRes.data) {
-          const { invoices, transactions, subscription: sub } = billingRes.data;
+          const { invoices, transactions, subscription: sub, systemSettings: sysSettings } = billingRes.data;
 
           const foundInvoice = invoices.find(
             (inv) => String(inv.id) === String(id) || String(inv.invoice_number) === String(id)
@@ -67,6 +68,7 @@ export default function StandalonePrintInvoicePage() {
               createdAt: foundInvoice.billing_date
             });
             setSubscription(sub || {});
+            setSystemSettings(sysSettings || {});
             setSchool({
               school_name: fetchedSchool.schoolName || fetchedSchool.school_name || fetchedSchool.name || session.user.schoolName || 'N/A',
               code: fetchedSchool.code || 'N/A',
@@ -160,17 +162,21 @@ export default function StandalonePrintInvoicePage() {
           <div className="flex justify-between items-start pb-6 border-b border-zinc-200 gap-6">
             <div className="space-y-1">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center font-black text-white">
-                  <ShieldCheck size={24} />
+                <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center font-black text-primary-500 shrink-0 overflow-hidden">
+                  {systemSettings?.logo_url ? (
+                    <img src={process.env.NEXT_PUBLIC_BASE_URL ? process.env.NEXT_PUBLIC_BASE_URL + systemSettings.logo_url : `http://localhost:5000${systemSettings.logo_url}`} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <ShieldCheck size={24} />
+                  )}
                 </div>
                 <div>
-                  <h1 className="text-lg font-black text-zinc-900 tracking-tight">EduSchool SaaS Cloud</h1>
-                  <p className="text-xs text-primary-600 font-bold">Enterprise School Management Suite</p>
+                  <h1 className="text-lg font-black text-zinc-900 tracking-tight">{systemSettings?.company_name || 'EduManage Cloud Solutions'}</h1>
+                  <p className="text-xs text-primary-600 font-bold">{systemSettings?.tagline || 'Next-Generation School ERP'}</p>
                 </div>
               </div>
               <p className="text-[11px] text-zinc-650 pt-1.5 leading-relaxed">
-                Tech Park Tower 4, Educational Corridor, Cyber City <br />
-                GSTIN: 27AAAAA0000A1Z5 | Support: support@eduschool.io
+                {systemSettings?.address || 'Tech Park Tower 4, Educational Corridor, Cyber City'} <br />
+                GSTIN: {systemSettings?.gstin || '27AAAAA0000A1Z5'} | Support: {systemSettings?.support_email || 'support@eduschool.io'}
               </p>
             </div>
 
