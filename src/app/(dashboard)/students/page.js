@@ -42,6 +42,7 @@ import {
   promoteStudentsAction
 } from '@/actions/studentActions';
 import { getClassesAction } from '@/actions/classActions';
+import { getRoutesAction, getStopsAction } from '@/actions/transportActions';
 import { useRouter } from 'next/navigation';
 import Switch from '@/components/ui/Switch';
 import { handleConfirmDelete, handleStatusToggle, formatPhoneNumber } from '@/lib/commonHandlers';
@@ -50,6 +51,7 @@ import { notifySuccess, notifyError } from '@/lib/notify';
 import DataTable from '@/components/ui/DataTable';
 import { SkeletonTableRow } from '@/components/ui/Skeleton';
 import { useAcademicYear } from '@/context/AcademicYearContext';
+import { usePackage } from '@/context/PackageContext';
 import PromoteStudentsModal from '@/components/modals/PromoteStudentsModal';
 
 const SESSION_STATUS_CONFIG = {
@@ -75,10 +77,13 @@ export default function StudentsPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const { activeYear, academicYears } = useAcademicYear();
+  const { hasModule, isTransportOnly } = usePackage();
 
   // Data States
   const [students, setStudents] = useState([]);
   const [classesList, setClassesList] = useState([]);
+  const [routesList, setRoutesList] = useState([]);
+  const [stopsList, setStopsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('all');
@@ -118,7 +123,7 @@ export default function StudentsPage() {
     guardian_phone: '',
     alternate_phone: '',
     nfc_card_uid: '',
-    is_bus_service_enabled: false,
+    is_bus_service_enabled: isTransportOnly ? true : false,
     bus_route_id: '',
     bus_stop_id: ''
   });
@@ -140,9 +145,30 @@ export default function StudentsPage() {
     }
   };
 
+  // Fetch routes and stops if transport enabled
+  const fetchTransportData = async () => {
+    try {
+      const [rRes, sRes] = await Promise.all([
+        getRoutesAction(),
+        getStopsAction()
+      ]);
+      if (rRes?.success && Array.isArray(rRes.data)) {
+        setRoutesList(rRes.data);
+      }
+      if (sRes?.success && Array.isArray(sRes.data)) {
+        setStopsList(sRes.data);
+      }
+    } catch (e) {
+      console.warn('Could not load transport options in students page', e);
+    }
+  };
+
   useEffect(() => {
     fetchClasses();
-  }, []);
+    if (hasModule('transport')) {
+      fetchTransportData();
+    }
+  }, [hasModule('transport')]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -180,6 +206,20 @@ export default function StudentsPage() {
     { label: 'Female', value: 'female' },
     { label: 'Other',  value: 'other' }
   ];
+
+  const routeOptions = routesList.map(r => ({
+    label: `${r.route_name || r.name} (${r.route_number || r.route_code || ''})`,
+    value: String(r.id)
+  }));
+
+  const filteredStops = formData.bus_route_id 
+    ? stopsList.filter(s => String(s.route_id || s.routeId) === String(formData.bus_route_id))
+    : stopsList;
+
+  const availableStopOptions = filteredStops.map(s => ({
+    label: `${s.stop_name || s.name}${s.pickup_time ? ` (Pickup: ${s.pickup_time})` : ''}`,
+    value: String(s.id)
+  }));
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -311,7 +351,9 @@ export default function StudentsPage() {
       dob: '2012-05-15',
       guardian_name: '', guardian_address: '', guardian_email: '', guardian_phone: '',
       alternate_phone: '', nfc_card_uid: '',
-      is_bus_service_enabled: false, bus_route_id: '', bus_stop_id: ''
+      is_bus_service_enabled: isTransportOnly ? true : false,
+      bus_route_id: routesList[0] ? String(routesList[0].id) : '',
+      bus_stop_id: ''
     });
     setSelectedFile(null);
     setPreviewUrl('');
@@ -332,24 +374,24 @@ export default function StudentsPage() {
     const initialClassId = matchedClass ? String(matchedClass.id) : (studentClassId ? String(studentClassId) : (classesList[0] ? String(classesList[0].id) : ''));
 
     setFormData({
-      first_name: student.firstName || '',
-      last_name: student.lastName || '',
-      admission_number: student.admissionNumber || '',
+      first_name: student.firstName || student.first_name || '',
+      last_name: student.lastName || student.last_name || '',
+      admission_number: student.admissionNumber || student.admission_number || '',
       roll_number: student.rollNumber || student.roll_number || '',
       class_id: initialClassId,
       grade: initialClassId,
       section: student.section || (matchedClass ? matchedClass.section : 'A'),
       gender: student.gender || 'male',
       dob: student.dob || '',
-      guardian_name: student.guardianName || '',
-      guardian_address: student.parent?.address || student.guardian_address || '',
-      guardian_email: student.guardianEmail || '',
-      guardian_phone: student.guardianPhone || '',
-      alternate_phone: student.alternatePhone || '',
-      nfc_card_uid: student.nfcCardUid || '',
-      is_bus_service_enabled: Boolean(student.isBusServiceEnabled),
-      bus_route_id: student.busRouteId || '',
-      bus_stop_id: student.busStopId || ''
+      guardian_name: student.guardianName || student.guardian_name || '',
+      guardian_address: student.parent?.address || student.guardianAddress || student.guardian_address || '',
+      guardian_email: student.guardianEmail || student.guardian_email || '',
+      guardian_phone: student.guardianPhone || student.guardian_phone || '',
+      alternate_phone: student.alternatePhone || student.alternate_phone || '',
+      nfc_card_uid: student.nfcCardUid || student.nfc_card_uid || '',
+      is_bus_service_enabled: isTransportOnly ? true : Boolean(student.isBusServiceEnabled ?? student.is_bus_service_enabled),
+      bus_route_id: student.busRouteId || student.bus_route_id ? String(student.busRouteId || student.bus_route_id) : (routesList[0] ? String(routesList[0].id) : ''),
+      bus_stop_id: student.busStopId || student.bus_stop_id ? String(student.busStopId || student.bus_stop_id) : ''
     });
     setSelectedFile(null);
     setPreviewUrl(student.photo || '');
@@ -612,45 +654,51 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Promote Students Button */}
-          <Button
-            variant="secondary"
-            icon={GraduationCap}
-            onClick={handleOpenPromoteModal}
-            disabled={!activeYear}
-            className="font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80"
-          >
-            Promote Students
-          </Button>
+          {/* Promote Students Button (Academics only) */}
+          {hasModule('academics') && (
+            <Button
+              variant="secondary"
+              icon={GraduationCap}
+              onClick={handleOpenPromoteModal}
+              disabled={!activeYear}
+              className="font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80"
+            >
+              Promote Students
+            </Button>
+          )}
 
           <Button variant="primary" icon={UserPlus} onClick={handleOpenAddModal}>
-            + New Admission
+            {isTransportOnly ? '+ Add Commuter' : '+ New Admission'}
           </Button>
         </div>
       </div>
 
       {/* 📊 Summary Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 ${hasModule('transport') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
         <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
           <div className="flex items-center justify-between text-slate-500 text-xs"><span>Total Students</span><Users size={16} className="text-primary-600" /></div>
           <p className="text-2xl font-extrabold text-slate-900">{totalStudents}</p>
-          <span className="text-[10px] text-emerald-600 font-semibold">Active Enrollments</span>
+          <span className="text-[10px] text-emerald-600 font-semibold">{isTransportOnly ? 'Bus Commuters' : 'Active Enrollments'}</span>
         </div>
         <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
           <div className="flex items-center justify-between text-slate-500 text-xs"><span>NFC Cards Issued</span><CreditCard size={16} className="text-emerald-600" /></div>
           <p className="text-2xl font-extrabold text-emerald-600">{nfcAssignedCount}</p>
           <span className="text-[10px] text-slate-500 font-medium">{Math.round((nfcAssignedCount / (totalStudents || 1)) * 100)}% Coverage</span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
-          <div className="flex items-center justify-between text-slate-500 text-xs"><span>Smart Bus Riders</span><Bus size={16} className="text-amber-600" /></div>
-          <p className="text-2xl font-extrabold text-amber-600">{busRidersCount}</p>
-          <span className="text-[10px] text-slate-500 font-medium">Active Transport Riders</span>
-        </div>
-        <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
-          <div className="flex items-center justify-between text-slate-500 text-xs"><span>Attendance Status</span><UserCheck size={16} className="text-primary-600" /></div>
-          <p className="text-2xl font-extrabold text-slate-900">98.4%</p>
-          <span className="text-[10px] text-emerald-600 font-semibold">Daily Campus Average</span>
-        </div>
+        {hasModule('transport') && (
+          <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
+            <div className="flex items-center justify-between text-slate-500 text-xs"><span>Smart Bus Riders</span><Bus size={16} className="text-amber-600" /></div>
+            <p className="text-2xl font-extrabold text-amber-600">{busRidersCount}</p>
+            <span className="text-[10px] text-slate-500 font-medium">Active Transport Riders</span>
+          </div>
+        )}
+        {hasModule('attendance') && (
+          <div className="glass-panel p-4 rounded-xl border border-slate-200 space-y-1 bg-white">
+            <div className="flex items-center justify-between text-slate-500 text-xs"><span>Attendance Status</span><UserCheck size={16} className="text-primary-600" /></div>
+            <p className="text-2xl font-extrabold text-slate-900">98.4%</p>
+            <span className="text-[10px] text-emerald-600 font-semibold">Daily Campus Average</span>
+          </div>
+        )}
       </div>
 
       {/* 🔍 Search & Filter Toolbar */}
@@ -667,12 +715,16 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          <div className="w-full sm:w-48">
-            <Select value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value)} options={gradeFilterOptions} placeholder="All Grades" searchable={true} />
-          </div>
-          <div className="w-full sm:w-48">
-            <Select value={selectedBusFilter} onChange={(e) => setSelectedBusFilter(e.target.value)} options={busFilterOptions} placeholder="All Transport Status" searchable={true} />
-          </div>
+          {hasModule('academics') && (
+            <div className="w-full sm:w-48">
+              <Select value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value)} options={gradeFilterOptions} placeholder="All Grades" searchable={true} />
+            </div>
+          )}
+          {hasModule('transport') && (
+            <div className="w-full sm:w-48">
+              <Select value={selectedBusFilter} onChange={(e) => setSelectedBusFilter(e.target.value)} options={busFilterOptions} placeholder="All Transport Status" searchable={true} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -782,19 +834,85 @@ export default function StudentsPage() {
                   </div>
                 </div>
 
-                {/* Smart Bus Toggle */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="block text-xs font-bold text-slate-900 flex items-center gap-1.5"><Bus size={14} className="text-amber-600" /> Smart Bus Transport Service</span>
-                      <span className="text-[10px] text-slate-500">Enable automatic bus boarding &amp; deboarding scanning.</span>
+                {/* Smart Bus Transport Configuration (only if transport module enabled) */}
+                {hasModule('transport') && (
+                  isTransportOnly ? (
+                    /* Transport Only Plan: Bus Service is Compulsory & Pre-enrolled */
+                    <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-4 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                            <Bus size={15} className="text-amber-600" /> Smart Bus Transit Enrollment
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Mandatory bus commuter service for all registered student riders.
+                          </span>
+                        </div>
+                        <Badge variant="amber" size="sm" dot>
+                          Included (Compulsory)
+                        </Badge>
+                      </div>
+
+                      {/* Route and Stop Selectors */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-amber-200/60">
+                        <Select 
+                          label="Assigned Bus Route" 
+                          value={formData.bus_route_id} 
+                          onChange={(e) => setFormData({ ...formData, bus_route_id: e.target.value, bus_stop_id: '' })} 
+                          options={routeOptions} 
+                          placeholder="Select Bus Route" 
+                          searchable={true} 
+                        />
+                        <Select 
+                          label="Pickup & Drop Stop" 
+                          value={formData.bus_stop_id} 
+                          onChange={(e) => setFormData({ ...formData, bus_stop_id: e.target.value })} 
+                          options={availableStopOptions} 
+                          placeholder={formData.bus_route_id ? "Select Pickup Stop" : "First choose a Route"} 
+                          searchable={true} 
+                        />
+                      </div>
                     </div>
-                    <Checkbox 
-                      checked={formData.is_bus_service_enabled} 
-                      onChange={(e) => setFormData({ ...formData, is_bus_service_enabled: e.target.checked })} 
-                    />
-                  </div>
-                </div>
+                  ) : (
+                    /* Full Suite Plan: Bus Service is Optional per student */
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                            <Bus size={14} className="text-amber-600" /> Smart Bus Transport Service
+                          </span>
+                          <span className="text-[10px] text-slate-500">Enable automatic bus boarding &amp; deboarding scanning.</span>
+                        </div>
+                        <Checkbox 
+                          checked={formData.is_bus_service_enabled} 
+                          onChange={(e) => setFormData({ ...formData, is_bus_service_enabled: e.target.checked })} 
+                        />
+                      </div>
+
+                      {/* Expandable Route and Stop Selectors when Bus enabled */}
+                      {formData.is_bus_service_enabled && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 animate-fadeIn">
+                          <Select 
+                            label="Assigned Bus Route" 
+                            value={formData.bus_route_id} 
+                            onChange={(e) => setFormData({ ...formData, bus_route_id: e.target.value, bus_stop_id: '' })} 
+                            options={routeOptions} 
+                            placeholder="Select Bus Route" 
+                            searchable={true} 
+                          />
+                          <Select 
+                            label="Pickup & Drop Stop" 
+                            value={formData.bus_stop_id} 
+                            onChange={(e) => setFormData({ ...formData, bus_stop_id: e.target.value })} 
+                            options={availableStopOptions} 
+                            placeholder={formData.bus_route_id ? "Select Pickup Stop" : "First choose a Route"} 
+                            searchable={true} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Fixed Footer */}

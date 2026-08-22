@@ -27,6 +27,7 @@ import { getStudentsAction } from '@/actions/studentActions';
 import { getTeachersAction } from '@/actions/teacherActions';
 import SidebarNavPopover from '@/components/ui/SidebarNavPopover';
 import { useAcademicYear } from '@/context/AcademicYearContext';
+import { usePackage } from '@/context/PackageContext';
 
 /**
  * Dynamic Sidebar Component with Collapsible Icon-Only Mode
@@ -40,6 +41,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { activeYear } = useAcademicYear();
+  const { hasModule, packageInfo } = usePackage();
   const [studentCount, setStudentCount] = useState(null);
   const [teacherCount, setTeacherCount] = useState(null);
   const [userSession, setUserSession] = useState(null);
@@ -97,19 +99,21 @@ export default function Sidebar({
     router.push('/login');
   };
 
-  const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: Activity },
-    { label: 'Classes & Sections', href: '/classes', icon: BookOpen },
-    { label: 'Students', href: '/students', icon: Users, badge: studentCount !== null ? studentCount.toString() : null },
-    { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null },
-    { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Active' },
-    { label: 'Attendance', href: '/attendance', icon: Calendar },
-    { label: 'Timetable & Periods', href: '/timetable', icon: Clock },
-    { label: 'Student Fees', href: '/fees', icon: Landmark },
-    { label: 'Academic Year', href: '/academic-years', icon: CalendarDays },
-    { label: 'Billing & Plans', href: '/billing', icon: CreditCard },
-    { label: 'Settings', href: '/settings', icon: Settings }
+  const allNavItems = [
+    { label: 'Dashboard', href: '/dashboard', icon: Activity, moduleKey: 'always' },
+    { label: 'Classes & Sections', href: '/classes', icon: BookOpen, moduleKey: 'academics' },
+    { label: 'Students', href: '/students', icon: Users, badge: studentCount !== null ? studentCount.toString() : null, moduleKey: 'students' },
+    { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null, moduleKey: 'teachers' },
+    { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Live', moduleKey: 'transport' },
+    { label: 'Attendance', href: '/attendance', icon: Calendar, moduleKey: 'attendance' },
+    { label: 'Timetable & Periods', href: '/timetable', icon: Clock, moduleKey: 'timetable' },
+    { label: 'Student Fees', href: '/fees', icon: Landmark, moduleKey: 'fees' },
+    { label: 'Academic Year', href: '/academic-years', icon: CalendarDays, moduleKey: 'academic_years' },
+    { label: 'Billing & Plans', href: '/billing', icon: CreditCard, moduleKey: 'always' },
+    { label: 'Settings', href: '/settings', icon: Settings, moduleKey: 'always' }
   ];
+
+  const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
 
 
   const sidebarContent = (
