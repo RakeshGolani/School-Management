@@ -208,7 +208,7 @@ export default function InvoiceDetailPage() {
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 overflow-hidden">
                     {systemSettings?.logo_url ? (
-                      <img src={process.env.NEXT_PUBLIC_BASE_URL ? process.env.NEXT_PUBLIC_BASE_URL + systemSettings.logo_url : `http://localhost:5000${systemSettings.logo_url}`} alt="Logo" className="w-full h-full object-contain" />
+                      <img src={systemSettings.logo_url.startsWith('http') ? systemSettings.logo_url : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}${systemSettings.logo_url}`} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
                       <ShieldCheck size={24} />
                     )}
@@ -308,12 +308,13 @@ export default function InvoiceDetailPage() {
                         SaaS Subscription Plan ({subscription.plan_type ? subscription.plan_type.toUpperCase() : 'MONTHLY'})
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        Access to Student Portal, NFC Attendance, Bus Tracking & Admin Dashboard
+                        Access to Student Portal, NFC Attendance{subscription.max_buses_limit > 0 ? ', Bus Tracking' : ''} & Admin Dashboard
                       </div>
                     </td>
                     <td className="py-3 px-3.5 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-[11px] font-medium whitespace-nowrap border border-slate-200">
-                        {subscription.max_students_limit || 50} Students / {subscription.max_buses_limit || 5} Buses
+                      <span className="px-2 py-0.5 rounded bg-slate-50 print-pill text-slate-700 font-mono text-[11px] whitespace-nowrap border border-slate-200">
+                        {subscription.max_students_limit ?? 50} Students
+                        {subscription.max_buses_limit > 0 ? ` / ${subscription.max_buses_limit} Buses` : ''}
                       </span>
                     </td>
                     <td className="py-3 px-3.5 text-right font-mono">₹{subtotal}</td>
