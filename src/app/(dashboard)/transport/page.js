@@ -20,7 +20,7 @@ import {
   getStopsAction, createStopAction, updateStopAction, deleteStopAction,
   getBusesAction, createBusAction, updateBusAction, deleteBusAction,
   getAssignedStudentsAction, updateStudentTransportAction
-} from '@/actions/transportActions';
+} from '@/actions/school/transportActions';
 import { busSchema, routeSchema, stopSchema } from '@/validators/transportSchemas';
 import dynamic from 'next/dynamic';
 import { MapPin as MapPinIcon } from 'lucide-react'; // renamed for tab icon 

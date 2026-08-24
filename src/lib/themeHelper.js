@@ -21,10 +21,14 @@ export function applyDynamicTheme(primaryColor) {
   // Apply immediately — NO requestAnimationFrame delay
   root.style.setProperty('--theme-primary-500', primaryColor);
   root.style.setProperty('--theme-primary-400', lightenHex(primaryColor, 15));
+  root.style.setProperty('--theme-primary-300', lightenHex(primaryColor, 30));
   root.style.setProperty('--theme-primary-600', darkenHex(primaryColor, 10));
-  root.style.setProperty('--theme-primary-900', darkenHex(primaryColor, 35));
+  root.style.setProperty('--theme-primary-700', darkenHex(primaryColor, 20));
+  root.style.setProperty('--theme-primary-800', darkenHex(primaryColor, 30));
+  root.style.setProperty('--theme-primary-900', darkenHex(primaryColor, 40));
   root.style.setProperty('--theme-primary-50',  hexToRgba(primaryColor, 0.08));
   root.style.setProperty('--theme-primary-100', hexToRgba(primaryColor, 0.15));
+  root.style.setProperty('--theme-primary-200', hexToRgba(primaryColor, 0.25));
 }
 
 // ─── Color Utilities ──────────────────────────────────────────────────────────

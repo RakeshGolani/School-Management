@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Mail, 
@@ -19,7 +19,7 @@ import {
   Zap
 } from 'lucide-react';
 import Link from 'next/link';
-import { loginAction } from '@/actions/authActions';
+import { loginAction, getSessionAction } from '@/actions/school/authActions';
 import { loginSchema } from '@/validators/authSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
@@ -35,6 +35,20 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const session = await getSessionAction();
+        if (session?.user?.id) {
+          router.replace('/dashboard');
+        }
+      } catch (err) {
+        // Continue to login if no session
+      }
+    }
+    checkExistingSession();
+  }, [router]);
 
   const handleQuickFill = (demoEmail, demoPass) => {
     setEmail(demoEmail);

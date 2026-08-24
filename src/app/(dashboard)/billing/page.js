@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import BillingPageSkeleton from '@/components/skeletons/BillingPageSkeleton';
+import BillingPageSkeleton from '@/components/skeletons/school/BillingPageSkeleton';
 import { 
   CreditCard, 
   Users, 
@@ -26,7 +26,7 @@ import {
   getSubscriptionDetailsAction, 
   checkoutSubscriptionAction, 
   triggerMockPaymentAction 
-} from '@/actions/billingActions';
+} from '@/actions/school/billingActions';
 
 export default function BillingPage() {
   const [loading, setLoading] = useState(true);

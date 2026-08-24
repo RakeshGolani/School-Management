@@ -14,10 +14,12 @@ import {
   Sparkles,
   Command
 } from 'lucide-react';
-import { getSessionAction, logoutAction } from '@/actions/authActions';
+import { getSessionAction, logoutAction } from '@/actions/school/authActions';
+import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import { usePathname } from 'next/navigation';
 import AcademicYearHeaderDropdown from '@/components/layout/AcademicYearHeaderDropdown';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 
@@ -101,10 +103,24 @@ export default function Header({
   const displayEmail = userSession?.email || 'school@gmail.com';
   const displayCode = userSession?.code || 'SCH-1001';
 
-  const handleLogout = async () => {
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogoutTrigger = () => {
     setProfileOpen(false);
-    await logoutAction();
-    router.push('/login');
+    setLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logoutAction();
+      notifySuccess('Logged out successfully');
+      router.push('/login');
+    } catch (err) {
+      notifyError(err.message || 'Logout failed');
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -272,7 +288,7 @@ export default function Header({
               {/* Logout Action */}
               <div className="border-t border-slate-100 pt-2">
                 <button
-                  onClick={handleLogout}
+                  onClick={handleLogoutTrigger}
                   className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                 >
                   <LogOut size={16} />
@@ -283,6 +299,19 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {/* REUSABLE LOGOUT CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => !loggingOut && setLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        title="Sign Out Confirmation"
+        message="Are you sure you want to sign out from the School Administration portal?"
+        confirmText="Yes, Sign Out"
+        cancelText="Cancel"
+        type="danger"
+        loading={loggingOut}
+      />
     </header>
   );
 }

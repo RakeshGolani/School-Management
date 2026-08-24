@@ -26,7 +26,10 @@ export default async function RootLayout({ children }) {
     ? {
         '--theme-primary-500': color,
         '--theme-primary-400': color,
+        '--theme-primary-300': color,
         '--theme-primary-600': color,
+        '--theme-primary-700': color,
+        '--theme-primary-800': color,
         '--theme-primary-900': color,
         '--theme-primary-50':  color + '1a',
         '--theme-primary-100': color + '26',

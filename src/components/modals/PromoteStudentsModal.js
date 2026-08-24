@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { GraduationCap, X, AlertCircle, CheckSquare, Square, Check, Search } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
-import { promoteStudentsAction } from '@/actions/studentActions';
+import { promoteStudentsAction } from '@/actions/school/studentActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
 // Helper to resolve student photo image URL

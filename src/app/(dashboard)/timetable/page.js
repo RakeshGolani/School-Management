@@ -36,16 +36,16 @@ import Tooltip from '@/components/ui/Tooltip';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { confirmCustomAction } from '@/lib/commonHandlers';
 import { useAcademicYear } from '@/context/AcademicYearContext';
-import { getClassesAction } from '@/actions/classActions';
-import { getTeachersAction } from '@/actions/teacherActions';
+import { getClassesAction } from '@/actions/school/classActions';
+import { getTeachersAction } from '@/actions/school/teacherActions';
 import { 
-  getPeriodSlotsAction, 
-  savePeriodSlotAction, 
-  deletePeriodSlotAction,
-  allocateSlotAction,
-  deleteAllocationAction,
-  getClassTimetableAction
-} from '@/actions/timetableActions';
+  getTimetableAction, 
+  createPeriodAction, 
+  updatePeriodAction, 
+  deletePeriodAction,
+  autoGenerateTimetableAction,
+  resetTimetableAction 
+} from '@/actions/school/timetableActions';
 
 const DAYS = [
   { key: 'MONDAY', label: 'Mon' },

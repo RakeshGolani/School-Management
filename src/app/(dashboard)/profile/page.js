@@ -27,10 +27,11 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import FormPhoneInput from '@/components/FormPhoneInput';
-import { getSessionAction, logoutAction } from '@/actions/authActions';
-import { updateProfileAction, changePasswordAction } from '@/actions/profileActions';
+import { getSessionAction, logoutAction } from '@/actions/school/authActions';
+import { updateProfileAction, changePasswordAction } from '@/actions/school/profileActions';
 import { schoolProfileSchema, changePasswordSchema } from '@/validators/authSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
+import SchoolProfileSkeleton from '@/components/skeletons/school/SchoolProfileSkeleton';
 
 /**
  * Compact & Sleek My School Profile Workspace
@@ -42,6 +43,7 @@ export default function SchoolProfilePage() {
   // Active Tab State: 'branding' | 'contacts' | 'security'
   const [activeTab, setActiveTab] = useState('branding');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   
   // Profile Form States
   const [formData, setFormData] = useState({
@@ -111,6 +113,8 @@ export default function SchoolProfilePage() {
         }
       } catch (err) {
         console.error('Error loading school profile:', err);
+      } finally {
+        setPageLoading(false);
       }
     };
 
@@ -118,6 +122,10 @@ export default function SchoolProfilePage() {
     window.addEventListener('sessionUpdated', loadProfile);
     return () => window.removeEventListener('sessionUpdated', loadProfile);
   }, []);
+
+  if (pageLoading) {
+    return <SchoolProfileSkeleton />;
+  }
 
   const getInitials = () => {
     const name = formData.school_name || 'School';

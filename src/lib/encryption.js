@@ -7,18 +7,8 @@ const ALGORITHM = 'aes-256-cbc';
 // Derive key buffer (32 bytes)
 const KEY_BUFFER = crypto.createHash('sha256').update(SECRET_KEY).digest();
 
-/**
- * Encrypts a Cookie Key (Name) into an encrypted/hashed string suitable for HTTP cookie headers.
- * @param {string} keyName - Plain cookie name (e.g. 'school_session')
- * @returns {string} Encrypted cookie name (e.g. 'enc_key_a8f3b12c90e54d1a')
- */
-export function encryptCookieKey(keyName = 'school_session') {
-  const hash = crypto.createHash('sha256')
-    .update(keyName + SECRET_KEY)
-    .digest('hex')
-    .substring(0, 16);
-  return `enc_key_${hash}`;
-}
+import { encryptCookieKey } from './cookieKeys';
+export { encryptCookieKey };
 
 /**
  * Encrypts any data payload/token into an AES-256-CBC ciphertext string.

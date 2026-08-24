@@ -37,8 +37,8 @@ import {
   getTeachersAction, 
   createTeacherAction, 
   updateTeacherAction 
-} from '@/actions/teacherActions';
-import { getClassesAction } from '@/actions/classActions';
+} from '@/actions/school/teacherActions';
+import { getClassesAction } from '@/actions/school/classActions';
 import { handleConfirmDelete, handleStatusToggle, formatPhoneNumber } from '@/lib/commonHandlers';
 import { teacherSchema } from '@/validators/teacherSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';

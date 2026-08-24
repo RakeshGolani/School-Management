@@ -927,24 +927,28 @@ export default function LandingPage() {
           <PortalRoleCard
             title="School Administrator"
             role="ADMIN"
+            loginHref="/login"
             icon={<Building className="text-primary-400" size={24} />}
             desc="Full command of student registrations, fee collection, staff allocation, and institutional configuration."
           />
           <PortalRoleCard
             title="Class Teacher"
             role="TEACHER"
+            loginHref="/teacher/login"
             icon={<GraduationCap className="text-purple-400" size={24} />}
             desc="1-click daily attendance logging, timetable schedule view, grading submissions, and parent notices."
           />
           <PortalRoleCard
             title="Parent & Guardian"
             role="PARENT"
+            loginHref="/parent/login"
             icon={<Users className="text-emerald-400" size={24} />}
             desc="Live smart bus route GPS tracker, NFC boarding logs, fee receipts download, and academic milestones."
           />
           <PortalRoleCard
             title="Student Profile"
             role="STUDENT"
+            loginHref="/student/login"
             icon={<Smartphone className="text-cyan-400" size={24} />}
             desc="Access daily period timetables, download homework assignments, exam schedules, and library records."
           />
@@ -1180,7 +1184,7 @@ export default function LandingPage() {
   );
 }
 
-function PortalRoleCard({ title, role, icon, desc }) {
+function PortalRoleCard({ title, role, icon, desc, loginHref = '/login' }) {
   return (
     <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/10 hover:border-primary-500/40 flex flex-col justify-between transition-all duration-300 group shadow-lg">
       <div className="space-y-3">
@@ -1196,7 +1200,7 @@ function PortalRoleCard({ title, role, icon, desc }) {
         <p className="text-slate-400 text-xs leading-relaxed">{desc}</p>
       </div>
       <Link 
-        href="/login" 
+        href={loginHref} 
         className="mt-6 py-2.5 px-4 rounded-xl text-center text-xs font-bold bg-white/5 border border-white/10 hover:bg-primary-600 hover:border-primary-500 hover:text-white text-slate-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
       >
         Sign In <ArrowRight size={12} />

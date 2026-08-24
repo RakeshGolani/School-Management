@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import InvoiceSkeleton from '@/components/skeletons/InvoiceSkeleton';
+import InvoiceSkeleton from '@/components/skeletons/school/InvoiceSkeleton';
 import { 
   Building2, 
   CheckCircle2, 
@@ -11,8 +11,8 @@ import {
   Phone, 
   MapPin
 } from 'lucide-react';
-import { getSubscriptionDetailsAction } from '@/actions/billingActions';
-import { getSessionAction } from '@/actions/authActions';
+import { getSubscriptionDetailsAction } from '@/actions/school/billingActions';
+import { getSessionAction } from '@/actions/school/authActions';
 
 export default function StandalonePrintInvoicePage() {
   const params = useParams();

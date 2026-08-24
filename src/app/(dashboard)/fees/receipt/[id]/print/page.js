@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import InvoiceSkeleton from '@/components/skeletons/InvoiceSkeleton';
+import InvoiceSkeleton from '@/components/skeletons/school/InvoiceSkeleton';
 import { 
   Building2, 
   CheckCircle2, 
@@ -13,8 +13,8 @@ import {
   User,
   GraduationCap
 } from 'lucide-react';
-import { getFeeReceiptAction } from '@/actions/feeActions';
-import { getSessionAction } from '@/actions/authActions';
+import { getFeeReceiptAction } from '@/actions/school/feeActions';
+import { getSessionAction } from '@/actions/school/authActions';
 
 export default function StandalonePrintReceiptPage() {
   const params = useParams();

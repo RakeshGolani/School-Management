@@ -1,5 +1,5 @@
 import Notiflix from 'notiflix';
-import { updateStatusAction, deleteEntityAction } from '@/actions/commonActions';
+import { updateStatusAction, deleteEntityAction } from '@/actions/school/commonActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
 // Initialize Notiflix with a premium dark theme globally (Client-side only)

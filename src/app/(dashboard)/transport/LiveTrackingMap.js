@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from
 import L from 'leaflet';
 import { io } from 'socket.io-client';
 import 'leaflet/dist/leaflet.css';
-import { getLiveLocationsAction, getRoutesAction } from '@/actions/transportActions';
+import { getLiveLocationsAction, getRoutesAction } from '@/actions/school/transportActions';
 import { hexToRgba } from '@/lib/themeHelper';
 import { Route, Navigation } from 'lucide-react';
 import StudentAvatarStack from '@/components/ui/StudentAvatarHover';

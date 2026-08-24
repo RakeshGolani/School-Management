@@ -29,7 +29,7 @@ import {
   getAttendanceAction, 
   saveBulkAttendanceAction, 
   getAttendanceSummaryAction 
-} from '@/actions/attendanceActions';
+} from '@/actions/school/attendanceActions';
 
 import { useAcademicYear } from '@/context/AcademicYearContext';
 

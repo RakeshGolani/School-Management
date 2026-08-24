@@ -16,9 +16,9 @@ import {
   Check
 } from 'lucide-react';
 import Link from 'next/link';
-import InvoiceSkeleton from '@/components/skeletons/InvoiceSkeleton';
-import { getSubscriptionDetailsAction } from '@/actions/billingActions';
-import { getSessionAction } from '@/actions/authActions';
+import InvoiceSkeleton from '@/components/skeletons/school/InvoiceSkeleton';
+import { getSubscriptionDetailsAction } from '@/actions/school/billingActions';
+import { getSessionAction } from '@/actions/school/authActions';
 
 export default function InvoiceDetailPage() {
   const router = useRouter();

@@ -40,9 +40,9 @@ import {
   updateStudentAction,
   getStudentSessionsAction,
   promoteStudentsAction
-} from '@/actions/studentActions';
-import { getClassesAction } from '@/actions/classActions';
-import { getRoutesAction, getStopsAction } from '@/actions/transportActions';
+} from '@/actions/school/studentActions';
+import { getClassesAction } from '@/actions/school/classActions';
+import { getRoutesAction, getStopsAction } from '@/actions/school/transportActions';
 import { useRouter } from 'next/navigation';
 import Switch from '@/components/ui/Switch';
 import { handleConfirmDelete, handleStatusToggle, formatPhoneNumber } from '@/lib/commonHandlers';

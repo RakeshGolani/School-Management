@@ -37,8 +37,8 @@ import {
   createClassAction, 
   updateClassAction, 
   deleteClassAction 
-} from '@/actions/classActions';
-import { getTeachersAction } from '@/actions/teacherActions';
+} from '@/actions/school/classActions';
+import { getTeachersAction } from '@/actions/school/teacherActions';
 
 import * as Yup from 'yup';
 

@@ -27,10 +27,10 @@ import {
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import TeacherDetailsSkeleton from '@/components/skeletons/TeacherDetailsSkeleton';
+import TeacherDetailsSkeleton from '@/components/skeletons/school/TeacherDetailsSkeleton';
 import TeacherIdCardModal from '@/components/modals/TeacherIdCardModal';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { getTeacherTimetableAction } from '@/actions/timetableActions';
+import { getTeacherTimetableAction } from '@/actions/school/timetableActions';
 
 export default function TeacherDetailsPage() {
   const router = useRouter();

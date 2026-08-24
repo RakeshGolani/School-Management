@@ -33,8 +33,8 @@ import Skeleton from '@/components/ui/Skeleton';
 import Tooltip from '@/components/ui/Tooltip';
 import { useAcademicYear } from '@/context/AcademicYearContext';
 import { usePackage } from '@/context/PackageContext';
-import { getSchoolDashboardAction } from '@/actions/dashboardActions';
-import SchoolDashboardSkeleton from '@/components/skeletons/SchoolDashboardSkeleton';
+import { getSchoolDashboardAction } from '@/actions/school/dashboardActions';
+import SchoolDashboardSkeleton from '@/components/skeletons/school/SchoolDashboardSkeleton';
 
 // Dynamically load the Leaflet Map component with SSR disabled
 const LiveTrackingMap = dynamic(

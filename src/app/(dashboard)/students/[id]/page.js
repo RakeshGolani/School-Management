@@ -30,12 +30,12 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Skeleton from '@/components/ui/Skeleton';
-import StudentDetailsSkeleton from '@/components/skeletons/StudentDetailsSkeleton';
+import StudentDetailsSkeleton from '@/components/skeletons/school/StudentDetailsSkeleton';
 import StudentIdCardModal from '@/components/modals/StudentIdCardModal';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { getClassTimetableAction } from '@/actions/timetableActions';
-import { getAttendanceAction } from '@/actions/attendanceActions';
-import { getFeeAllocationsAction } from '@/actions/feeActions';
+import { getClassTimetableAction } from '@/actions/school/timetableActions';
+import { getAttendanceAction } from '@/actions/school/attendanceActions';
+import { getFeeAllocationsAction } from '@/actions/school/feeActions';
 
 export default function StudentDetailsPage() {
   const router = useRouter();

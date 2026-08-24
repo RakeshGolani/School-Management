@@ -46,9 +46,9 @@ import {
   updateClassAction,
   assignStudentToClassAction, 
   unassignStudentFromClassAction 
-} from '@/actions/classActions';
-import { getTeachersAction } from '@/actions/teacherActions';
-import { promoteStudentsAction } from '@/actions/studentActions';
+} from '@/actions/school/classActions';
+import { getTeachersAction } from '@/actions/school/teacherActions';
+import { promoteStudentsAction } from '@/actions/school/studentActions';
 import PromoteStudentsModal from '@/components/modals/PromoteStudentsModal';
 import BatchStudentIdCardModal from '@/components/modals/BatchStudentIdCardModal';
 

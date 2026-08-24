@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getSessionAction } from '@/actions/authActions';
+import { getSessionAction } from '@/actions/school/authActions';
 
 const PackageContext = createContext(null);
 

@@ -41,9 +41,9 @@ import {
   recordPaymentAction, 
   getPaymentTransactionsAction, 
   getFeeStatsAction 
-} from '@/actions/feeActions';
-import { getClassesAction } from '@/actions/classActions';
-import { getStudentsAction } from '@/actions/studentActions';
+} from '@/actions/school/feeActions';
+import { getClassesAction } from '@/actions/school/classActions';
+import { getStudentsAction } from '@/actions/school/studentActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { feeCategorySchema, feeAllocationSchema, feePaymentSchema } from '@/validators/feeSchemas';
 

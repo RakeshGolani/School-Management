@@ -22,10 +22,12 @@ import {
   Clock
 } from 'lucide-react';
 
-import { logoutAction, getSessionAction } from '@/actions/authActions';
-import { getStudentsAction } from '@/actions/studentActions';
-import { getTeachersAction } from '@/actions/teacherActions';
+import { logoutAction, getSessionAction } from '@/actions/school/authActions';
+import { getStudentsAction } from '@/actions/school/studentActions';
+import { getTeachersAction } from '@/actions/school/teacherActions';
+import { notifySuccess, notifyError } from '@/lib/notify';
 import SidebarNavPopover from '@/components/ui/SidebarNavPopover';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useAcademicYear } from '@/context/AcademicYearContext';
 import { usePackage } from '@/context/PackageContext';
 
@@ -94,9 +96,24 @@ export default function Sidebar({
     return () => window.removeEventListener('sessionUpdated', fetchSession);
   }, [activeYear?.id]); // re-fetch counts whenever active academic year changes
 
-  const handleLogout = async () => {
-    await logoutAction();
-    router.push('/login');
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogoutTrigger = () => {
+    if (onClose) onClose();
+    setLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logoutAction();
+      notifySuccess('Logged out successfully');
+      router.push('/login');
+    } catch (err) {
+      notifyError(err.message || 'Logout failed');
+      setLoggingOut(false);
+    }
   };
 
   const allNavItems = [
@@ -222,7 +239,7 @@ export default function Sidebar({
         {collapsed ? (
           <SidebarNavPopover icon={LogOut} label="Sign Out" isActive={false}>
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutTrigger}
               className="w-full flex items-center justify-center px-2 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
             >
               <LogOut size={20} className="shrink-0" />
@@ -230,7 +247,7 @@ export default function Sidebar({
           </SidebarNavPopover>
         ) : (
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutTrigger}
             className="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
           >
             <LogOut size={20} className="shrink-0" />
@@ -259,6 +276,19 @@ export default function Sidebar({
           </div>
         </div>
       )}
+
+      {/* REUSABLE LOGOUT CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => !loggingOut && setLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        title="Sign Out Confirmation"
+        message="Are you sure you want to sign out from the School Administration portal?"
+        confirmText="Yes, Sign Out"
+        cancelText="Cancel"
+        type="danger"
+        loading={loggingOut}
+      />
     </>
   );
 }
