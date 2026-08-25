@@ -39,12 +39,14 @@ import { useAcademicYear } from '@/context/AcademicYearContext';
 import { getClassesAction } from '@/actions/school/classActions';
 import { getTeachersAction } from '@/actions/school/teacherActions';
 import { 
-  getTimetableAction, 
-  createPeriodAction, 
-  updatePeriodAction, 
-  deletePeriodAction,
-  autoGenerateTimetableAction,
-  resetTimetableAction 
+  getPeriodSlotsAction,
+  savePeriodSlotAction,
+  deletePeriodSlotAction,
+  allocateSlotAction,
+  deleteAllocationAction,
+  getClassTimetableAction,
+  getTeacherTimetableAction,
+  assignProxyAction
 } from '@/actions/school/timetableActions';
 
 const DAYS = [

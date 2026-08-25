@@ -21,6 +21,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import Skeleton from '@/components/ui/Skeleton';
 import Input from '@/components/ui/Input';
 import Checkbox from '@/components/ui/Checkbox';
+import DatePicker from '@/components/ui/DatePicker';
 
 export default function AcademicYearsPage() {
   const { academicYears, activeYear, loading: contextLoading, fetchAcademicYears, changeActiveYear } = useAcademicYear();
@@ -479,20 +480,20 @@ export default function AcademicYearsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <DatePicker
                   label="Start Date"
-                  type="date"
                   required
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  placeholder="Select Start Date"
                 />
 
-                <Input
+                <DatePicker
                   label="End Date"
-                  type="date"
                   required
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  placeholder="Select End Date"
                 />
               </div>
 

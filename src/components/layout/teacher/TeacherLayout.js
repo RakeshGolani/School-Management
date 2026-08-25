@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   CheckCircle2, 
   CalendarDays, 
-  Users 
+  Users,
+  FileText 
 } from 'lucide-react';
 import { teacherLogoutAction } from '@/actions/teacher/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -15,6 +16,7 @@ import TeacherSidebar from './TeacherSidebar';
 import TeacherHeader from './TeacherHeader';
 import TeacherFooter from './TeacherFooter';
 import TeacherMobileNav from './TeacherMobileNav';
+import TeacherMobileDrawer from './TeacherMobileDrawer';
 
 export default function TeacherLayout({ user, children }) {
   const router = useRouter();
@@ -47,12 +49,27 @@ export default function TeacherLayout({ user, children }) {
     };
   }, [profileDropdownOpen]);
 
-  const navItems = [
-    { label: 'Dashboard', href: '/teacher/dashboard', icon: LayoutDashboard },
-    { label: 'Mark Attendance', href: '/teacher/attendance', icon: CheckCircle2 },
-    { label: 'Teaching Schedule', href: '/teacher/timetable', icon: CalendarDays },
-    { label: 'Class Students', href: '/teacher/students', icon: Users },
+  const schoolPackage = user?.school?.package;
+  const packageModules = Array.isArray(schoolPackage?.modules) ? schoolPackage.modules : [];
+  const packageCode = typeof schoolPackage === 'string' ? schoolPackage : schoolPackage?.code;
+
+  const hasModule = (moduleKey) => {
+    if (!moduleKey || moduleKey === 'always') return true;
+    if (!schoolPackage) return true;
+    if (packageCode === 'TRANSPORT_ONLY') return false; // Teachers have academic features disabled in TRANSPORT_ONLY
+    if (packageModules.length > 0) return packageModules.includes(moduleKey);
+    return true;
+  };
+
+  const allNavItems = [
+    { label: 'Dashboard', href: '/teacher/dashboard', icon: LayoutDashboard, moduleKey: 'always' },
+    { label: 'Mark Attendance', href: '/teacher/attendance', icon: CheckCircle2, moduleKey: 'attendance' },
+    { label: 'Teaching Schedule', href: '/teacher/timetable', icon: CalendarDays, moduleKey: 'timetable' },
+    { label: 'Class Students', href: '/teacher/students', icon: Users, moduleKey: 'students' },
+    { label: 'Leave Approvals', href: '/teacher/leaves', icon: FileText, moduleKey: 'attendance' },
   ];
+
+  const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
 
   const handleLogoutTrigger = () => {
     setProfileDropdownOpen(false);
@@ -86,28 +103,22 @@ export default function TeacherLayout({ user, children }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans selection:bg-primary-500 selection:text-white">
-      {/* Mobile Drawer Backdrop */}
-      {mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-          onClick={() => setMobileOpen(false)}
+      {/* DESKTOP TEACHER SIDEBAR */}
+      <div className="hidden lg:flex shrink-0">
+        <TeacherSidebar
+          schoolName={schoolName}
+          schoolLogo={schoolLogo}
+          schoolCode={schoolCode}
+          teacherName={teacherName}
+          teacherPhoto={teacherPhoto}
+          employeeId={employeeId}
+          classTeacherFor={classTeacherFor}
+          navItems={navItems}
+          mobileOpen={false}
+          setMobileOpen={setMobileOpen}
+          handleLogout={handleLogoutTrigger}
         />
-      )}
-
-      {/* MODULAR TEACHER SIDEBAR */}
-      <TeacherSidebar
-        schoolName={schoolName}
-        schoolLogo={schoolLogo}
-        schoolCode={schoolCode}
-        teacherName={teacherName}
-        teacherPhoto={teacherPhoto}
-        employeeId={employeeId}
-        classTeacherFor={classTeacherFor}
-        navItems={navItems}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-        handleLogout={handleLogoutTrigger}
-      />
+      </div>
 
       {/* MAIN CONTENT WRAPPER */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -136,7 +147,21 @@ export default function TeacherLayout({ user, children }) {
       </div>
 
       {/* MOBILE / TABLET NATIVE APP BOTTOM NAVIGATION BAR */}
-      <TeacherMobileNav user={user} onOpenDrawer={() => setMobileOpen(true)} />
+      <TeacherMobileNav user={user} navItems={navItems} onOpenDrawer={() => setMobileOpen(true)} />
+
+      {/* MOBILE / TABLET BOTTOM SHEET SLIDE-UP DRAWER */}
+      <TeacherMobileDrawer
+        isOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        navItems={navItems}
+        teacherName={teacherName}
+        teacherPhoto={teacherPhoto}
+        employeeId={employeeId}
+        classTeacherFor={classTeacherFor}
+        schoolName={schoolName}
+        schoolCode={schoolCode}
+        handleLogout={handleLogoutTrigger}
+      />
 
       {/* REUSABLE LOGOUT CONFIRMATION MODAL */}
       <ConfirmModal

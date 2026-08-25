@@ -19,7 +19,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Landmark,
-  Clock
+  Clock,
+  FileText
 } from 'lucide-react';
 
 import { logoutAction, getSessionAction } from '@/actions/school/authActions';
@@ -43,10 +44,16 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { activeYear } = useAcademicYear();
-  const { hasModule, packageInfo } = usePackage();
+  const { hasModule, packageInfo, loading: packageLoading } = usePackage();
+  const [mounted, setMounted] = useState(false);
   const [studentCount, setStudentCount] = useState(null);
   const [teacherCount, setTeacherCount] = useState(null);
   const [userSession, setUserSession] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -71,6 +78,7 @@ export default function Sidebar({
 
     const fetchSession = async () => {
       try {
+        setSessionLoading(true);
         const sessionData = await getSessionAction();
         if (sessionData && sessionData.user) {
           setUserSession(sessionData.user);
@@ -86,6 +94,8 @@ export default function Sidebar({
         }
       } catch (err) {
         console.warn('Could not fetch session data in Sidebar:', err);
+      } finally {
+        setSessionLoading(false);
       }
     };
 
@@ -123,6 +133,7 @@ export default function Sidebar({
     { label: 'Teachers', href: '/teachers', icon: GraduationCap, badge: teacherCount !== null ? teacherCount.toString() : null, moduleKey: 'teachers' },
     { label: 'Smart Bus', href: '/transport', icon: Bus, badge: 'Live', moduleKey: 'transport' },
     { label: 'Attendance', href: '/attendance', icon: Calendar, moduleKey: 'attendance' },
+    { label: 'Leave Requests', href: '/leaves', icon: FileText, moduleKey: 'attendance' },
     { label: 'Timetable & Periods', href: '/timetable', icon: Clock, moduleKey: 'timetable' },
     { label: 'Student Fees', href: '/fees', icon: Landmark, moduleKey: 'fees' },
     { label: 'Academic Year', href: '/academic-years', icon: CalendarDays, moduleKey: 'academic_years' },
@@ -154,26 +165,35 @@ export default function Sidebar({
           <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shadow-2xs shrink-0 overflow-hidden p-0.5" title={userSession?.schoolName || 'EduManage'}>
             {userSession?.logo ? (
               <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-cover" />
+            ) : (!mounted || (sessionLoading && !userSession)) ? (
+              <div className="w-full h-full bg-slate-200 rounded-lg animate-pulse" />
             ) : (
               <BookOpen size={20} className="text-primary-600" />
             )}
           </div>
           
           {!collapsed && (
-            <div className="relative group/tooltip min-w-0 flex-1">
-              <h1 className="text-sm font-black tracking-tight text-slate-900 truncate cursor-pointer">
-                {userSession?.schoolName || 'EduManage'}
-              </h1>
-              <span className="text-[10px] text-primary-600 font-bold uppercase tracking-widest block truncate">
-                {userSession?.code ? `ID: ${userSession.code}` : 'School ERP'}
-              </span>
-
-              {/* Floating Popper Tooltip */}
-              <div className="absolute left-0 top-full mt-2 hidden group-hover/tooltip:block z-50 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap animate-fadeIn pointer-events-none">
-                {userSession?.schoolName || 'EduManage'}
-                <div className="w-2 h-2 bg-slate-900 border-t border-l border-white/10 rotate-45 absolute -top-1 left-4"></div>
+            (!mounted || (sessionLoading && !userSession)) ? (
+              <div className="space-y-1.5 min-w-0 flex-1 animate-pulse">
+                <div className="h-4 w-28 bg-slate-200 rounded-md" />
+                <div className="h-3 w-16 bg-slate-100 rounded" />
               </div>
-            </div>
+            ) : (
+              <div className="relative group/tooltip min-w-0 flex-1">
+                <h1 className="text-sm font-black tracking-tight text-slate-900 truncate cursor-pointer">
+                  {userSession?.schoolName || 'EduManage'}
+                </h1>
+                <span className="text-[10px] text-primary-600 font-bold uppercase tracking-widest block truncate">
+                  {userSession?.code ? `ID: ${userSession.code}` : 'School ERP'}
+                </span>
+
+                {/* Floating Popper Tooltip */}
+                <div className="absolute left-0 top-full mt-2 hidden group-hover/tooltip:block z-50 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap animate-fadeIn pointer-events-none">
+                  {userSession?.schoolName || 'EduManage'}
+                  <div className="w-2 h-2 bg-slate-900 border-t border-l border-white/10 rotate-45 absolute -top-1 left-4"></div>
+                </div>
+              </div>
+            )
           )}
         </div>
       </div>
@@ -186,72 +206,103 @@ export default function Sidebar({
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Main Menu</p>
         )}
 
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-
-          const linkEl = (
-            <Link
-              href={item.href}
-              onClick={onClose}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center ${
-                collapsed ? 'justify-center px-2 py-3' : 'justify-between px-3.5 py-3'
-              } rounded-xl transition-all duration-200 group ${
-                isActive
-                  ? 'bg-primary-50 text-primary-600 border border-primary-100 font-semibold shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <Icon size={20} className={`transition-colors shrink-0 ${isActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                {!collapsed && <span className="text-sm truncate">{item.label}</span>}
+        {!mounted || (packageLoading && !packageInfo) ? (
+          <div className={`space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div
+                key={i}
+                className={`flex items-center ${
+                  collapsed ? 'justify-center p-2' : 'px-3 py-2 rounded-2xl'
+                } animate-pulse gap-3`}
+              >
+                <div className="w-8 h-8 rounded-xl bg-slate-200/80 shrink-0" />
+                {!collapsed && (
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div
+                      className="h-3.5 bg-slate-200/80 rounded-md"
+                      style={{ width: `${i % 3 === 0 ? 65 : i % 2 === 0 ? 80 : 55}%` }}
+                    />
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        ) : (
+          navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
-              {!collapsed && item.badge && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                  isActive ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-600 border border-slate-200'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
+            const linkEl = (
+              <Link
+                href={item.href}
+                onClick={onClose}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center ${
+                  collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2 rounded-2xl'
+                } transition-all duration-200 group text-xs font-bold ${
+                  isActive
+                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25'
+                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                    isActive 
+                      ? 'bg-white/20 text-white' 
+                      : 'bg-slate-100/80 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-600 group-hover:scale-105'
+                  }`}>
+                    <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                  </div>
+                  {!collapsed && <span className="truncate tracking-tight">{item.label}</span>}
+                </div>
 
-              {collapsed && item.badge && (
-                <span className="w-2 h-2 rounded-full bg-primary-500 absolute top-2 right-2"></span>
-              )}
-            </Link>
-          );
+                {!collapsed && item.badge && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
 
-          return (
-            <div key={item.label} className="relative">
-              {collapsed ? (
-                <SidebarNavPopover icon={Icon} label={item.label} badge={item.badge} isActive={isActive}>
-                  {linkEl}
-                </SidebarNavPopover>
-              ) : linkEl}
-            </div>
-          );
-        })}
+                {collapsed && item.badge && (
+                  <span className="w-2 h-2 rounded-full bg-primary-500 absolute top-2 right-2 ring-2 ring-white"></span>
+                )}
+              </Link>
+            );
+
+            return (
+              <div key={item.label} className="relative">
+                {collapsed ? (
+                  <SidebarNavPopover icon={Icon} label={item.label} badge={item.badge} isActive={isActive}>
+                    {linkEl}
+                  </SidebarNavPopover>
+                ) : linkEl}
+              </div>
+            );
+          })
+        )}
       </nav>
 
       {/* Logout Action Footer */}
-      <div className={`p-4 border-t border-slate-200 ${collapsed ? 'px-2' : 'px-4'}`}>
+      <div className={`p-4 border-t border-slate-100 ${collapsed ? 'px-2' : 'px-4'}`}>
         {collapsed ? (
           <SidebarNavPopover icon={LogOut} label="Sign Out" isActive={false}>
             <button
               onClick={handleLogoutTrigger}
-              className="w-full flex items-center justify-center px-2 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
+              className="w-full flex items-center justify-center p-2.5 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-200 cursor-pointer bg-rose-50/60"
             >
-              <LogOut size={20} className="shrink-0" />
+              <LogOut size={16} className="shrink-0" />
             </button>
           </SidebarNavPopover>
         ) : (
           <button
             onClick={handleLogoutTrigger}
-            className="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 border border-transparent transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-200 cursor-pointer bg-rose-50/60"
           >
-            <LogOut size={20} className="shrink-0" />
-            <span>Sign Out</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-100/70 text-rose-600 group-hover:bg-white/20 flex items-center justify-center shrink-0">
+              <LogOut size={16} className="shrink-0" />
+            </div>
+            <span>Sign Out Desk</span>
           </button>
         )}
       </div>

@@ -4,10 +4,13 @@ import { createPortal } from 'react-dom';
 
 export default function Tooltip({
   content,
+  text,
   children,
   position = 'top', // 'top' | 'bottom' | 'left' | 'right'
   delay = 150,
-  variant = 'default' // 'default' | 'danger'
+  variant = 'default', // 'default' | 'danger'
+  maxWidth = 'max-w-xs',
+  className = ''
 }) {
   const [active, setActive] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -138,13 +141,16 @@ export default function Tooltip({
   };
 
   const bubbleClasses = variantStyles[variant]?.bubble || variantStyles.default.bubble;
+  const tipContent = content || text;
 
-  if (!content) return children;
+  if (!tipContent) return children;
+
+  const isLong = typeof tipContent === 'string' && tipContent.length > 35;
 
   return (
     <div
       ref={triggerRef}
-      className="relative inline-flex items-center"
+      className={`relative inline-flex items-center ${className}`}
       onMouseEnter={showTip}
       onMouseLeave={hideTip}
     >
@@ -152,13 +158,15 @@ export default function Tooltip({
       {active && mounted && createPortal(
         <div
           style={coords}
-          className={`absolute z-50 whitespace-nowrap backdrop-blur-md border px-2.5 py-1.5 rounded-xl text-[10px] font-bold shadow-2xl pointer-events-none transition-all duration-150 ease-out ${bubbleClasses} ${
+          className={`absolute z-[99999] backdrop-blur-md border px-3 py-2 rounded-2xl text-[11px] font-bold shadow-2xl pointer-events-none transition-all duration-150 ease-out leading-relaxed ${
+            isLong ? `${maxWidth} whitespace-normal break-words text-left` : 'whitespace-nowrap'
+          } ${bubbleClasses} ${
             visible
               ? 'opacity-100 translate-y-0 scale-100'
               : 'opacity-0 translate-y-2 scale-95'
           }`}
         >
-          {content}
+          {tipContent}
           {/* Caret / Arrow */}
           <div className={`absolute border-4 ${getArrowClasses()}`} />
         </div>,

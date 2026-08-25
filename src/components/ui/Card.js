@@ -16,8 +16,8 @@ export default function Card({
   return (
     <div 
       className={`${
-        glass ? 'glass-panel' : 'bg-white border border-slate-200 shadow-sm'
-      } p-6 rounded-3xl space-y-4 shadow-sm transition-all duration-300 ${className}`}
+        glass ? 'glass-panel' : 'bg-white shadow-sm shadow-slate-200/60'
+      } p-6 rounded-3xl space-y-4 transition-all duration-300 ${className}`}
       {...props}
     >
       {(title || Icon || action) && (

@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   CalendarDays, 
   CheckCircle2, 
-  Bus 
+  Bus,
+  FileText 
 } from 'lucide-react';
 import { studentLogoutAction } from '@/actions/student/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -15,6 +16,7 @@ import StudentSidebar from './StudentSidebar';
 import StudentHeader from './StudentHeader';
 import StudentFooter from './StudentFooter';
 import StudentMobileNav from './StudentMobileNav';
+import StudentMobileDrawer from './StudentMobileDrawer';
 
 export default function StudentLayout({ user, children }) {
   const router = useRouter();
@@ -47,12 +49,30 @@ export default function StudentLayout({ user, children }) {
     };
   }, [profileDropdownOpen]);
 
-  const navItems = [
-    { label: 'Student Hub', href: '/student/dashboard', icon: LayoutDashboard },
-    { label: 'Weekly Timetable', href: '/student/timetable', icon: CalendarDays },
-    { label: 'Attendance Meter', href: '/student/attendance', icon: CheckCircle2 },
-    { label: 'Smart Bus & Stops', href: '/student/transport', icon: Bus },
+  const schoolPackage = user?.school?.package;
+  const packageModules = Array.isArray(schoolPackage?.modules) ? schoolPackage.modules : [];
+  const packageCode = typeof schoolPackage === 'string' ? schoolPackage : schoolPackage?.code;
+
+  const hasModule = (moduleKey) => {
+    if (!moduleKey || moduleKey === 'always') return true;
+    if (!schoolPackage) return true;
+    if (packageCode === 'SCHOOL_ONLY' && moduleKey === 'transport') return false;
+    if (packageCode === 'TRANSPORT_ONLY') {
+      return moduleKey === 'transport' || moduleKey === 'students';
+    }
+    if (packageModules.length > 0) return packageModules.includes(moduleKey);
+    return true;
+  };
+
+  const allNavItems = [
+    { label: 'Student Hub', href: '/student/dashboard', icon: LayoutDashboard, moduleKey: 'always' },
+    { label: 'Weekly Timetable', href: '/student/timetable', icon: CalendarDays, moduleKey: 'timetable' },
+    { label: 'Attendance Meter', href: '/student/attendance', icon: CheckCircle2, moduleKey: 'attendance' },
+    { label: 'Smart Bus & Stops', href: '/student/transport', icon: Bus, moduleKey: 'transport' },
+    { label: 'Leave Requests', href: '/student/leaves', icon: FileText, moduleKey: 'attendance' },
   ];
+
+  const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
 
   const handleLogoutTrigger = () => {
     setProfileDropdownOpen(false);
@@ -85,28 +105,22 @@ export default function StudentLayout({ user, children }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans selection:bg-primary-500 selection:text-white">
-      {/* Mobile Drawer Backdrop */}
-      {mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-          onClick={() => setMobileOpen(false)}
+      {/* DESKTOP STUDENT SIDEBAR */}
+      <div className="hidden lg:flex shrink-0">
+        <StudentSidebar
+          schoolName={schoolName}
+          schoolLogo={schoolLogo}
+          schoolCode={schoolCode}
+          studentName={studentName}
+          studentPhoto={studentPhoto}
+          admissionNumber={admissionNumber}
+          className={className}
+          navItems={navItems}
+          mobileOpen={false}
+          setMobileOpen={setMobileOpen}
+          handleLogout={handleLogoutTrigger}
         />
-      )}
-
-      {/* MODULAR STUDENT SIDEBAR */}
-      <StudentSidebar
-        schoolName={schoolName}
-        schoolLogo={schoolLogo}
-        schoolCode={schoolCode}
-        studentName={studentName}
-        studentPhoto={studentPhoto}
-        admissionNumber={admissionNumber}
-        className={className}
-        navItems={navItems}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-        handleLogout={handleLogoutTrigger}
-      />
+      </div>
 
       {/* MAIN CONTENT WRAPPER */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -135,7 +149,21 @@ export default function StudentLayout({ user, children }) {
       </div>
 
       {/* MOBILE / TABLET NATIVE APP BOTTOM NAVIGATION BAR */}
-      <StudentMobileNav user={user} onOpenDrawer={() => setMobileOpen(true)} />
+      <StudentMobileNav user={user} navItems={navItems} onOpenDrawer={() => setMobileOpen(true)} />
+
+      {/* MOBILE / TABLET BOTTOM SHEET SLIDE-UP DRAWER */}
+      <StudentMobileDrawer
+        isOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        navItems={navItems}
+        studentName={studentName}
+        studentPhoto={studentPhoto}
+        admissionNumber={admissionNumber}
+        className={className}
+        schoolName={schoolName}
+        schoolCode={schoolCode}
+        handleLogout={handleLogoutTrigger}
+      />
 
       {/* REUSABLE LOGOUT CONFIRMATION MODAL */}
       <ConfirmModal

@@ -124,7 +124,7 @@ export default function Header({
   };
 
   return (
-    <header className="h-20 shrink-0 min-h-[80px] bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 sticky top-0 z-40 shadow-xs transition-all duration-250">
+    <header className="h-20 shrink-0 min-h-[80px] bg-white/95 backdrop-blur-md flex items-center justify-between px-6 md:px-8 sticky top-0 z-40 shadow-xs shadow-slate-200/60 transition-all duration-250">
       
       {/* 🌟 Left Section: Mobile Toggle & Desktop Page Title */}
       <div className="flex items-center space-x-4">

@@ -27,6 +27,7 @@ import Tooltip from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import DataTable from '@/components/ui/DataTable';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import Skeleton, { SkeletonTableRow } from '@/components/ui/Skeleton';
@@ -1010,15 +1011,15 @@ export default function StudentFeesPage() {
                 required
               />
 
-              <Input 
+              <DatePicker 
                 label="Due Date (Optional)" 
-                type="date"
                 value={categoryForm.due_date}
                 error={categoryErrors.due_date}
                 onChange={(e) => {
                   setCategoryForm(prev => ({ ...prev, due_date: e.target.value }));
                   setCategoryErrors(prev => ({ ...prev, due_date: '' }));
                 }}
+                placeholder="Select Due Date"
               />
 
               <div className="space-y-1">
@@ -1133,15 +1134,15 @@ export default function StudentFeesPage() {
                   }}
                 />
 
-                <Input 
+                <DatePicker 
                   label="Custom Due Date (Optional)" 
-                  type="date"
                   value={allocateForm.due_date}
                   error={allocateErrors.due_date}
                   onChange={(e) => {
                     setAllocateForm(prev => ({ ...prev, due_date: e.target.value }));
                     setAllocateErrors(prev => ({ ...prev, due_date: '' }));
                   }}
+                  placeholder="Select Due Date"
                 />
               </div>
 
@@ -1234,9 +1235,8 @@ export default function StudentFeesPage() {
                   clearable={false}
                 />
 
-                <Input 
+                <DatePicker 
                   label="Payment Date" 
-                  type="date"
                   value={paymentForm.payment_date}
                   error={paymentErrors.payment_date}
                   onChange={(e) => {
@@ -1244,6 +1244,7 @@ export default function StudentFeesPage() {
                     setPaymentErrors(prev => ({ ...prev, payment_date: '' }));
                   }}
                   required
+                  placeholder="Select Date"
                 />
               </div>
 

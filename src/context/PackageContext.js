@@ -17,10 +17,18 @@ export function PackageProvider({ children }) {
         const res = await fetch(`${apiUrl}/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
         const data = await res.json();
         
+        let resolvedPkg = null;
         if (data?.success && data?.data?.package) {
-          setPackageInfo(data.data.package);
+          resolvedPkg = data.data.package;
         } else if (session?.user?.package) {
-          setPackageInfo(session.user.package);
+          resolvedPkg = session.user.package;
+        }
+
+        if (resolvedPkg) {
+          setPackageInfo(resolvedPkg);
+          try {
+            localStorage.setItem('school_package_info', JSON.stringify(resolvedPkg));
+          } catch (e) {}
         }
       }
     } catch (err) {
@@ -31,6 +39,13 @@ export function PackageProvider({ children }) {
   };
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('school_package_info');
+      if (cached) {
+        setPackageInfo(JSON.parse(cached));
+      }
+    } catch (e) {}
+
     fetchPackageInfo();
     window.addEventListener('sessionUpdated', fetchPackageInfo);
     return () => window.removeEventListener('sessionUpdated', fetchPackageInfo);
@@ -39,8 +54,8 @@ export function PackageProvider({ children }) {
   const modules = Array.isArray(packageInfo?.modules) ? packageInfo.modules : [];
 
   const hasModule = (moduleKey) => {
-    if (!moduleKey || moduleKey === 'always' || moduleKey === 'students') return true;
-    if (loading) return true; // prevent flash while loading
+    if (!moduleKey || moduleKey === 'always') return true;
+    if (!packageInfo && loading) return false;
     return modules.includes(moduleKey);
   };
 

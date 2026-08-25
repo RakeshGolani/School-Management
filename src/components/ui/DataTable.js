@@ -63,7 +63,7 @@ export default function DataTable({
                 <tr key={row.id || rowIdx} className="hover:bg-slate-50/80 transition duration-150 border-b border-slate-100">
                   {columns.map((col, colIdx) => (
                     <td key={colIdx} className={`py-3 px-4 ${col.className || ''}`}>
-                      {col.render ? col.render(row) : row[col.accessor]}
+                      {col.render ? col.render(row, rowIdx) : row[col.accessor]}
                     </td>
                   ))}
                 </tr>

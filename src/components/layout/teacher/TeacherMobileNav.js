@@ -9,20 +9,22 @@ import {
   Menu 
 } from 'lucide-react';
 
-export default function TeacherMobileNav({ user, onOpenDrawer }) {
+export default function TeacherMobileNav({ user, navItems, onOpenDrawer }) {
   const pathname = usePathname();
 
-  const mainNavItems = [
-    { label: 'Home', href: '/teacher/dashboard', icon: LayoutDashboard },
-    { label: 'Attendance', href: '/teacher/attendance', icon: CheckCircle2 },
-    { label: 'Schedule', href: '/teacher/timetable', icon: CalendarDays },
-    { label: 'Students', href: '/teacher/students', icon: Users },
-  ];
+  const mainNavItems = (navItems && navItems.length > 0)
+    ? navItems.slice(0, 4)
+    : [
+        { label: 'Home', href: '/teacher/dashboard', icon: LayoutDashboard },
+        { label: 'Attendance', href: '/teacher/attendance', icon: CheckCircle2 },
+        { label: 'Schedule', href: '/teacher/timetable', icon: CalendarDays },
+        { label: 'Students', href: '/teacher/students', icon: Users },
+      ];
 
   return (
     <nav 
       aria-label="Mobile Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl shadow-[0_-6px_25px_rgba(15,23,42,0.07)] px-2 py-1.5"
       style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">

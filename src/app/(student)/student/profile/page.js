@@ -178,7 +178,7 @@ export default function StudentProfilePage() {
         </div>
 
         {/* RIGHT COLUMN: Official Student ID Card */}
-        <div className="lg:col-span-5 flex flex-col items-center">
+        <div className="lg:col-span-5 w-full flex flex-col items-center">
           {/* Official ID Card Component */}
           <StudentIdCard
             student={user}

@@ -16,6 +16,7 @@ import ParentSidebar from './ParentSidebar';
 import ParentHeader from './ParentHeader';
 import ParentFooter from './ParentFooter';
 import ParentMobileNav from './ParentMobileNav';
+import ParentMobileDrawer from './ParentMobileDrawer';
 
 // Context for sharing selected child across parent portal pages
 export const ParentChildContext = createContext(null);
@@ -30,7 +31,47 @@ export default function ParentLayout({ user, children }) {
   const dropdownRef = useRef(null);
   
   const childrenList = user?.children || [];
-  const [selectedChildIndex, setSelectedChildIndex] = useState(0);
+  const [selectedChildIndex, setSelectedChildIndexState] = useState(0);
+
+  // Restore saved active child from localStorage/cookie on mount
+  useEffect(() => {
+    try {
+      const savedChildId = localStorage.getItem('parent_active_child_id');
+      const savedIndex = localStorage.getItem('parent_active_child_idx');
+      
+      if (savedChildId && childrenList.length > 0) {
+        const foundIdx = childrenList.findIndex(c => String(c.id) === String(savedChildId));
+        if (foundIdx >= 0) {
+          setSelectedChildIndexState(foundIdx);
+          return;
+        }
+      }
+
+      if (savedIndex !== null && childrenList.length > 0) {
+        const parsed = parseInt(savedIndex, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < childrenList.length) {
+          setSelectedChildIndexState(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not restore parent active child from localStorage:', e);
+    }
+  }, [childrenList]);
+
+  // Persistent setter function across page refreshes
+  const setSelectedChildIndex = (idx) => {
+    setSelectedChildIndexState(idx);
+    try {
+      localStorage.setItem('parent_active_child_idx', String(idx));
+      if (childrenList[idx]?.id) {
+        localStorage.setItem('parent_active_child_id', String(childrenList[idx].id));
+      }
+      document.cookie = `parent_active_child_idx=${idx}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch (e) {
+      console.warn('Could not persist parent active child to localStorage:', e);
+    }
+  };
+
   const activeChild = childrenList[selectedChildIndex] || null;
 
   // Derive school information from active child or parent session
@@ -68,13 +109,30 @@ export default function ParentLayout({ user, children }) {
     };
   }, [profileDropdownOpen]);
 
-  const navItems = [
-    { label: 'Parent Hub', href: '/parent/dashboard', icon: LayoutDashboard },
-    { label: 'Live Bus Tracking', href: '/parent/bus-tracking', icon: Bus },
-    { label: 'Attendance & Gate Logs', href: '/parent/attendance', icon: CalendarCheck },
-    { label: 'Fees & Invoices', href: '/parent/fees', icon: CreditCard },
-    { label: 'Ward Timetable', href: '/parent/timetable', icon: CalendarDays },
+  const schoolPackage = schoolInfo?.package;
+  const packageModules = Array.isArray(schoolPackage?.modules) ? schoolPackage.modules : [];
+  const packageCode = typeof schoolPackage === 'string' ? schoolPackage : schoolPackage?.code;
+
+  const hasModule = (moduleKey) => {
+    if (!moduleKey || moduleKey === 'always') return true;
+    if (!schoolPackage) return true;
+    if (packageCode === 'SCHOOL_ONLY' && moduleKey === 'transport') return false;
+    if (packageCode === 'TRANSPORT_ONLY') {
+      return moduleKey === 'transport' || moduleKey === 'students';
+    }
+    if (packageModules.length > 0) return packageModules.includes(moduleKey);
+    return true;
+  };
+
+  const allNavItems = [
+    { label: 'Parent Hub', href: '/parent/dashboard', icon: LayoutDashboard, moduleKey: 'always' },
+    { label: 'Live Bus Tracking', href: '/parent/bus-tracking', icon: Bus, moduleKey: 'transport' },
+    { label: 'Attendance & Gate Logs', href: '/parent/attendance', icon: CalendarCheck, moduleKey: 'attendance' },
+    { label: 'Fees & Invoices', href: '/parent/fees', icon: CreditCard, moduleKey: 'fees' },
+    { label: 'Ward Timetable', href: '/parent/timetable', icon: CalendarDays, moduleKey: 'timetable' },
   ];
+
+  const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
 
   const handleLogoutTrigger = () => {
     setProfileDropdownOpen(false);
@@ -101,30 +159,24 @@ export default function ParentLayout({ user, children }) {
   return (
     <ParentChildContext.Provider value={{ activeChild, childrenList, setSelectedChildIndex, selectedChildIndex }}>
       <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans selection:bg-primary-500 selection:text-white">
-        {/* Mobile Drawer Backdrop */}
-        {mobileOpen && (
-          <div 
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-            onClick={() => setMobileOpen(false)}
+        {/* DESKTOP PARENT SIDEBAR */}
+        <div className="hidden lg:flex shrink-0">
+          <ParentSidebar
+            schoolName={schoolName}
+            schoolLogo={schoolLogo}
+            schoolCode={schoolCode}
+            parentName={parentName}
+            parentPhone={parentPhone}
+            childrenList={childrenList}
+            selectedChildIndex={selectedChildIndex}
+            setSelectedChildIndex={setSelectedChildIndex}
+            activeChild={activeChild}
+            navItems={navItems}
+            mobileOpen={false}
+            setMobileOpen={setMobileOpen}
+            handleLogout={handleLogoutTrigger}
           />
-        )}
-
-        {/* MODULAR PARENT SIDEBAR */}
-        <ParentSidebar
-          schoolName={schoolName}
-          schoolLogo={schoolLogo}
-          schoolCode={schoolCode}
-          parentName={parentName}
-          parentPhone={parentPhone}
-          childrenList={childrenList}
-          selectedChildIndex={selectedChildIndex}
-          setSelectedChildIndex={setSelectedChildIndex}
-          activeChild={activeChild}
-          navItems={navItems}
-          mobileOpen={mobileOpen}
-          setMobileOpen={setMobileOpen}
-          handleLogout={handleLogoutTrigger}
-        />
+        </div>
 
         {/* MAIN CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -133,6 +185,7 @@ export default function ParentLayout({ user, children }) {
             parentName={parentName}
             parentPhone={parentPhone}
             parentEmail={parentEmail}
+            studentName={activeChild?.first_name ? `${activeChild.first_name} ${activeChild.last_name || ''}`.trim() : ''}
             setMobileOpen={setMobileOpen}
             profileDropdownOpen={profileDropdownOpen}
             setProfileDropdownOpen={setProfileDropdownOpen}
@@ -152,7 +205,23 @@ export default function ParentLayout({ user, children }) {
         </div>
 
         {/* MOBILE / TABLET NATIVE APP BOTTOM NAVIGATION BAR */}
-        <ParentMobileNav user={user} onOpenDrawer={() => setMobileOpen(true)} />
+        <ParentMobileNav user={user} navItems={navItems} onOpenDrawer={() => setMobileOpen(true)} />
+
+        {/* MOBILE / TABLET BOTTOM SHEET SLIDE-UP DRAWER */}
+        <ParentMobileDrawer
+          isOpen={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          navItems={navItems}
+          parentName={parentName}
+          parentPhone={parentPhone}
+          childrenList={childrenList}
+          selectedChildIndex={selectedChildIndex}
+          setSelectedChildIndex={setSelectedChildIndex}
+          activeChild={activeChild}
+          schoolName={schoolName}
+          schoolCode={schoolCode}
+          handleLogout={handleLogoutTrigger}
+        />
 
         {/* REUSABLE LOGOUT CONFIRMATION MODAL */}
         <ConfirmModal

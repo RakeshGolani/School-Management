@@ -126,11 +126,50 @@ export async function parentLoginAction(credentials) {
   }
 }
 
+import { cookies } from 'next/headers';
+
 /**
  * Get Parent Session
  */
 export async function getParentSessionAction() {
   return await getEncryptedCookie('parent_session');
+}
+
+/**
+ * Get Active Ward for Parent (reads active child from cookies with zero-flicker SSR)
+ */
+export async function getParentActiveChildAction(sessionUser) {
+  try {
+    const user = sessionUser || (await getEncryptedCookie('parent_session'))?.user;
+    if (!user) return { activeChild: null, childIndex: 0 };
+
+    const childrenList = user.children || [];
+    if (childrenList.length === 0) {
+      return { activeChild: user.child || null, childIndex: 0 };
+    }
+
+    const cookieStore = await cookies();
+    const savedChildId = cookieStore.get('parent_active_child_id')?.value;
+    const savedChildIdx = cookieStore.get('parent_active_child_idx')?.value;
+
+    if (savedChildId) {
+      const idx = childrenList.findIndex(c => String(c.id) === String(savedChildId));
+      if (idx >= 0) {
+        return { activeChild: childrenList[idx], childIndex: idx };
+      }
+    }
+
+    if (savedChildIdx !== undefined && savedChildIdx !== null) {
+      const parsed = parseInt(savedChildIdx, 10);
+      if (!isNaN(parsed) && parsed >= 0 && parsed < childrenList.length) {
+        return { activeChild: childrenList[parsed], childIndex: parsed };
+      }
+    }
+
+    return { activeChild: childrenList[0], childIndex: 0 };
+  } catch (e) {
+    return { activeChild: null, childIndex: 0 };
+  }
 }
 
 /**

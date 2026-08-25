@@ -33,6 +33,7 @@ import Tooltip from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import FormPhoneInput from '@/components/FormPhoneInput';
 import { 
   getStudentsAction, 
@@ -818,7 +819,14 @@ export default function StudentsPage() {
                   <Input label="Admission Number" value={formData.admission_number} onChange={(e) => setFormData({ ...formData, admission_number: e.target.value })} placeholder="ADM-1001" />
                   <Input label="Roll Number" value={formData.roll_number} error={formErrors.roll_number} onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })} placeholder="e.g. 101" />
                   <Select label="Grade / Class" value={formData.class_id || formData.grade} onChange={(e) => setFormData({ ...formData, grade: e.target.value, class_id: e.target.value })} options={gradeOptions} error={formErrors.grade} searchable={true} />
-                  <Input type="date" required label="Date of Birth" value={formData.dob} error={formErrors.dob} onChange={(e) => { setFormData({ ...formData, dob: e.target.value }); setFormErrors(p => ({ ...p, dob: '' })); }} />
+                  <DatePicker 
+                    label="Date of Birth" 
+                    required 
+                    value={formData.dob} 
+                    error={formErrors.dob} 
+                    onChange={(e) => { setFormData({ ...formData, dob: e.target.value }); setFormErrors(p => ({ ...p, dob: '' })); }} 
+                    placeholder="Select DOB"
+                  />
                 </div>
 
                 {/* Guardian Info */}

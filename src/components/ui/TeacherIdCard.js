@@ -20,9 +20,9 @@ export default function TeacherIdCard({ teacher, schoolInfo, activeYear, contain
   const initials = (teacher.first_name?.charAt(0) || teacher.name?.charAt(0) || fullName.charAt(0) || 'T').toUpperCase();
 
   return (
-    <div className="flex justify-center py-2 animate-fadeIn shrink-0" id={containerId}>
+    <div className="w-full flex justify-center py-2 animate-fadeIn" id={containerId}>
       {/* Vertical Faculty ID Card Graphics */}
-      <div className="w-[320px] bg-white rounded-3xl border-2 border-slate-200 shadow-lg overflow-hidden text-slate-900 font-sans relative">
+      <div className="w-full max-w-[340px] bg-white rounded-3xl border-2 border-slate-200 shadow-lg overflow-hidden text-slate-900 font-sans relative">
         
         {/* School Header Banner */}
         <div className="bg-gradient-to-r from-slate-50 via-white to-primary-50/40 border-b border-slate-200/80 p-4 text-center relative">

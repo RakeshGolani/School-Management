@@ -9,13 +9,33 @@ import { getModuleInfo } from '@/config/modules';
  * Route prefix to Module Key mapping
  */
 const ROUTE_MODULE_MAP = [
+  // School Admin Routes
   { prefix: '/transport', moduleKey: 'transport' },
   { prefix: '/classes', moduleKey: 'academics' },
   { prefix: '/teachers', moduleKey: 'teachers' },
   { prefix: '/attendance', moduleKey: 'attendance' },
+  { prefix: '/leaves', moduleKey: 'attendance' },
   { prefix: '/timetable', moduleKey: 'timetable' },
   { prefix: '/fees', moduleKey: 'fees' },
   { prefix: '/academic-years', moduleKey: 'academic_years' },
+
+  // Teacher Desk Routes
+  { prefix: '/teacher/attendance', moduleKey: 'attendance' },
+  { prefix: '/teacher/leaves', moduleKey: 'attendance' },
+  { prefix: '/teacher/timetable', moduleKey: 'timetable' },
+  { prefix: '/teacher/students', moduleKey: 'students' },
+
+  // Student Portal Routes
+  { prefix: '/student/transport', moduleKey: 'transport' },
+  { prefix: '/student/timetable', moduleKey: 'timetable' },
+  { prefix: '/student/attendance', moduleKey: 'attendance' },
+  { prefix: '/student/leaves', moduleKey: 'attendance' },
+
+  // Parent Portal Routes
+  { prefix: '/parent/bus-tracking', moduleKey: 'transport' },
+  { prefix: '/parent/attendance', moduleKey: 'attendance' },
+  { prefix: '/parent/fees', moduleKey: 'fees' },
+  { prefix: '/parent/timetable', moduleKey: 'timetable' },
 ];
 
 /**
@@ -36,6 +56,15 @@ export default function PackageRouteGuard({ children }) {
 
     if (!isAllowed) {
       const moduleInfo = getModuleInfo(matchedRoute.moduleKey);
+
+      // Determine home dashboard redirect URL based on active portal
+      const homeDashboardUrl = pathname?.startsWith('/teacher')
+        ? '/teacher/dashboard'
+        : pathname?.startsWith('/student')
+        ? '/student/dashboard'
+        : pathname?.startsWith('/parent')
+        ? '/parent/dashboard'
+        : '/dashboard';
 
       return (
         <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -68,7 +97,7 @@ export default function PackageRouteGuard({ children }) {
               </div>
               <p className="text-xs text-slate-600 font-semibold">{packageInfo?.name || 'School ERP'}</p>
               <p className="text-[11px] text-slate-400">
-                To access this module, please contact your Super Admin to upgrade your package to Full Suite or enable this module.
+                To access this module, please contact your Super Admin to upgrade your package or enable this module.
               </p>
             </div>
 
@@ -77,7 +106,7 @@ export default function PackageRouteGuard({ children }) {
               <Button
                 variant="primary"
                 icon={ArrowLeft}
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(homeDashboardUrl)}
               >
                 Back to Dashboard
               </Button>

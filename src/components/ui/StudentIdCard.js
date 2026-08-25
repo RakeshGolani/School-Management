@@ -22,9 +22,9 @@ export default function StudentIdCard({ student, schoolInfo, activeYear, teacher
   const initials = (student.first_name?.charAt(0) || student.name?.charAt(0) || fullName.charAt(0) || 'S').toUpperCase();
 
   return (
-    <div className="flex justify-center py-2 animate-fadeIn shrink-0" id={containerId}>
+    <div className="w-full flex justify-center py-2 animate-fadeIn" id={containerId}>
       {/* Vertical ID Card Graphics */}
-      <div className="w-[320px] bg-white rounded-3xl border-2 border-slate-200 shadow-lg overflow-hidden text-slate-900 font-sans relative">
+      <div className="w-full max-w-[340px] bg-white rounded-3xl border-2 border-slate-200 shadow-lg overflow-hidden text-slate-900 font-sans relative">
         
         {/* School Header Banner */}
         <div className="bg-gradient-to-r from-slate-50 via-white to-primary-50/40 border-b border-slate-200/80 p-3 relative flex items-center gap-3">

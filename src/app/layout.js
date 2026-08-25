@@ -1,6 +1,5 @@
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
-import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -39,33 +38,8 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" suppressHydrationWarning style={htmlStyle}>
-      <head>
-        <Script
-          id="theme-restore-script"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var c = document.cookie.match(/theme_primary_color=([^;]+)/);
-                  var color = c ? decodeURIComponent(c[1]) : localStorage.getItem('theme_primary');
-                  if (color) {
-                    var r = document.documentElement;
-                    r.style.setProperty('--theme-primary-500', color);
-                    r.style.setProperty('--theme-primary-400', color);
-                    r.style.setProperty('--theme-primary-600', color);
-                    r.style.setProperty('--theme-primary-900', color);
-                    r.style.setProperty('--theme-primary-50', color + '1a');
-                    r.style.setProperty('--theme-primary-100', color + '26');
-                    r.style.setProperty('--theme-primary-200', color + '40');
-                  }
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <head />
+      <body className={`${inter.className} bg-slate-50 text-slate-900 antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>

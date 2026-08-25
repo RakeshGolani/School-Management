@@ -10,9 +10,16 @@ export default function DatePicker({
   placeholder = 'Select date',
   required = false,
   disabled = false,
+  disableFuture = false,
+  disablePast = false,
+  maxDate = null,
+  minDate = null,
+  clearable = true,
   id,
   name,
   className = '',
+  triggerClassName = '',
+  align = 'left', // 'left' | 'right'
   ...props
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +32,7 @@ export default function DatePicker({
   // Parse YYYY-MM-DD
   const parseDateStr = (dateStr) => {
     if (!dateStr) return null;
-    const parts = dateStr.split('-');
+    const parts = String(dateStr).split('-');
     if (parts.length !== 3) return null;
     const y = parseInt(parts[0], 10);
     const m = parseInt(parts[1], 10) - 1;
@@ -45,10 +52,10 @@ export default function DatePicker({
     return `${y}-${m}-${d}`;
   };
 
-  // Format display date (e.g. 10 Aug 2026)
+  // Format display date (e.g. 25 Aug 2026)
   const formatDisplayStr = (date) => {
     if (!date) return '';
-    const d = date.getDate();
+    const d = String(date.getDate()).padStart(2, '0');
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const m = months[date.getMonth()];
     const y = date.getFullYear();
@@ -118,16 +125,6 @@ export default function DatePicker({
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 120 }, (_, i) => currentYear - 90 + i);
 
-  const handleYearChange = (e) => {
-    const y = parseInt(e.target.value, 10);
-    setCurrentDate(new Date(y, month, 1));
-  };
-
-  const handleMonthChange = (e) => {
-    const m = parseInt(e.target.value, 10);
-    setCurrentDate(new Date(year, m, 1));
-  };
-
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
   };
@@ -136,9 +133,80 @@ export default function DatePicker({
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
+  const getEffectiveMaxDate = () => {
+    if (disableFuture) {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (maxDate) {
+        const parsedMax = parseDateStr(maxDate);
+        if (parsedMax) {
+          parsedMax.setHours(23, 59, 59, 999);
+          return parsedMax < today ? parsedMax : today;
+        }
+      }
+      return today;
+    }
+    if (maxDate) {
+      const parsedMax = parseDateStr(maxDate);
+      if (parsedMax) {
+        parsedMax.setHours(23, 59, 59, 999);
+        return parsedMax;
+      }
+    }
+    return null;
+  };
+
+  const getEffectiveMinDate = () => {
+    if (disablePast) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (minDate) {
+        const parsedMin = parseDateStr(minDate);
+        if (parsedMin) {
+          parsedMin.setHours(0, 0, 0, 0);
+          return parsedMin > today ? parsedMin : today;
+        }
+      }
+      return today;
+    }
+    if (minDate) {
+      const parsedMin = parseDateStr(minDate);
+      if (parsedMin) {
+        parsedMin.setHours(0, 0, 0, 0);
+        return parsedMin;
+      }
+    }
+    return null;
+  };
+
+  const isCellDisabled = (cell) => {
+    const cellDate = new Date(year, month + cell.offset, cell.day);
+    const max = getEffectiveMaxDate();
+    if (max) {
+      const compareDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(), 23, 59, 59, 999);
+      if (compareDate > max) return true;
+    }
+    const min = getEffectiveMinDate();
+    if (min) {
+      const compareDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(), 0, 0, 0, 0);
+      if (compareDate < min) return true;
+    }
+    return false;
+  };
+
   const selectDate = (day, offset = 0) => {
     if (disabled) return;
     const targetDate = new Date(year, month + offset, day);
+    const max = getEffectiveMaxDate();
+    const min = getEffectiveMinDate();
+    if (max) {
+      const compareMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+      if (compareMax > max) return;
+    }
+    if (min) {
+      const compareMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
+      if (compareMin < min) return;
+    }
     const dateString = formatDateStr(targetDate);
     if (onChange) {
       onChange({
@@ -154,6 +222,10 @@ export default function DatePicker({
   const handleToday = () => {
     if (disabled) return;
     const today = new Date();
+    const max = getEffectiveMaxDate();
+    const min = getEffectiveMinDate();
+    if (max && today > max) return;
+    if (min && today < min) return;
     const dateString = formatDateStr(today);
     if (onChange) {
       onChange({
@@ -245,36 +317,43 @@ export default function DatePicker({
           onClick={() => !disabled && setIsOpen(!isOpen)}
           className={`w-full flex items-center justify-between bg-slate-50/70 border ${
             error ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-primary-500'
-          } rounded-xl py-2.5 px-4 text-sm text-left ${
-            displayValue ? 'text-slate-900 font-medium' : 'text-slate-400'
+          } rounded-2xl py-2.5 px-3.5 sm:px-4 text-xs sm:text-sm text-left ${
+            displayValue ? 'text-slate-900 font-semibold' : 'text-slate-400 font-normal'
           } focus:outline-none focus:bg-white focus:ring-2 ${
             error ? 'focus:ring-rose-500/20' : 'focus:ring-primary-500/20'
-          } transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
+          } transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-2xs ${triggerClassName}`}
           {...props}
         >
-          <span>{displayValue || placeholder || 'Select date'}</span>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            {displayValue && !disabled && (
+          <div className="flex items-center gap-2 min-w-0">
+            <Calendar size={16} className="text-primary-600 shrink-0" />
+            <span className="truncate">{displayValue || placeholder || 'Select date'}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-slate-400 shrink-0 ml-2">
+            {displayValue && !disabled && clearable && !required && (
               <span 
                 onClick={handleClear}
                 className="hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/60 transition cursor-pointer"
+                title="Clear date"
               >
-                <X size={15} />
+                <X size={14} />
               </span>
             )}
-            <Calendar size={18} className="text-slate-400 pointer-events-none" />
+            <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </div>
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1.5 w-76 p-4 bg-white border border-slate-200 rounded-2xl shadow-xl animate-fadeIn focus:outline-none left-0">
+        <div className={`absolute z-50 mt-1.5 w-full sm:w-[310px] p-3 sm:p-4 bg-white border border-slate-200 rounded-3xl shadow-xl animate-fadeIn focus:outline-none ${
+          align === 'right' ? 'right-0 sm:right-0 sm:left-auto' : 'left-0 sm:left-0 sm:right-auto'
+        }`}>
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-700 transition cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
@@ -289,7 +368,7 @@ export default function DatePicker({
                     setIsMonthOpen(!isMonthOpen);
                     setIsYearOpen(false);
                   }}
-                  className="flex items-center gap-0.5 text-xs font-bold text-slate-700 hover:bg-slate-100 py-1 px-1.5 rounded-lg cursor-pointer transition"
+                  className="flex items-center gap-0.5 text-xs font-bold text-slate-700 hover:bg-slate-100 py-1 px-2 rounded-lg cursor-pointer transition"
                 >
                   <span>{monthsList[month]}</span>
                   <span className={`transition-transform duration-200 text-slate-400 ${isMonthOpen ? 'rotate-180' : ''}`}>
@@ -329,7 +408,7 @@ export default function DatePicker({
                     setIsYearOpen(!isYearOpen);
                     setIsMonthOpen(false);
                   }}
-                  className="flex items-center gap-0.5 text-xs font-bold text-slate-700 hover:bg-slate-100 py-1 px-1.5 rounded-lg cursor-pointer transition"
+                  className="flex items-center gap-0.5 text-xs font-bold text-slate-700 hover:bg-slate-100 py-1 px-2 rounded-lg cursor-pointer transition"
                 >
                   <span>{year}</span>
                   <span className={`transition-transform duration-200 text-slate-400 ${isYearOpen ? 'rotate-180' : ''}`}>
@@ -368,41 +447,45 @@ export default function DatePicker({
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-700 transition cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
           {/* Weekday Labels */}
-          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 py-2.5">
+          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 py-2">
             {weekdays.map((wd) => (
               <div key={wd}>{wd}</div>
             ))}
           </div>
 
-          {/* Grid */}
+          {/* Day Grid */}
           <div className="grid grid-cols-7 gap-1 text-center">
             {dayCells.map((cell, idx) => {
               const selected = isCellSelected(cell);
               const today = isCellToday(cell);
+              const isCellDis = isCellDisabled(cell);
 
-              let btnClasses = "h-8 w-8 flex items-center justify-center text-xs rounded-full transition-all focus:outline-none cursor-pointer ";
-              if (selected) {
-                btnClasses += "bg-primary-500 text-white font-bold hover:bg-primary-600 shadow-sm shadow-primary-500/20";
+              let btnClasses = "w-full aspect-square max-w-[34px] max-h-[34px] flex items-center justify-center text-xs rounded-xl transition-all focus:outline-none mx-auto ";
+              if (isCellDis) {
+                btnClasses += "text-slate-300 opacity-40 cursor-not-allowed pointer-events-none select-none ";
+              } else if (selected) {
+                btnClasses += "bg-primary-600 text-white font-black shadow-md shadow-primary-600/30 scale-105 cursor-pointer ";
               } else if (today) {
-                btnClasses += "border border-primary-500 text-primary-600 font-bold hover:bg-primary-50/50";
+                btnClasses += "border border-primary-500 text-primary-600 font-bold hover:bg-primary-50/60 cursor-pointer ";
               } else if (!cell.isCurrentMonth) {
-                btnClasses += "text-slate-300 hover:bg-slate-100/60";
+                btnClasses += "text-slate-300 hover:bg-slate-100/60 cursor-pointer ";
               } else {
-                btnClasses += "text-slate-700 hover:bg-slate-100 font-medium";
+                btnClasses += "text-slate-700 hover:bg-slate-100 font-medium cursor-pointer ";
               }
 
               return (
                 <button
                   key={`${cell.offset}-${cell.day}-${idx}`}
                   type="button"
-                  onClick={() => selectDate(cell.day, cell.offset)}
+                  disabled={isCellDis}
+                  onClick={() => !isCellDis && selectDate(cell.day, cell.offset)}
                   className={btnClasses}
                 >
                   {cell.day}
@@ -411,8 +494,8 @@ export default function DatePicker({
             })}
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-3 text-xs">
+          {/* Footer with Quick Action Buttons */}
+          <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 mt-2.5 text-xs">
             <button
               type="button"
               onClick={handleToday}
@@ -420,7 +503,7 @@ export default function DatePicker({
             >
               Today
             </button>
-            {value && (
+            {value && clearable && !required && (
               <button
                 type="button"
                 onClick={handleClear}

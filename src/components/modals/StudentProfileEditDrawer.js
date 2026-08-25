@@ -5,6 +5,7 @@ import Drawer from '@/components/ui/Drawer';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
 import { updateStudentProfileAction } from '@/actions/student/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
@@ -240,13 +241,12 @@ export default function StudentProfileEditDrawer({ isOpen, onClose, user, onProf
 
         <div className="grid grid-cols-2 gap-4">
           {/* Date of Birth */}
-          <Input
+          <DatePicker
             label="Date of Birth"
             name="dob"
-            type="date"
             value={formData.dob}
             onChange={handleChange}
-            icon={Calendar}
+            placeholder="Select DOB"
           />
 
           {/* Gender */}
