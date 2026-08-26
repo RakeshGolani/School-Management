@@ -94,7 +94,7 @@ export default function StudentLayout({ user, children }) {
     }
   };
 
-  const schoolName = user?.school?.name || user?.school?.school_name || 'EduManage Academy';
+  const schoolName = user?.school?.name || user?.school?.school_name || 'Vidyadmin Academy';
   const schoolLogo = user?.school?.logo_url || user?.school?.logo;
   const schoolCode = user?.school?.code || user?.school?.school_code || 'SCH-2026';
 

@@ -66,15 +66,27 @@ export async function parentVerifyOtpAction({ phone, otp }) {
       };
     }
 
+    const user = data.data.user;
+    const school = user?.school || user?.children?.[0]?.school;
+
     await setEncryptedCookie('parent_session', {
       token: data.data.token,
-      user: data.data.user
+      user
     });
+
+    if (school) {
+      await setEncryptedCookie('school_branding', {
+        schoolName: school.name || school.school_name || school.schoolName,
+        code: school.code || school.school_code,
+        logo: school.logo || school.logo_url,
+        primaryColor: school.primaryColor || school.primary_color || '#0047AB'
+      });
+    }
 
     return {
       success: true,
       message: data.message || 'Parent authenticated successfully',
-      user: data.data.user
+      user
     };
   } catch (error) {
     console.error('Error in parentVerifyOtpAction:', error.message);
@@ -110,15 +122,27 @@ export async function parentLoginAction(credentials) {
       };
     }
 
+    const user = data.data.user;
+    const school = user?.school || user?.children?.[0]?.school;
+
     await setEncryptedCookie('parent_session', {
       token: data.data.token,
-      user: data.data.user
+      user
     });
+
+    if (school) {
+      await setEncryptedCookie('school_branding', {
+        schoolName: school.name || school.school_name || school.schoolName,
+        code: school.code || school.school_code,
+        logo: school.logo || school.logo_url,
+        primaryColor: school.primaryColor || school.primary_color || '#0047AB'
+      });
+    }
 
     return {
       success: true,
       message: data.message || 'Parent login successful',
-      user: data.data.user
+      user
     };
   } catch (error) {
     console.error('Error in parentLoginAction:', error.message);

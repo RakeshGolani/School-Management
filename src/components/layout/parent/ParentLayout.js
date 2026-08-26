@@ -88,7 +88,7 @@ export default function ParentLayout({ user, initialChildIndex = 0, children }) 
                      user?.children?.[0]?.school || 
                      null;
 
-  const schoolName = schoolInfo?.name || schoolInfo?.school_name || 'EduManage Academy';
+  const schoolName = schoolInfo?.name || schoolInfo?.school_name || 'Vidyadmin Academy';
   const schoolLogo = schoolInfo?.logo_url || schoolInfo?.logo;
   const schoolCode = schoolInfo?.code || schoolInfo?.school_code || 'SCH-2026';
 

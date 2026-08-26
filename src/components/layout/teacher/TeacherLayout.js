@@ -91,7 +91,7 @@ export default function TeacherLayout({ user, children }) {
     }
   };
 
-  const schoolName = user?.school?.name || user?.school?.school_name || 'EduManage Institute';
+  const schoolName = user?.school?.name || user?.school?.school_name || 'Vidyadmin Institute';
   const schoolLogo = user?.school?.logo_url || user?.school?.logo;
   const schoolCode = user?.school?.code || user?.school?.school_code || 'SCH-2026';
   

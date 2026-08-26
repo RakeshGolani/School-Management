@@ -1,7 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, GraduationCap, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
+import { applyDynamicTheme } from '@/lib/themeHelper';
 
 /**
  * Forgot Password Recovery Page
@@ -11,6 +13,40 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [brandingLoading, setBrandingLoading] = useState(true);
+  const [schoolBranding, setSchoolBranding] = useState(null);
+  const [systemSettings, setSystemSettings] = useState({
+    company_name: 'Vidyadmin',
+    tagline: 'Simplifying Education, Empowering Admins',
+    logo_url: null
+  });
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const [brandingRes, settingsRes] = await Promise.all([
+          getSchoolBrandingAction().catch(() => null),
+          getSystemSettingsAction().catch(() => null)
+        ]);
+
+        if (settingsRes?.success && settingsRes?.data) {
+          setSystemSettings(settingsRes.data);
+        }
+
+        if (brandingRes?.hasSchoolCookie) {
+          setSchoolBranding(brandingRes);
+          applyDynamicTheme(brandingRes.primaryColor || '#0047AB');
+        } else {
+          applyDynamicTheme('#0047AB');
+        }
+      } catch (err) {
+        applyDynamicTheme('#0047AB');
+      } finally {
+        setBrandingLoading(false);
+      }
+    }
+    checkSession();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -23,35 +59,57 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="max-w-xl mx-auto rounded-3xl border border-white/15 bg-slate-900/80 backdrop-blur-2xl shadow-2xl overflow-hidden p-6 sm:p-10 relative animate-fadeIn space-y-6">
+    <div className="max-w-xl mx-auto rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden p-6 sm:p-10 relative animate-fadeIn space-y-6">
       {/* Top Header */}
       <div className="text-center space-y-3">
-        <Link href="/" className="inline-flex items-center space-x-3 group mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform">
-            <GraduationCap size={26} className="text-white" />
-          </div>
-        </Link>
-        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        {brandingLoading ? (
+          <div className="w-18 h-18 rounded-full bg-slate-200 animate-pulse mx-auto" />
+        ) : (
+          <Link href="/" className="inline-flex items-center space-x-3 group mx-auto">
+            {schoolBranding?.schoolName ? (
+              schoolBranding.logo ? (
+                <div className="w-18 h-18 rounded-full bg-white border border-slate-200/90 p-2 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+                  <img src={schoolBranding.logo} alt={schoolBranding.schoolName} className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-18 h-18 rounded-full bg-primary-600 border border-primary-500/40 flex items-center justify-center shadow-lg shadow-primary-600/30 group-hover:scale-105 transition-transform relative shrink-0 text-white font-black text-3xl">
+                  {schoolBranding.schoolName.charAt(0).toUpperCase()}
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-secondary-500 border-2 border-white"></span>
+                </div>
+              )
+            ) : systemSettings?.logo_url ? (
+              <div className="w-18 h-18 rounded-full bg-white border border-slate-200/90 p-2 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+                <img src={systemSettings.logo_url} alt={systemSettings.company_name || 'Logo'} className="w-full h-full object-contain" />
+              </div>
+            ) : (
+              <div className="w-18 h-18 rounded-full bg-primary-600 border border-primary-500/40 flex items-center justify-center shadow-lg shadow-primary-600/30 group-hover:scale-105 transition-transform relative shrink-0">
+                <GraduationCap size={36} className="text-white" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-secondary-500 border-2 border-white"></span>
+              </div>
+            )}
+          </Link>
+        )}
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Recover Password
         </h2>
-        <p className="text-slate-400 text-xs sm:text-sm max-w-sm mx-auto">
+        <p className="text-slate-500 text-xs sm:text-sm max-w-sm mx-auto">
           Enter your registered institutional email to receive secure recovery instructions.
         </p>
       </div>
 
       {submitted ? (
         <div className="space-y-6 animate-fadeIn">
-          <div className="p-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-2xl text-center space-y-3">
-            <CheckCircle2 size={40} className="mx-auto text-emerald-400" />
-            <h4 className="font-bold text-base text-white">Recovery Instructions Dispatched</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              We have sent password reset instructions to <strong className="text-white font-mono">{email}</strong>. Please check your inbox and spam folder.
+          <div className="p-6 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-center space-y-3">
+            <CheckCircle2 size={40} className="mx-auto text-emerald-600" />
+            <h4 className="font-bold text-base text-slate-900">Recovery Instructions Dispatched</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              We have sent password reset instructions to <strong className="text-slate-900 font-mono font-bold">{email}</strong>. Please check your inbox and spam folder.
             </p>
           </div>
 
           <Link
             href="/login"
-            className="w-full py-3.5 px-4 rounded-xl text-center text-white font-bold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-xl shadow-indigo-600/30 transition duration-200 flex items-center justify-center gap-2"
+            className="w-full py-3.5 px-4 rounded-xl text-center text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 transition duration-200 flex items-center justify-center gap-2"
           >
             <ArrowLeft size={16} /> Return to Portal Login
           </Link>
@@ -59,7 +117,7 @@ export default function ForgotPassword() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
               Institutional Email Address <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
@@ -71,7 +129,7 @@ export default function ForgotPassword() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/70 border border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none transition duration-200"
+                className="w-full bg-slate-50/70 border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 rounded-xl py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition duration-200"
                 placeholder="admin@school.com"
               />
             </div>
@@ -80,7 +138,7 @@ export default function ForgotPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 rounded-xl text-white font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 active:scale-[0.99] disabled:opacity-50 transition duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2"
+            className="w-full py-3.5 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-[0.99] disabled:opacity-50 transition duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -98,12 +156,12 @@ export default function ForgotPassword() {
       )}
 
       {/* Footer Navigation */}
-      <div className="flex items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-4">
-        <Link href="/login" className="hover:text-white transition flex items-center gap-1.5 font-medium">
+      <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-200 pt-4">
+        <Link href="/login" className="hover:text-slate-900 transition flex items-center gap-1.5 font-medium">
           <ArrowLeft size={14} /> Back to Login
         </Link>
-        <span className="flex items-center gap-1 text-[11px] text-slate-500">
-          <ShieldCheck size={13} className="text-emerald-400" /> Secure Recovery
+        <span className="flex items-center gap-1 text-[11px] text-slate-400">
+          <ShieldCheck size={13} className="text-emerald-600" /> Secure Recovery
         </span>
       </div>
     </div>

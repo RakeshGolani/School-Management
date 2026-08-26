@@ -33,15 +33,27 @@ export async function studentLoginAction(credentials) {
       };
     }
 
+    const user = data.data.user;
+    const school = user?.school;
+
     await setEncryptedCookie('student_session', {
       token: data.data.token,
-      user: data.data.user
+      user
     });
+
+    if (school) {
+      await setEncryptedCookie('school_branding', {
+        schoolName: school.name || school.school_name || school.schoolName,
+        code: school.code || school.school_code,
+        logo: school.logo || school.logo_url,
+        primaryColor: school.primaryColor || school.primary_color || '#0047AB'
+      });
+    }
 
     return {
       success: true,
       message: data.message || 'Student login successful',
-      user: data.data.user
+      user
     };
   } catch (error) {
     console.error('Error in studentLoginAction:', error.message);
@@ -110,15 +122,27 @@ export async function studentVerifyOtpAction({ phone, otp }) {
       };
     }
 
+    const user = data.data.user;
+    const school = user?.school;
+
     await setEncryptedCookie('student_session', {
       token: data.data.token,
-      user: data.data.user
+      user
     });
+
+    if (school) {
+      await setEncryptedCookie('school_branding', {
+        schoolName: school.name || school.school_name || school.schoolName,
+        code: school.code || school.school_code,
+        logo: school.logo || school.logo_url,
+        primaryColor: school.primaryColor || school.primary_color || '#0047AB'
+      });
+    }
 
     return {
       success: true,
       message: data.message || 'Student authenticated successfully',
-      user: data.data.user
+      user
     };
   } catch (error) {
     console.error('Error in studentVerifyOtpAction:', error.message);

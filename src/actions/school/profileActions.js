@@ -41,15 +41,17 @@ export async function updateProfileAction(profileData) {
     // Read current encrypted session & update payload
     const currentSession = await getEncryptedCookie('school_session');
     
+    const primaryColor = data.data.primaryColor || data.data.primary_color || currentSession?.user?.primaryColor || '#0047AB';
     const updatedUser = {
       ...currentSession?.user,
-      schoolName: data.data.schoolName,
+      schoolName: data.data.schoolName || data.data.school_name || currentSession?.user?.schoolName,
       email: data.data.email,
       phone: data.data.phone,
       address: data.data.address,
       latitude: data.data.latitude,
       longitude: data.data.longitude,
-      logo: data.data.logo_url || data.data.logo
+      logo: data.data.logo_url || data.data.logo,
+      primaryColor
     };
 
     await setEncryptedCookie('school_session', {
@@ -73,7 +75,8 @@ export async function updateProfileAction(profileData) {
       email: profileData.email || currentSession?.user?.email,
       phone: profileData.phone || currentSession?.user?.phone,
       address: profileData.address || currentSession?.user?.address,
-      logo: profileData.logo || currentSession?.user?.logo
+      logo: profileData.logo || currentSession?.user?.logo,
+      primaryColor: currentSession?.user?.primaryColor || '#0047AB'
     };
 
     await setEncryptedCookie('school_session', {

@@ -33,15 +33,27 @@ export async function teacherLoginAction(credentials) {
       };
     }
 
+    const user = data.data.user;
+    const school = user?.school;
+
     await setEncryptedCookie('teacher_session', {
       token: data.data.token,
-      user: data.data.user
+      user
     });
+
+    if (school) {
+      await setEncryptedCookie('school_branding', {
+        schoolName: school.name || school.school_name || school.schoolName,
+        code: school.code || school.school_code,
+        logo: school.logo || school.logo_url,
+        primaryColor: school.primaryColor || school.primary_color || '#0047AB'
+      });
+    }
 
     return {
       success: true,
       message: data.message || 'Teacher login successful',
-      user: data.data.user
+      user
     };
 
   } catch (error) {

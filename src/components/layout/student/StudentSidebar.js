@@ -46,11 +46,11 @@ export default function StudentSidebar({
       <div className="p-5 border-b border-slate-100 space-y-3">
         <div className="flex items-center justify-between">
           <Link href="/student/dashboard" className="flex items-center space-x-3 min-w-0 group">
-            <div className="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200/80 p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden group-hover:scale-105 transition-all">
+            <div className="w-11 h-11 rounded-full bg-slate-50 border border-slate-200/80 p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden group-hover:scale-105 transition-all">
               {schoolLogo ? (
-                <img src={schoolLogo} alt={schoolName} className="w-full h-full object-contain rounded-xl" />
+                <img src={schoolLogo} alt={schoolName} className="w-full h-full object-contain" />
               ) : (
-                <div className="w-full h-full rounded-xl bg-gradient-to-tr from-primary-600 to-primary-500 flex items-center justify-center text-white font-black text-sm shadow-xs">
+                <div className="w-full h-full rounded-full bg-gradient-to-tr from-primary-600 to-primary-500 flex items-center justify-center text-white font-black text-sm shadow-xs">
                   {schoolName.charAt(0).toUpperCase()}
                 </div>
               )}

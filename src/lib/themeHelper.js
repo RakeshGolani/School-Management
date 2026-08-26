@@ -1,40 +1,55 @@
+const DEFAULT_PRIMARY = '#0047AB';
+
+/**
+ * Returns an object of CSS variables computed from the given primary color.
+ * Can be used server-side in layout.js style prop or client-side.
+ */
+export function getThemeCssVars(primaryColor = DEFAULT_PRIMARY) {
+  const safeColor = (primaryColor && typeof primaryColor === 'string' && primaryColor.startsWith('#'))
+    ? primaryColor
+    : DEFAULT_PRIMARY;
+
+  return {
+    '--theme-primary-500': safeColor,
+    '--theme-primary-400': lightenHex(safeColor, 15),
+    '--theme-primary-300': lightenHex(safeColor, 30),
+    '--theme-primary-600': darkenHex(safeColor, 10),
+    '--theme-primary-700': darkenHex(safeColor, 20),
+    '--theme-primary-800': darkenHex(safeColor, 30),
+    '--theme-primary-900': darkenHex(safeColor, 40),
+    '--theme-primary-50': hexToRgba(safeColor, 0.08),
+    '--theme-primary-100': hexToRgba(safeColor, 0.15),
+    '--theme-primary-200': hexToRgba(safeColor, 0.25),
+    '--theme-secondary-500': '#FF8C00',
+    '--theme-accent-500': '#32CD32',
+  };
+}
+
 /**
  * Helper to dynamically inject primary brand theme colors into the document root.
  * Also persists the color in both localStorage AND a cookie so the server can
  * read it on next request and inject it before any JS runs (zero FOUC).
  */
 export function applyDynamicTheme(primaryColor) {
-  if (typeof window === 'undefined' || !primaryColor) return;
-
+  if (typeof window === 'undefined') return;
+  const safeColor = primaryColor || DEFAULT_PRIMARY;
   const root = document.documentElement;
 
-  // Persist in localStorage (client-side fallback)
+  // Persist in localStorage (client-side fast cache)
   try {
-    localStorage.setItem('theme_primary', primaryColor);
+    localStorage.setItem('theme_primary', safeColor);
   } catch (e) {}
 
-  // Persist in cookie so server layout can inject it synchronously (eliminates flash)
-  try {
-    document.cookie = `theme_primary_color=${encodeURIComponent(primaryColor)}; path=/; max-age=31536000; SameSite=Lax`;
-  } catch (e) {}
-
-  // Apply immediately — NO requestAnimationFrame delay
-  root.style.setProperty('--theme-primary-500', primaryColor);
-  root.style.setProperty('--theme-primary-400', lightenHex(primaryColor, 15));
-  root.style.setProperty('--theme-primary-300', lightenHex(primaryColor, 30));
-  root.style.setProperty('--theme-primary-600', darkenHex(primaryColor, 10));
-  root.style.setProperty('--theme-primary-700', darkenHex(primaryColor, 20));
-  root.style.setProperty('--theme-primary-800', darkenHex(primaryColor, 30));
-  root.style.setProperty('--theme-primary-900', darkenHex(primaryColor, 40));
-  root.style.setProperty('--theme-primary-50',  hexToRgba(primaryColor, 0.08));
-  root.style.setProperty('--theme-primary-100', hexToRgba(primaryColor, 0.15));
-  root.style.setProperty('--theme-primary-200', hexToRgba(primaryColor, 0.25));
+  const vars = getThemeCssVars(safeColor);
+  Object.entries(vars).forEach(([key, val]) => {
+    root.style.setProperty(key, val);
+  });
 }
 
 // ─── Color Utilities ──────────────────────────────────────────────────────────
 
 function hexToRgb(hex) {
-  const defaultHex = '#4f46e5';
+  const defaultHex = DEFAULT_PRIMARY;
   const cleanHex = (hex && typeof hex === 'string' && hex.startsWith('#')) ? hex : defaultHex;
   const clean = cleanHex.replace('#', '');
   const full = clean.length === 3

@@ -164,11 +164,11 @@ export default function Sidebar({
         collapsed ? 'justify-center px-2' : 'px-4 justify-between'
       }`}>
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shadow-2xs shrink-0 overflow-hidden p-0.5" title={userSession?.schoolName || 'EduManage'}>
+          <div className="w-10 h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center shadow-2xs shrink-0 overflow-hidden p-0.5" title={userSession?.schoolName || 'Vidyadmin'}>
             {userSession?.logo ? (
-              <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-cover" />
+              <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-contain" />
             ) : (!mounted || (sessionLoading && !userSession)) ? (
-              <div className="w-full h-full bg-slate-200 rounded-lg animate-pulse" />
+              <div className="w-full h-full bg-slate-200 rounded-full animate-pulse" />
             ) : (
               <BookOpen size={20} className="text-primary-600" />
             )}
@@ -183,15 +183,15 @@ export default function Sidebar({
             ) : (
               <div className="relative group/tooltip min-w-0 flex-1">
                 <h1 className="text-sm font-black tracking-tight text-slate-900 truncate cursor-pointer">
-                  {userSession?.schoolName || 'EduManage'}
+                  {userSession?.schoolName || 'Vidyadmin'}
                 </h1>
                 <span className="text-[10px] text-primary-600 font-bold uppercase tracking-widest block truncate">
-                  {userSession?.code ? `ID: ${userSession.code}` : 'School ERP'}
+                  {userSession?.code ? `ID: ${userSession.code}` : 'Vidyadmin ERP'}
                 </span>
 
                 {/* Floating Popper Tooltip */}
                 <div className="absolute left-0 top-full mt-2 hidden group-hover/tooltip:block z-50 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap animate-fadeIn pointer-events-none">
-                  {userSession?.schoolName || 'EduManage'}
+                  {userSession?.schoolName || 'Vidyadmin'}
                   <div className="w-2 h-2 bg-slate-900 border-t border-l border-white/10 rotate-45 absolute -top-1 left-4"></div>
                 </div>
               </div>

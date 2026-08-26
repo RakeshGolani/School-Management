@@ -88,7 +88,7 @@ export default function Header({
   }, []);
 
   const getInitials = () => {
-    const nameStr = userSession?.schoolName || userSession?.name || 'Greenwood Intl';
+    const nameStr = userSession?.schoolName || userSession?.name || 'Vidyadmin';
     const words = nameStr.split(' ').filter(Boolean);
     if (words.length >= 2) {
       return (words[0][0] + words[1][0]).toUpperCase();
@@ -100,9 +100,9 @@ export default function Header({
     return userSession?.logo_url || userSession?.logo || null;
   };
 
-  const displayName = userSession?.schoolName || userSession?.name || 'Greenwood Intl';
-  const displayEmail = userSession?.email || 'school@gmail.com';
-  const displayCode = userSession?.code || 'SCH-1001';
+  const displayName = userSession?.schoolName || userSession?.name || 'Vidyadmin School';
+  const displayEmail = userSession?.email || 'admin@vidyadmin.com';
+  const displayCode = userSession?.code || 'SCH-2026';
 
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);

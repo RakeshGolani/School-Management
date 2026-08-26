@@ -27,3 +27,27 @@ export async function deleteEntityAction(module, id) {
     return { success: false, message: 'Delete operation failed' };
   }
 }
+
+export async function getSystemSettingsAction() {
+  try {
+    const response = await fetch(`${API_URL}/system-settings`, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return {
+      success: true,
+      data: {
+        company_name: 'Vidyadmin',
+        tagline: 'Simplifying Education, Empowering Admins',
+        support_email: 'support@vidyadmin.com',
+        support_phone: '+91 9876543210',
+        address: 'Vidyadmin Global HQ, Tech Horizon Tower',
+        logo_url: null
+      }
+    };
+  }
+}
+
