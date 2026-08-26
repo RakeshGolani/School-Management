@@ -6,7 +6,8 @@ import {
   CheckCircle2, 
   CalendarDays, 
   Users,
-  FileText 
+  FileText,
+  Bell
 } from 'lucide-react';
 import { teacherLogoutAction } from '@/actions/teacher/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -67,6 +68,7 @@ export default function TeacherLayout({ user, children }) {
     { label: 'Teaching Schedule', href: '/teacher/timetable', icon: CalendarDays, moduleKey: 'timetable' },
     { label: 'Class Students', href: '/teacher/students', icon: Users, moduleKey: 'students' },
     { label: 'Leave Approvals', href: '/teacher/leaves', icon: FileText, moduleKey: 'attendance' },
+    { label: 'Notifications', href: '/teacher/notifications', icon: Bell, moduleKey: 'always' },
   ];
 
   const navItems = allNavItems.filter(item => hasModule(item.moduleKey));

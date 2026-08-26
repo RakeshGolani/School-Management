@@ -20,7 +20,8 @@ import {
   ChevronsRight,
   Landmark,
   Clock,
-  FileText
+  FileText,
+  Bell
 } from 'lucide-react';
 
 import { logoutAction, getSessionAction } from '@/actions/school/authActions';
@@ -136,6 +137,7 @@ export default function Sidebar({
     { label: 'Leave Requests', href: '/leaves', icon: FileText, moduleKey: 'attendance' },
     { label: 'Timetable & Periods', href: '/timetable', icon: Clock, moduleKey: 'timetable' },
     { label: 'Student Fees', href: '/fees', icon: Landmark, moduleKey: 'fees' },
+    { label: 'Notifications', href: '/notifications', icon: Bell, moduleKey: 'always' },
     { label: 'Academic Year', href: '/academic-years', icon: CalendarDays, moduleKey: 'academic_years' },
     { label: 'Billing & Plans', href: '/billing', icon: CreditCard, moduleKey: 'always' },
     { label: 'Settings', href: '/settings', icon: Settings, moduleKey: 'always' }

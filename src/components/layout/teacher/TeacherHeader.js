@@ -6,6 +6,7 @@ import {
   Calendar 
 } from 'lucide-react';
 import TeacherUserDropdown from './TeacherUserDropdown';
+import NotificationBellDropdown from '@/components/layout/NotificationBellDropdown';
 
 export default function TeacherHeader({
   teacherName,
@@ -36,6 +37,9 @@ export default function TeacherHeader({
   } else if (pathname === '/teacher/leaves') {
     pageTitle = 'Leave Approvals';
     pageSub = 'Class Student Leave Requests';
+  } else if (pathname === '/teacher/notifications') {
+    pageTitle = 'Notification Center';
+    pageSub = 'Alerts, Broadcasts & Activity Updates';
   } else if (pathname === '/teacher/profile') {
     pageTitle = 'Faculty Profile & ID';
     pageSub = 'Credentials & Official Digital ID';
@@ -73,6 +77,9 @@ export default function TeacherHeader({
           <Calendar size={13} className="text-primary-600 shrink-0" />
           <span>{todayFormatted}</span>
         </div>
+
+        {/* Dynamic Notification Bell */}
+        <NotificationBellDropdown role="teacher" />
 
         {/* User Profile Dropdown Component */}
         <TeacherUserDropdown

@@ -6,6 +6,7 @@ import {
   Calendar 
 } from 'lucide-react';
 import ParentUserDropdown from './ParentUserDropdown';
+import NotificationBellDropdown from '@/components/layout/NotificationBellDropdown';
 
 export default function ParentHeader({
   parentName,
@@ -33,6 +34,9 @@ export default function ParentHeader({
   } else if (pathname === '/parent/fees') {
     pageTitle = 'Fee Invoices';
     pageSub = 'Tuition & Transport Receipts';
+  } else if (pathname === '/parent/notifications') {
+    pageTitle = 'Notification Center';
+    pageSub = 'Ward Activity, Bus & Fee Alerts';
   } else if (pathname === '/parent/profile') {
     pageTitle = 'Guardian Profile';
     pageSub = 'Account Credentials & Ward Info';
@@ -70,6 +74,9 @@ export default function ParentHeader({
           <Calendar size={13} className="text-primary-600 shrink-0" />
           <span>{todayFormatted}</span>
         </div>
+
+        {/* Dynamic Notification Bell */}
+        <NotificationBellDropdown role="parent" />
 
         {/* User Profile Dropdown Component */}
         <ParentUserDropdown

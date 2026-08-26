@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getEncryptedCookie } from '@/lib/cookieHelper';
+import { getParentActiveChildAction } from '@/actions/parent/authActions';
 import ParentLayout from '@/components/layout/parent/ParentLayout';
 import { BackendStatusProvider } from '@/context/BackendStatusContext';
 import BackendOfflineScreen from '@/components/ui/BackendOfflineScreen';
@@ -15,10 +16,12 @@ export default async function Layout({ children }) {
     redirect('/parent/login');
   }
 
+  const { childIndex } = await getParentActiveChildAction(session.user);
+
   return (
     <BackendStatusProvider>
       <BackendOfflineScreen />
-      <ParentLayout user={session.user}>
+      <ParentLayout user={session.user} initialChildIndex={childIndex}>
         {children}
       </ParentLayout>
     </BackendStatusProvider>

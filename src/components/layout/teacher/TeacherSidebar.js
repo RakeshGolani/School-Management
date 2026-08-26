@@ -14,6 +14,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import TeacherSidebarSkeleton from '@/components/skeletons/teacher/TeacherSidebarSkeleton';
+
 export default function TeacherSidebar({
   schoolName,
   schoolLogo,
@@ -25,8 +27,12 @@ export default function TeacherSidebar({
   navItems,
   mobileOpen,
   setMobileOpen,
-  handleLogout
+  handleLogout,
+  loading = false
 }) {
+  if (loading) {
+    return <TeacherSidebarSkeleton />;
+  }
   const pathname = usePathname();
 
   return (

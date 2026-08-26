@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Bus, 
   CalendarCheck, 
   CreditCard, 
-  CalendarDays 
+  CalendarDays,
+  Bell
 } from 'lucide-react';
 import { parentLogoutAction } from '@/actions/parent/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -22,7 +23,7 @@ import ParentMobileDrawer from './ParentMobileDrawer';
 export const ParentChildContext = createContext(null);
 export const useParentChild = () => useContext(ParentChildContext);
 
-export default function ParentLayout({ user, children }) {
+export default function ParentLayout({ user, initialChildIndex = 0, children }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function ParentLayout({ user, children }) {
   const dropdownRef = useRef(null);
   
   const childrenList = user?.children || [];
-  const [selectedChildIndex, setSelectedChildIndexState] = useState(0);
+  const [selectedChildIndex, setSelectedChildIndexState] = useState(initialChildIndex);
 
   // Restore saved active child from localStorage/cookie on mount
   useEffect(() => {
@@ -43,6 +44,8 @@ export default function ParentLayout({ user, children }) {
         const foundIdx = childrenList.findIndex(c => String(c.id) === String(savedChildId));
         if (foundIdx >= 0) {
           setSelectedChildIndexState(foundIdx);
+          document.cookie = `parent_active_child_id=${savedChildId}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `parent_active_child_idx=${foundIdx}; path=/; max-age=31536000; SameSite=Lax`;
           return;
         }
       }
@@ -51,6 +54,10 @@ export default function ParentLayout({ user, children }) {
         const parsed = parseInt(savedIndex, 10);
         if (!isNaN(parsed) && parsed >= 0 && parsed < childrenList.length) {
           setSelectedChildIndexState(parsed);
+          document.cookie = `parent_active_child_idx=${parsed}; path=/; max-age=31536000; SameSite=Lax`;
+          if (childrenList[parsed]?.id) {
+            document.cookie = `parent_active_child_id=${childrenList[parsed].id}; path=/; max-age=31536000; SameSite=Lax`;
+          }
         }
       }
     } catch (e) {
@@ -65,6 +72,7 @@ export default function ParentLayout({ user, children }) {
       localStorage.setItem('parent_active_child_idx', String(idx));
       if (childrenList[idx]?.id) {
         localStorage.setItem('parent_active_child_id', String(childrenList[idx].id));
+        document.cookie = `parent_active_child_id=${childrenList[idx].id}; path=/; max-age=31536000; SameSite=Lax`;
       }
       document.cookie = `parent_active_child_idx=${idx}; path=/; max-age=31536000; SameSite=Lax`;
     } catch (e) {
@@ -130,6 +138,7 @@ export default function ParentLayout({ user, children }) {
     { label: 'Attendance & Gate Logs', href: '/parent/attendance', icon: CalendarCheck, moduleKey: 'attendance' },
     { label: 'Fees & Invoices', href: '/parent/fees', icon: CreditCard, moduleKey: 'fees' },
     { label: 'Ward Timetable', href: '/parent/timetable', icon: CalendarDays, moduleKey: 'timetable' },
+    { label: 'Notifications', href: '/parent/notifications', icon: Bell, moduleKey: 'always' },
   ];
 
   const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
@@ -155,6 +164,19 @@ export default function ParentLayout({ user, children }) {
   const parentName = user?.name || 'Guardian';
   const parentPhone = user?.phone || '+91 9876543210';
   const parentEmail = user?.email || '';
+
+  const pathname = usePathname();
+  const isPrintPage = pathname?.endsWith('/print');
+
+  if (isPrintPage) {
+    return (
+      <ParentChildContext.Provider value={{ activeChild, childrenList, setSelectedChildIndex, selectedChildIndex }}>
+        <div className="min-h-screen bg-white text-slate-900 font-sans">
+          {children}
+        </div>
+      </ParentChildContext.Provider>
+    );
+  }
 
   return (
     <ParentChildContext.Provider value={{ activeChild, childrenList, setSelectedChildIndex, selectedChildIndex }}>

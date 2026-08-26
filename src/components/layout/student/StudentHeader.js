@@ -6,6 +6,7 @@ import {
   Calendar 
 } from 'lucide-react';
 import StudentUserDropdown from './StudentUserDropdown';
+import NotificationBellDropdown from '@/components/layout/NotificationBellDropdown';
 
 export default function StudentHeader({
   studentName,
@@ -36,6 +37,9 @@ export default function StudentHeader({
   } else if (pathname === '/student/leaves') {
     pageTitle = 'Leave Requests';
     pageSub = 'Student Applications & Status';
+  } else if (pathname === '/student/notifications') {
+    pageTitle = 'Notification Center';
+    pageSub = 'Alerts, Broadcasts & Activity Updates';
   } else if (pathname === '/student/profile') {
     pageTitle = 'Student Profile & ID';
     pageSub = 'Digital Identity & Credentials';
@@ -73,6 +77,9 @@ export default function StudentHeader({
           <Calendar size={13} className="text-primary-600 shrink-0" />
           <span>{todayFormatted}</span>
         </div>
+
+        {/* Dynamic Notification Bell */}
+        <NotificationBellDropdown role="student" />
 
         {/* User Profile Dropdown Component */}
         <StudentUserDropdown

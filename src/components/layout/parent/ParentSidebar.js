@@ -19,6 +19,8 @@ import {
   Check
 } from 'lucide-react';
 
+import ParentSidebarSkeleton from '@/components/skeletons/parent/ParentSidebarSkeleton';
+
 export default function ParentSidebar({
   schoolName,
   schoolLogo,
@@ -32,8 +34,12 @@ export default function ParentSidebar({
   navItems,
   mobileOpen,
   setMobileOpen,
-  handleLogout
+  handleLogout,
+  loading = false
 }) {
+  if (loading) {
+    return <ParentSidebarSkeleton />;
+  }
   const pathname = usePathname();
   const [wardMenuOpen, setWardMenuOpen] = useState(false);
   const wardMenuRef = useRef(null);

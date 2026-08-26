@@ -6,6 +6,7 @@ import { getParentAttendanceAction } from '@/actions/parent/attendanceActions';
 import ParentAttendanceSkeleton from '@/components/skeletons/parent/ParentAttendanceSkeleton';
 import Card from '@/components/ui/Card';
 import DataTable from '@/components/ui/DataTable';
+import Select from '@/components/ui/Select';
 import Tooltip from '@/components/ui/Tooltip';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { 
@@ -163,10 +164,10 @@ export default function ParentAttendanceClient({ initialData }) {
 
   // Month selector options
   const monthOptions = [
-    { key: 'ALL', label: 'All Months (Academic Year)' },
-    { key: '08', label: 'August 2026' },
-    { key: '07', label: 'July 2026' },
-    { key: '06', label: 'June 2026' }
+    { value: 'ALL', label: 'All Months (Academic Year)' },
+    { value: '08', label: 'August 2026' },
+    { value: '07', label: 'July 2026' },
+    { value: '06', label: 'June 2026' }
   ];
 
   // DataTable columns for Ward Attendance
@@ -446,17 +447,16 @@ export default function ParentAttendanceClient({ initialData }) {
             {/* Month Filter & Search Box */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
               {/* Month Dropdown */}
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition cursor-pointer"
-              >
-                {monthOptions.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full sm:w-60">
+                <Select
+                  options={monthOptions}
+                  value={selectedMonth}
+                  onChange={(val) => setSelectedMonth(val || 'ALL')}
+                  placeholder="Select Month"
+                  searchable={false}
+                  clearable={false}
+                />
+              </div>
 
               {/* Search Box */}
               <div className="relative w-full sm:w-60">

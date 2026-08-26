@@ -1,6 +1,6 @@
 'use server';
 
-import { getParentSessionAction } from '@/actions/parent/authActions';
+import { getParentSessionAction, getParentActiveChildAction } from '@/actions/parent/authActions';
 import { getParentBusTrackingAction } from '@/actions/parent/transportActions';
 import { redirect } from 'next/navigation';
 import ParentBusTrackingClient from './ParentBusTrackingClient';
@@ -12,9 +12,9 @@ export default async function ParentBusTrackingPage() {
     redirect('/parent/login');
   }
 
-  // Get first child id if present in session
-  const initialChild = session.user?.children?.[0] || session.user?.child;
-  const initialRes = await getParentBusTrackingAction(initialChild?.id);
+  // Get active child saved in parent cookie or fallback to first
+  const { activeChild } = await getParentActiveChildAction(session.user);
+  const initialRes = await getParentBusTrackingAction(activeChild?.id);
 
   return (
     <ParentBusTrackingClient 

@@ -15,6 +15,8 @@ import {
   User
 } from 'lucide-react';
 
+import StudentSidebarSkeleton from '@/components/skeletons/student/StudentSidebarSkeleton';
+
 export default function StudentSidebar({
   schoolName,
   schoolLogo,
@@ -26,8 +28,12 @@ export default function StudentSidebar({
   navItems,
   mobileOpen,
   setMobileOpen,
-  handleLogout
+  handleLogout,
+  loading = false
 }) {
+  if (loading) {
+    return <StudentSidebarSkeleton />;
+  }
   const pathname = usePathname();
 
   return (

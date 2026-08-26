@@ -19,6 +19,7 @@ import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import { usePathname } from 'next/navigation';
 import AcademicYearHeaderDropdown from '@/components/layout/AcademicYearHeaderDropdown';
+import NotificationBellDropdown from '@/components/layout/NotificationBellDropdown';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
@@ -164,49 +165,8 @@ export default function Header({
         {/* Quick Academic Year Dropdown Selector */}
         <AcademicYearHeaderDropdown />
 
-
-        {/* Notifications Dropdown */}
-        <div className="relative" ref={notifRef}>
-          <button 
-            onClick={() => {
-              setNotificationsOpen(!notificationsOpen);
-              setProfileOpen(false);
-            }}
-            className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all duration-200 cursor-pointer relative shadow-2xs"
-            title="Notifications"
-          >
-            <Bell size={18} />
-            <span className="w-2.5 h-2.5 rounded-full bg-primary-500 border-2 border-white absolute top-2 right-2 animate-pulse"></span>
-          </button>
-
-          {notificationsOpen && (
-            <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200/90 p-4 rounded-2xl space-y-3 shadow-2xl z-[100] animate-fadeIn">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div className="flex items-center space-x-1.5">
-                  <Bell size={14} className="text-primary-600" />
-                  <span className="text-xs font-bold text-slate-900">System Notifications</span>
-                </div>
-                <span className="text-[10px] bg-primary-50 border border-primary-100 text-primary-600 px-2 py-0.5 rounded-full font-bold">2 NEW</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition text-slate-700">
-                  <p className="font-bold text-slate-900 flex items-center justify-between">
-                    <span>NFC Bus Route #12 Active</span>
-                    <span className="text-[9px] text-slate-400 font-normal">10m ago</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1">324 students scanned & checked in today</p>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition text-slate-700">
-                  <p className="font-bold text-slate-900 flex items-center justify-between">
-                    <span>Faculty Attendance Ready</span>
-                    <span className="text-[9px] text-slate-400 font-normal">1h ago</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1">Grade 10 teachers submitted morning logs</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Dynamic Notifications Dropdown */}
+        <NotificationBellDropdown role="school" />
 
         {/* Dynamic User Profile Pill & Dropdown */}
         <div className="relative" ref={profileRef}>

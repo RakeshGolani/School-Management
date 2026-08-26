@@ -6,7 +6,8 @@ import {
   CalendarDays, 
   CheckCircle2, 
   Bus,
-  FileText 
+  FileText,
+  Bell
 } from 'lucide-react';
 import { studentLogoutAction } from '@/actions/student/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -70,6 +71,7 @@ export default function StudentLayout({ user, children }) {
     { label: 'Attendance Meter', href: '/student/attendance', icon: CheckCircle2, moduleKey: 'attendance' },
     { label: 'Smart Bus & Stops', href: '/student/transport', icon: Bus, moduleKey: 'transport' },
     { label: 'Leave Requests', href: '/student/leaves', icon: FileText, moduleKey: 'attendance' },
+    { label: 'Notifications', href: '/student/notifications', icon: Bell, moduleKey: 'always' },
   ];
 
   const navItems = allNavItems.filter(item => hasModule(item.moduleKey));
