@@ -155,9 +155,18 @@ export default function ParentLogin() {
       }
 
       notifySuccess('Parent authenticated successfully! Redirecting...');
+
+      const schoolColor = result.user?.school?.primary_color || 
+                          result.user?.school?.primaryColor || 
+                          result.user?.children?.[0]?.school?.primary_color || 
+                          result.user?.children?.[0]?.school?.primaryColor;
+      if (schoolColor) {
+        applyDynamicTheme(schoolColor);
+      }
+
       setTimeout(() => {
         router.push('/parent/dashboard');
-      }, 800);
+      }, 500);
     } catch (err) {
       notifyError(err.message || 'OTP verification failed.');
     } finally {
@@ -189,9 +198,18 @@ export default function ParentLogin() {
       }
 
       notifySuccess('Parent login successful! Redirecting...');
+
+      const schoolColor = result.user?.school?.primary_color || 
+                          result.user?.school?.primaryColor || 
+                          result.user?.children?.[0]?.school?.primary_color || 
+                          result.user?.children?.[0]?.school?.primaryColor;
+      if (schoolColor) {
+        applyDynamicTheme(schoolColor);
+      }
+
       setTimeout(() => {
         router.push('/parent/dashboard');
-      }, 800);
+      }, 500);
     } catch (err) {
       notifyError(err.message || 'Failed to sign in.');
     } finally {

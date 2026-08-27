@@ -129,9 +129,15 @@ export default function StudentLogin() {
       }
 
       notifySuccess('Student authenticated successfully! Redirecting to student hub...');
+
+      const schoolColor = result.user?.school?.primary_color || result.user?.school?.primaryColor;
+      if (schoolColor) {
+        applyDynamicTheme(schoolColor);
+      }
+
       setTimeout(() => {
         router.push('/student/dashboard');
-      }, 800);
+      }, 500);
     } catch (err) {
       notifyError(err.message || 'Student login failed.');
     } finally {
@@ -189,10 +195,16 @@ export default function StudentLogin() {
         return;
       }
 
-      notifySuccess('Student verified successfully! Redirecting...');
+      notifySuccess('Student authenticated successfully! Redirecting...');
+
+      const schoolColor = result.user?.school?.primary_color || result.user?.school?.primaryColor;
+      if (schoolColor) {
+        applyDynamicTheme(schoolColor);
+      }
+
       setTimeout(() => {
         router.push('/student/dashboard');
-      }, 800);
+      }, 500);
     } catch (err) {
       notifyError(err.message || 'OTP verification failed.');
     } finally {

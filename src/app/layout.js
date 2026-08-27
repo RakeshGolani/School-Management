@@ -26,14 +26,18 @@ export default async function RootLayout({ children }) {
     getEncryptedCookie('school_branding'),
   ]);
 
-  const activeData = schoolSession?.user || 
-                     teacherSession?.user?.school || 
-                     studentSession?.user?.school || 
-                     parentSession?.user?.school || parentSession?.user?.children?.[0]?.school ||
-                     branding;
-  
-  const resolvedColor = activeData?.primaryColor || 
-                        activeData?.primary_color || 
+  const resolvedColor = studentSession?.user?.school?.primary_color ||
+                        studentSession?.user?.school?.primaryColor ||
+                        teacherSession?.user?.school?.primary_color ||
+                        teacherSession?.user?.school?.primaryColor ||
+                        parentSession?.user?.school?.primary_color ||
+                        parentSession?.user?.school?.primaryColor ||
+                        parentSession?.user?.children?.[0]?.school?.primary_color ||
+                        parentSession?.user?.children?.[0]?.school?.primaryColor ||
+                        schoolSession?.user?.primaryColor || 
+                        schoolSession?.user?.primary_color || 
+                        branding?.primaryColor ||
+                        branding?.primary_color ||
                         '#0047AB';
 
   const htmlStyle = getThemeCssVars(resolvedColor);
@@ -49,7 +53,14 @@ export default async function RootLayout({ children }) {
               try {
                 var p = localStorage.getItem('theme_primary');
                 if (p && p.startsWith('#')) {
+                  var hex = p.replace('#', '');
+                  if (hex.length === 3) hex = hex.split('').map(function(c){return c+c;}).join('');
+                  var num = parseInt(hex, 16);
+                  var r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
                   document.documentElement.style.setProperty('--theme-primary-500', p);
+                  document.documentElement.style.setProperty('--theme-primary-50', 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
+                  document.documentElement.style.setProperty('--theme-primary-100', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+                  document.documentElement.style.setProperty('--theme-primary-200', 'rgba(' + r + ',' + g + ',' + b + ',0.25)');
                 }
               } catch(e) {}
             `
