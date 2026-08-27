@@ -58,11 +58,11 @@ export default function PackageRouteGuard({ children }) {
       const moduleInfo = getModuleInfo(matchedRoute.moduleKey);
 
       // Determine home dashboard redirect URL based on active portal
-      const homeDashboardUrl = pathname?.startsWith('/teacher')
+      const homeDashboardUrl = (pathname === '/teacher' || pathname?.startsWith('/teacher/'))
         ? '/teacher/dashboard'
-        : pathname?.startsWith('/student')
+        : (pathname === '/student' || pathname?.startsWith('/student/'))
         ? '/student/dashboard'
-        : pathname?.startsWith('/parent')
+        : (pathname === '/parent' || pathname?.startsWith('/parent/'))
         ? '/parent/dashboard'
         : '/dashboard';
 

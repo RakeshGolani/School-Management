@@ -22,6 +22,7 @@ import { teacherLoginAction, getTeacherSessionAction } from '@/actions/teacher/a
 import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import Checkbox from '@/components/ui/Checkbox';
 
 /**
  * Dedicated Teacher Portal & Mobile App Login Page
@@ -366,15 +367,12 @@ export default function TeacherLogin() {
 
           {/* Remember Session Toggle */}
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center space-x-2 text-xs text-slate-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded bg-white border border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-              />
-              <span>Remember teacher login session</span>
-            </label>
+            <Checkbox
+              id="remember-teacher"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              label="Remember teacher login session"
+            />
           </div>
 
           {/* Submit Button */}

@@ -29,6 +29,7 @@ import {
 import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import Checkbox from '@/components/ui/Checkbox';
 
 /**
  * Dedicated Student Profile Login Page
@@ -466,6 +467,16 @@ export default function StudentLogin() {
               {fieldErrors.password && (
                 <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.password}</p>
               )}
+            </div>
+
+            {/* Remember Session Toggle */}
+            <div className="flex items-center justify-between pt-1">
+              <Checkbox
+                id="remember-student"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                label="Remember student login session"
+              />
             </div>
 
             {/* Submit Button */}

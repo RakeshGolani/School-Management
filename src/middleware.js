@@ -2,81 +2,99 @@ import { NextResponse } from 'next/server';
 import { encryptCookieKey } from '@/lib/cookieKeys';
 
 /**
- * Next.js Request Interceptor / Proxy
- * Enforces role-based session isolation and auto-redirects authenticated users to their respective dashboards.
+ * Sub-Portals Configuration
+ * Any path under prefix (e.g. /teacher/*, /student/*, /parent/*) will automatically be governed by that portal's session.
+ */
+const PORTALS = [
+  {
+    prefix: '/teacher',
+    loginPath: '/teacher/login',
+    dashboardPath: '/teacher/dashboard',
+    sessionKey: 'teacher_session',
+  },
+  {
+    prefix: '/student',
+    loginPath: '/student/login',
+    dashboardPath: '/student/dashboard',
+    sessionKey: 'student_session',
+  },
+  {
+    prefix: '/parent',
+    loginPath: '/parent/login',
+    dashboardPath: '/parent/dashboard',
+    sessionKey: 'parent_session',
+  },
+];
+
+/**
+ * Public Routes (No authentication required)
+ */
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/forgot-password',
+  '/reset-password',
+];
+
+// Helper: Strict path matching (handles exact path and sub-paths without string boundary conflicts)
+const isMatch = (pathname, prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+/**
+ * Dynamic Role-Based Next.js Middleware
+ * Automatically protects any current and future School Admin modules without requiring manual route additions.
  */
 export function middleware(request) {
   const { pathname } = request.nextUrl;
   const cookies = request.cookies;
 
-  const schoolSessionKey = encryptCookieKey('school_session');
-  const teacherSessionKey = encryptCookieKey('teacher_session');
-  const parentSessionKey = encryptCookieKey('parent_session');
-  const studentSessionKey = encryptCookieKey('student_session');
+  // Session verification helper (supports both encrypted & plain cookies)
+  const hasSession = (key) => {
+    const encKey = encryptCookieKey(key);
+    return Boolean(cookies.get(encKey)?.value || cookies.get(key)?.value);
+  };
 
-  const hasSchoolSession = Boolean(cookies.get(schoolSessionKey)?.value || cookies.get('school_session')?.value);
-  const hasTeacherSession = Boolean(cookies.get(teacherSessionKey)?.value || cookies.get('teacher_session')?.value);
-  const hasParentSession = Boolean(cookies.get(parentSessionKey)?.value || cookies.get('parent_session')?.value);
-  const hasStudentSession = Boolean(cookies.get(studentSessionKey)?.value || cookies.get('student_session')?.value);
+  // 1. Check Sub-Portals first (Teacher, Student, Parent, etc.)
+  const activePortal = PORTALS.find(portal => isMatch(pathname, portal.prefix));
 
-  // 1. School Admin Auth Redirect: If logged in as School Admin and visits /login -> redirect to /dashboard
-  if (pathname === '/login' && hasSchoolSession) {
+  if (activePortal) {
+    const hasPortalSession = hasSession(activePortal.sessionKey);
+
+    // If authenticated user visits the portal login page -> redirect to portal dashboard
+    if (pathname === activePortal.loginPath) {
+      if (hasPortalSession) {
+        return NextResponse.redirect(new URL(activePortal.dashboardPath, request.url));
+      }
+      return NextResponse.next();
+    }
+
+    // Protected Portal Route: Redirect unauthenticated user to portal login
+    if (!hasPortalSession) {
+      const loginUrl = new URL(activePortal.loginPath, request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
+  }
+
+  // 2. School Admin & Public Root Routes
+  const hasSchoolSession = hasSession('school_session');
+
+  // If School Admin is already logged in and visits /login or /forgot-password -> redirect to /dashboard
+  if ((pathname === '/login' || pathname === '/forgot-password') && hasSchoolSession) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // 2. Teacher Auth Redirect: If logged in as Teacher and visits /teacher/login -> redirect to /teacher/dashboard
-  if (pathname === '/teacher/login' && hasTeacherSession) {
-    return NextResponse.redirect(new URL('/teacher/dashboard', request.url));
+  // Allow public routes (e.g. Landing page '/')
+  if (PUBLIC_ROUTES.includes(pathname)) {
+    return NextResponse.next();
   }
 
-  // 3. Parent Auth Redirect: If logged in as Parent and visits /parent/login -> redirect to /parent/dashboard
-  if (pathname === '/parent/login' && hasParentSession) {
-    return NextResponse.redirect(new URL('/parent/dashboard', request.url));
-  }
-
-  // 4. Student Auth Redirect: If logged in as Student and visits /student/login -> redirect to /student/dashboard
-  if (pathname === '/student/login' && hasStudentSession) {
-    return NextResponse.redirect(new URL('/student/dashboard', request.url));
-  }
-
-  // 5. School Admin Protected Routes: If unauthenticated -> redirect to /login
-  const isSchoolDashboardRoute = 
-    pathname === '/dashboard' ||
-    pathname.startsWith('/dashboard/') ||
-    pathname.startsWith('/students') ||
-    pathname.startsWith('/teachers') ||
-    pathname.startsWith('/classes') ||
-    pathname.startsWith('/timetable') ||
-    pathname.startsWith('/transport') ||
-    pathname.startsWith('/fees') ||
-    pathname.startsWith('/billing') ||
-    pathname.startsWith('/settings') ||
-    pathname.startsWith('/profile') ||
-    pathname.startsWith('/academic-years');
-
-  if (isSchoolDashboardRoute && !hasSchoolSession) {
+  // 3. Dynamic School Admin Protected Routes:
+  // Any other route (e.g. /students, /teachers, /classes, /transport, or ANY future module like /library, /hostel, /inventory)
+  // is automatically treated as a protected School Admin route.
+  if (!hasSchoolSession) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 6. Teacher Protected Routes: If unauthenticated -> redirect to /teacher/login
-  if (pathname.startsWith('/teacher') && pathname !== '/teacher/login' && !hasTeacherSession) {
-    const loginUrl = new URL('/teacher/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 7. Parent Protected Routes: If unauthenticated -> redirect to /parent/login
-  if (pathname.startsWith('/parent') && pathname !== '/parent/login' && !hasParentSession) {
-    const loginUrl = new URL('/parent/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 8. Student Protected Routes: If unauthenticated -> redirect to /student/login
-  if (pathname.startsWith('/student') && pathname !== '/student/login' && !hasStudentSession) {
-    const loginUrl = new URL('/student/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -84,22 +102,11 @@ export function middleware(request) {
   return NextResponse.next();
 }
 
+/**
+ * Universal Next.js Matcher
+ * Automatically intercepts all dynamic pages, excluding static files, images, favicon, and API endpoints.
+ * Never requires manual updates when adding new pages.
+ */
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/students/:path*',
-    '/teachers/:path*',
-    '/classes/:path*',
-    '/timetable/:path*',
-    '/transport/:path*',
-    '/fees/:path*',
-    '/billing/:path*',
-    '/settings/:path*',
-    '/profile/:path*',
-    '/academic-years/:path*',
-    '/teacher/:path*',
-    '/parent/:path*',
-    '/student/:path*',
-    '/login'
-  ]
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)'],
 };

@@ -2,7 +2,7 @@
 import React from 'react';
 
 /**
- * Enterprise-Grade Professional Dynamic Checkbox Component
+ * Enterprise-Grade Professional Dynamic Theme Checkbox Component
  */
 export default function Checkbox({
   label,
@@ -18,16 +18,16 @@ export default function Checkbox({
   const checkboxId = id || name || (typeof label === 'string' ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   const sizeClasses = {
-    sm: 'w-4 h-4 rounded-[4px]',
-    md: 'w-[18px] h-[18px] rounded-[5px]',
-    lg: 'w-5 h-5 rounded-md',
-  }[size] || 'w-[18px] h-[18px] rounded-[5px]';
+    sm: 'w-4 h-4 rounded-[5px]',
+    md: 'w-5 h-5 rounded-md',
+    lg: 'w-6 h-6 rounded-lg',
+  }[size] || 'w-5 h-5 rounded-md';
 
   const iconSizes = {
     sm: 10,
-    md: 12,
-    lg: 14,
-  }[size] || 12;
+    md: 13,
+    lg: 16,
+  }[size] || 13;
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -43,12 +43,12 @@ export default function Checkbox({
 
   return (
     <div 
-      className={`inline-flex items-start gap-2.5 select-none cursor-pointer ${
-        disabled ? 'opacity-50 cursor-not-allowed' : ''
+      className={`inline-flex items-center gap-2.5 select-none cursor-pointer group transition-all duration-150 ${
+        disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
       } ${className}`}
       onClick={handleClick}
     >
-      <div className="relative flex items-center shrink-0 mt-0.5">
+      <div className="relative flex items-center shrink-0">
         <input
           type="checkbox"
           id={checkboxId}
@@ -59,19 +59,19 @@ export default function Checkbox({
           className="sr-only"
         />
         <div 
-          className={`${sizeClasses} border transition-colors duration-150 flex items-center justify-center relative ${
+          className={`${sizeClasses} border-2 transition-all duration-200 flex items-center justify-center relative shadow-2xs ${
             checked 
-              ? 'bg-primary-600 border-primary-600 text-white shadow-2xs' 
-              : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
+              ? 'text-white scale-100 shadow-xs' 
+              : 'bg-white border-slate-300 group-hover:border-primary-400 group-hover:scale-105'
           }`}
           style={checked ? {
-            backgroundColor: 'var(--theme-primary-500)',
-            borderColor: 'var(--theme-primary-500)'
+            backgroundColor: 'var(--theme-primary-500, #0047AB)',
+            borderColor: 'var(--theme-primary-500, #0047AB)'
           } : {}}
         >
           {checked && (
             <svg 
-              className="text-white" 
+              className="text-white animate-scaleIn transition-transform" 
               style={{ width: iconSizes, height: iconSizes }}
               viewBox="0 0 14 14" 
               fill="none" 
@@ -80,7 +80,7 @@ export default function Checkbox({
               <path 
                 d="M2.5 7.5L5.5 10.5L11.5 3.5" 
                 stroke="currentColor" 
-                strokeWidth="2.5" 
+                strokeWidth="2.4" 
                 strokeLinecap="round" 
                 strokeLinejoin="round" 
               />
@@ -92,12 +92,12 @@ export default function Checkbox({
       {(label || description) && (
         <div className="flex flex-col">
           {label && (
-            <span className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight">
+            <span className="text-xs sm:text-sm font-medium text-slate-700 group-hover:text-slate-900 leading-tight transition-colors">
               {label}
             </span>
           )}
           {description && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-normal">
+            <span className="text-[11px] text-slate-500 mt-0.5 leading-normal">
               {description}
             </span>
           )}

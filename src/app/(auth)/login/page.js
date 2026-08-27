@@ -23,6 +23,7 @@ import { loginAction, getSessionAction, getSchoolBrandingAction, getSystemSettin
 import { loginSchema } from '@/validators/authSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import Checkbox from '@/components/ui/Checkbox';
 
 /**
  * Dedicated School Portal Login Page
@@ -370,15 +371,12 @@ export default function Login() {
 
           {/* Remember Session Toggle */}
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center space-x-2 text-xs text-slate-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded bg-white border border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-              />
-              <span>Remember this browser for 30 days</span>
-            </label>
+            <Checkbox
+              id="remember-school"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              label="Remember this browser for 30 days"
+            />
           </div>
 
           {/* Submit Button with dynamic school primary theme */}
@@ -434,7 +432,9 @@ export default function Login() {
           <Link href="/" className="hover:text-slate-900 transition flex items-center gap-1.5 font-medium">
             <ArrowLeft size={14} /> Back to Homepage
           </Link>
-          <span className="text-[11px] text-slate-400">Protected by CloudShield</span>
+          <span className="text-[11px] text-slate-400 font-medium">
+            {systemSettings?.company_name || 'Vidyadmin'} Enterprise Security
+          </span>
         </div>
       </div>
     </div>
