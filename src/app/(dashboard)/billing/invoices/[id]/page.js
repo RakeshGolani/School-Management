@@ -62,7 +62,12 @@ export default function InvoiceDetailPage() {
         
         // Find matching invoice
         const foundInvoice = invoices.find(
-          (inv) => String(inv.id) === String(id) || String(inv.invoice_number) === String(id)
+          (inv) => String(inv.uuid) === String(id) || String(inv.id) === String(id) || String(inv.invoice_number) === String(id)
+        ) || invoices.find(
+          (inv) => {
+            const txn = transactions.find(t => String(t.uuid) === String(id) || String(t.id) === String(id));
+            return txn && txn.id === inv.transaction_id;
+          }
         );
 
         if (foundInvoice) {

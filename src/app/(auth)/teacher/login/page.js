@@ -106,9 +106,16 @@ export default function TeacherLogin() {
       const res = await teacherLoginAction({ identifier, password, rememberMe });
       if (!res.success) {
         notifyError(res.message || 'Login failed');
-        if (res.errors) {
-          setFieldErrors(res.errors);
+        const errMap = res.errors ? { ...res.errors } : {};
+        if (res.message) {
+          const msg = res.message.toLowerCase();
+          if (msg.includes('password')) {
+            errMap.password = res.message;
+          } else {
+            errMap.identifier = res.message;
+          }
         }
+        setFieldErrors(errMap);
         setLoading(false);
         return;
       }

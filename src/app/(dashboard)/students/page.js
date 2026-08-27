@@ -590,7 +590,7 @@ export default function StudentsPage() {
           <Tooltip content="View Profile" position="top">
             <button
               type="button"
-              onClick={() => router.push(`/students/${student.id}`)}
+              onClick={() => router.push(`/students/${student.uuid || student.id}`)}
               className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"
             >
               <Eye size={14} />

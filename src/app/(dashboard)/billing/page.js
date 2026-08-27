@@ -174,7 +174,7 @@ export default function BillingPage() {
       sortable: false,
       className: 'text-right pr-4',
       render: (row) => {
-        const invoiceId = row.invoice?.id || row.id;
+        const invoiceId = row.uuid || row.invoice?.uuid || row.invoice?.id || row.id;
         return (
           <div className="flex items-center justify-end">
             <Tooltip content="View Invoice" position="left">

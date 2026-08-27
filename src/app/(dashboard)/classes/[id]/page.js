@@ -901,7 +901,7 @@ export default function ClassDetailsPage({ params }) {
                 <span>Unassign from Class</span>
               </button>
               <Link 
-                href={`/students/${selectedStudent.id}`}
+                href={`/students/${selectedStudent.uuid || selectedStudent.id}`}
                 className="flex-1"
               >
                 <button

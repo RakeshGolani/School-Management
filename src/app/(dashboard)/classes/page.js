@@ -243,7 +243,7 @@ export default function ClassesPage() {
       className: 'font-extrabold text-slate-900 dark:text-white',
       render: (cls) => (
         <Link 
-          href={`/classes/${cls.id}`} 
+          href={`/classes/${cls.uuid || cls.id}`} 
           className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2 group"
           title="Click to open visual classroom layout"
         >
@@ -294,7 +294,7 @@ export default function ClassesPage() {
       render: (cls) => (
         <div className="flex items-center justify-end space-x-2">
           <Tooltip content="View Layout" position="top">
-            <Link href={`/classes/${cls.id}`}>
+            <Link href={`/classes/${cls.uuid || cls.id}`}>
               <button
                 type="button"
                 className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:border-primary-500 text-slate-600 hover:text-primary-600 transition cursor-pointer"

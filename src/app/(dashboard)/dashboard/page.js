@@ -698,7 +698,7 @@ export default function Dashboard() {
                   recentAdmissions.map((student) => (
                     <Link 
                       key={student.id} 
-                      href={`/students/${student.id}`} 
+                      href={`/students/${student.uuid || student.id}`} 
                       className="block group"
                     >
                       <div className="p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs transition-all flex items-center justify-between gap-3">

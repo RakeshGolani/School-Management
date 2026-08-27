@@ -9,9 +9,10 @@ const API_BASE = API_URL.replace(/\/school$/, '');
  * Server Action: Authenticate Teacher (Employee ID or Email + Password)
  */
 export async function teacherLoginAction(credentials) {
-  const { email, password } = credentials || {};
+  const identifier = credentials?.identifier || credentials?.email;
+  const password = credentials?.password;
 
-  if (!email || !password) {
+  if (!identifier || !password) {
     return { success: false, message: 'Employee ID/Email and password are required' };
   }
 
@@ -19,7 +20,7 @@ export async function teacherLoginAction(credentials) {
     const response = await fetch(`${API_BASE}/teacher/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: identifier, password }),
       cache: 'no-store'
     });
 

@@ -113,9 +113,16 @@ export default function Login() {
 
       if (!res.success) {
         notifyError(res.message || 'Login failed');
-        if (res.errors) {
-          setFieldErrors(res.errors);
+        const errMap = res.errors ? { ...res.errors } : {};
+        if (res.message) {
+          const msg = res.message.toLowerCase();
+          if (msg.includes('password')) {
+            errMap.password = res.message;
+          } else {
+            errMap.email = res.message;
+          }
         }
+        setFieldErrors(errMap);
         setLoading(false);
         return;
       }
@@ -325,7 +332,10 @@ export default function Login() {
               />
             </div>
             {fieldErrors.email && (
-              <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.email}</p>
+              <p className="text-xs text-rose-500 font-semibold pl-1 animate-fadeIn flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <span>{fieldErrors.email}</span>
+              </p>
             )}
           </div>
 
@@ -370,7 +380,10 @@ export default function Login() {
               </button>
             </div>
             {fieldErrors.password && (
-              <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.password}</p>
+              <p className="text-xs text-rose-500 font-semibold pl-1 animate-fadeIn flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <span>{fieldErrors.password}</span>
+              </p>
             )}
           </div>
 

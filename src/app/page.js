@@ -6,6 +6,9 @@ import { applyDynamicTheme } from '@/lib/themeHelper';
 import LandingPageSkeleton from '@/components/skeletons/landing/LandingPageSkeleton';
 import Select from '@/components/ui/Select';
 import FormPhoneInput from '@/components/FormPhoneInput';
+import * as yup from 'yup';
+import { submitInquiryAction } from '@/actions/school/inquiryActions';
+import { notifySuccess, notifyError } from '@/lib/notify';
 import { 
   GraduationCap, 
   Bus, 
@@ -20,31 +23,66 @@ import {
   DollarSign, 
   Bell, 
   Calendar, 
-  Sparkles,
-  Zap,
-  Activity,
-  Layers,
-  Award,
-  BarChart3,
-  FileCheck2,
-  Lock,
-  Smartphone,
-  Check,
-  Star,
-  Compass,
-  Radio,
-  Sliders,
-  Send,
-  HelpCircle,
-  Building,
-  Mail,
-  Phone,
-  Menu,
-  X,
-  QrCode,
-  ShieldCheck,
-  Navigation
+  Sparkles, 
+  Zap, 
+  Activity, 
+  Layers, 
+  Award, 
+  BarChart3, 
+  FileCheck2, 
+  Lock, 
+  Smartphone, 
+  Check, 
+  Star, 
+  Compass, 
+  Radio, 
+  Sliders, 
+  Send, 
+  HelpCircle, 
+  Building, 
+  Mail, 
+  Phone, 
+  Menu, 
+  X, 
+  QrCode, 
+  ShieldCheck, 
+  Navigation,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
+
+const inquirySchema = yup.object().shape({
+  name: yup
+    .string()
+    .trim()
+    .required('Representative name is required')
+    .min(2, 'Name must be at least 2 characters'),
+  email: yup
+    .string()
+    .trim()
+    .required('Email address is required')
+    .email('Please enter a valid email address'),
+  school: yup
+    .string()
+    .trim()
+    .required('School / Academy name is required')
+    .min(2, 'School name must be at least 2 characters'),
+  phone: yup
+    .string()
+    .trim()
+    .required('Phone number is required')
+    .test('valid-phone', 'Please enter a valid 10-digit phone number', (val) => {
+      if (!val) return false;
+      const clean = val.replace(/[^0-9]/g, '');
+      return clean.length >= 10;
+    }),
+  moduleInterest: yup
+    .string()
+    .required('Please select a module of interest'),
+  message: yup
+    .string()
+    .max(1000, 'Message cannot exceed 1000 characters')
+});
 
 export default function LandingPage() {
   const [activePreviewTab, setActivePreviewTab] = useState('admin');
@@ -54,6 +92,8 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', school: '', phone: '', moduleInterest: 'full_suite', message: '' });
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemSettings, setSystemSettings] = useState({
     company_name: 'Vidyadmin',
     tagline: 'Simplifying Education, Empowering Admins',
@@ -90,13 +130,46 @@ export default function LandingPage() {
     setExpandedFaq(expandedFaq === index ? null : index);
   };
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
-    setContactSubmitted(true);
-    setTimeout(() => {
-      setContactSubmitted(false);
-      setFormData({ name: '', email: '', school: '', phone: '', moduleInterest: 'full_suite', message: '' });
-    }, 4500);
+    setFormErrors({});
+
+    try {
+      await inquirySchema.validate(formData, { abortEarly: false });
+    } catch (err) {
+      if (err.inner) {
+        const errors = {};
+        err.inner.forEach((error) => {
+          errors[error.path] = error.message;
+        });
+        setFormErrors(errors);
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await submitInquiryAction({
+        representative_name: formData.name,
+        email: formData.email,
+        school_name: formData.school,
+        phone: formData.phone,
+        module_interest: formData.moduleInterest,
+        message: formData.message
+      });
+
+      if (res.success) {
+        setContactSubmitted(true);
+        notifySuccess(res.message || 'Demonstration request submitted successfully!');
+        setFormData({ name: '', email: '', school: '', phone: '', moduleInterest: 'full_suite', message: '' });
+      } else {
+        notifyError(res.message || 'Failed to submit demonstration inquiry');
+      }
+    } catch (err) {
+      notifyError('Failed to connect to the server');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Dynamic calculations based on student slider
@@ -1095,58 +1168,103 @@ export default function LandingPage() {
           </div>
 
           {contactSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center space-y-3 animate-fadeIn">
-              <CheckCircle size={48} className="text-emerald-600 mx-auto" />
-              <h4 className="text-xl font-bold text-slate-900">Demonstration Request Confirmed!</h4>
-              <p className="text-sm text-slate-600">
-                Our educational technology consultant will contact your office within 24 hours to coordinate the live interactive demo.
-              </p>
+            <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-8 sm:p-10 text-center space-y-4 animate-fadeIn shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                <CheckCircle size={36} className="text-emerald-600" />
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900">Demonstration Request Confirmed!</h4>
+                <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                  Thank you! Our educational technology consultant will contact your office within 24 hours to schedule the live interactive demo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setContactSubmitted(false);
+                  setFormErrors({});
+                }}
+                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:text-primary-600 hover:border-primary-300 shadow-xs transition-all cursor-pointer"
+              >
+                <RefreshCw size={13} /> Submit Another Request
+              </button>
             </div>
           ) : (
             <form onSubmit={handleContactSubmit} className="space-y-4 max-w-xl mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Representative Name</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Representative Name <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setFormErrors(prev => ({ ...prev, name: '' }));
+                    }}
+                    className={`w-full bg-white border ${
+                      formErrors.name ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                    } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition`}
                     placeholder="Principal / Admin Name"
                   />
+                  {formErrors.name && (
+                    <p className="text-xs text-rose-500 font-medium pl-1">{formErrors.name}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Email Address</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="email"
-                    required
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setFormErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    className={`w-full bg-white border ${
+                      formErrors.email ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                    } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition`}
                     placeholder="admin@institution.edu"
                   />
+                  {formErrors.email && (
+                    <p className="text-xs text-rose-500 font-medium pl-1">{formErrors.email}</p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">School / Academy Name</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    School / Academy Name <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    required
                     value={formData.school}
-                    onChange={(e) => setFormData({ ...formData, school: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
+                    onChange={(e) => {
+                      setFormData({ ...formData, school: e.target.value });
+                      setFormErrors(prev => ({ ...prev, school: '' }));
+                    }}
+                    className={`w-full bg-white border ${
+                      formErrors.school ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                    } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition`}
                     placeholder="E.g. St. Xavier's Academy"
                   />
+                  {formErrors.school && (
+                    <p className="text-xs text-rose-500 font-medium pl-1">{formErrors.school}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <FormPhoneInput
                     label="Phone Number"
                     required
                     value={formData.phone}
-                    onChange={(phone) => setFormData({ ...formData, phone })}
+                    error={formErrors.phone}
+                    onChange={(phone) => {
+                      setFormData({ ...formData, phone });
+                      setFormErrors(prev => ({ ...prev, phone: '' }));
+                    }}
                     defaultCountry="in"
                   />
                 </div>
@@ -1154,9 +1272,13 @@ export default function LandingPage() {
 
               <div className="space-y-1.5">
                 <Select
-                  label="Primary Module of Interest"
+                  label="Primary Module of Interest *"
                   value={formData.moduleInterest}
-                  onChange={(val) => setFormData({ ...formData, moduleInterest: val })}
+                  error={formErrors.moduleInterest}
+                  onChange={(val) => {
+                    setFormData({ ...formData, moduleInterest: val });
+                    setFormErrors(prev => ({ ...prev, moduleInterest: '' }));
+                  }}
                   options={[
                     { value: 'full_suite', label: 'Full Institutional Suite (ERP + Smart Bus + NFC)' },
                     { value: 'transport_only', label: 'Smart Bus Fleet & Live GPS Only' },
@@ -1172,17 +1294,34 @@ export default function LandingPage() {
                 <textarea
                   rows={3}
                   value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition resize-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, message: e.target.value });
+                    setFormErrors(prev => ({ ...prev, message: '' }));
+                  }}
+                  className={`w-full bg-white border ${
+                    formErrors.message ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                  } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition resize-none`}
                   placeholder="Tell us about student count, bus count, or custom requirements..."
                 />
+                {formErrors.message && (
+                  <p className="text-xs text-rose-500 font-medium pl-1">{formErrors.message}</p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="w-full py-4 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isSubmitting}
+                className="w-full py-4 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Send size={16} /> Submit Demonstration Request
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" /> Submitting Request...
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} /> Submit Demonstration Request
+                  </>
+                )}
               </button>
             </form>
           )}

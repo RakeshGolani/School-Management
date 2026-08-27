@@ -119,6 +119,7 @@ export default function ParentLogin() {
       const result = await parentSendOtpAction({ phone: cleanPhone });
       if (!result.success) {
         notifyError(result.message || 'Failed to send OTP to mobile number.');
+        setFieldErrors({ phone: result.message || 'Failed to send OTP to mobile number.' });
         return;
       }
 
@@ -195,6 +196,16 @@ export default function ParentLogin() {
 
       if (!result.success) {
         notifyError(result.message || 'Invalid credentials.');
+        const errMap = result.errors ? { ...result.errors } : {};
+        if (result.message) {
+          const msg = result.message.toLowerCase();
+          if (msg.includes('password')) {
+            errMap.password = result.message;
+          } else {
+            errMap.identifier = result.message;
+          }
+        }
+        setFieldErrors(errMap);
         return;
       }
 

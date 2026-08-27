@@ -3,11 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Lock, 
-  Smartphone, 
   ArrowLeft, 
   ShieldCheck, 
   ArrowRight, 
-  Phone, 
   Sparkles, 
   BadgeCheck, 
   CheckCircle2, 
@@ -16,14 +14,12 @@ import {
   CalendarDays, 
   User, 
   Eye, 
-  EyeOff, 
-  RefreshCw 
+  EyeOff,
+  GraduationCap
 } from 'lucide-react';
 import Link from 'next/link';
 import { 
   studentLoginAction, 
-  studentSendOtpAction, 
-  studentVerifyOtpAction, 
   getStudentSessionAction 
 } from '@/actions/student/authActions';
 import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
@@ -35,25 +31,16 @@ import AuthCardSkeleton from '@/components/skeletons/auth/AuthCardSkeleton';
 /**
  * Dedicated Student Profile Login Page
  * Route: /student/login
- * Primary Flow: Admission Number / Roll Number + Password / DOB
- * Secondary Flow: Mobile Number with OTP Verification
+ * Flow: Admission Number / Roll Number + Password / DOB
  */
 export default function StudentLogin() {
   const router = useRouter();
-  const [authMode, setAuthMode] = useState('credentials'); // 'credentials' | 'otp'
 
   // Credentials State
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-
-  // OTP State
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [devOtpHint, setDevOtpHint] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -98,14 +85,6 @@ export default function StudentLogin() {
     checkExistingSession();
   }, [router]);
 
-  useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [countdown]);
-
   const handleCredentialsLogin = async (e) => {
     e.preventDefault();
     setFieldErrors({});
@@ -126,6 +105,16 @@ export default function StudentLogin() {
 
       if (!result.success) {
         notifyError(result.message || 'Invalid Admission Number or password.');
+        const errMap = result.errors ? { ...result.errors } : {};
+        if (result.message) {
+          const msg = result.message.toLowerCase();
+          if (msg.includes('password') || msg.includes('dob') || msg.includes('birth')) {
+            errMap.password = result.message;
+          } else {
+            errMap.identifier = result.message;
+          }
+        }
+        setFieldErrors(errMap);
         return;
       }
 
@@ -146,76 +135,8 @@ export default function StudentLogin() {
     }
   };
 
-  const handleSendOtp = async (phoneVal = phone) => {
-    setFieldErrors({});
-    const cleanPhone = phoneVal.replace(/[^0-9]/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setFieldErrors({ phone: 'Please enter a valid 10-digit registered mobile number.' });
-      notifyError('Enter a valid 10-digit mobile number.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await studentSendOtpAction({ phone: cleanPhone });
-      if (!result.success) {
-        notifyError(result.message || 'Failed to send OTP.');
-        return;
-      }
-
-      setOtpSent(true);
-      setCountdown(30);
-      if (result.dev_otp) {
-        setDevOtpHint(result.dev_otp);
-      }
-      notifySuccess('OTP sent successfully to registered mobile number!');
-    } catch (err) {
-      notifyError(err.message || 'Error sending OTP.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setFieldErrors({});
-
-    if (!otp.trim()) {
-      setFieldErrors({ otp: 'Please enter the 6-digit OTP.' });
-      notifyError('Enter 6-digit OTP.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
-      const result = await studentVerifyOtpAction({ phone: cleanPhone, otp: otp.trim() });
-
-      if (!result.success) {
-        notifyError(result.message || 'Invalid or expired OTP.');
-        return;
-      }
-
-      notifySuccess('Student authenticated successfully! Redirecting...');
-
-      const schoolColor = result.user?.school?.primary_color || result.user?.school?.primaryColor;
-      if (schoolColor) {
-        applyDynamicTheme(schoolColor);
-      }
-
-      setTimeout(() => {
-        router.push('/student/dashboard');
-      }, 500);
-    } catch (err) {
-      notifyError(err.message || 'OTP verification failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickFill = (idVal, passVal) => {
-    setAuthMode('credentials');
-    setIdentifier(idVal);
+  const handleQuickFill = (admNo, passVal) => {
+    setIdentifier(admNo);
     setPassword(passVal);
     setFieldErrors({});
   };
@@ -226,15 +147,14 @@ export default function StudentLogin() {
 
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative animate-fadeIn">
-      {/* LEFT COLUMN: STUDENT LEARNING SPOTLIGHT (Desktop - Light Theme) */}
+      {/* LEFT COLUMN: STUDENT SPOTLIGHT (Desktop - Light Theme) */}
       <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-primary-50/70 via-slate-50 to-white p-10 flex-col justify-between border-r border-slate-200 relative overflow-hidden">
-        <div 
-          className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-15 pointer-events-none"
-          style={{ background: 'var(--theme-primary-500, #0047AB)' }}
-        ></div>
+        {/* Subtle dynamic background glow */}
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-secondary-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Top Header / Branding */}
-        <div className="space-y-6">
+        {/* Brand / School Header */}
+        <div className="space-y-4 relative z-10">
           {brandingLoading ? (
             <div className="flex items-center space-x-3.5 animate-pulse">
               <div className="w-16 h-16 rounded-full bg-slate-200 shrink-0" />
@@ -262,7 +182,7 @@ export default function StudentLogin() {
                 </div>
               ) : (
                 <div className="w-16 h-16 rounded-full bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-600/30 group-hover:scale-105 transition-transform relative shrink-0">
-                  <Smartphone size={32} className="text-white" />
+                  <GraduationCap size={32} className="text-white" />
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-secondary-500 border-2 border-white"></span>
                 </div>
               )}
@@ -284,7 +204,7 @@ export default function StudentLogin() {
           <div className="space-y-2 pt-4">
             <div className="inline-flex items-center space-x-2 bg-primary-100/80 border border-primary-200/80 px-3 py-1 rounded-full text-[11px] font-bold text-primary-800">
               <Sparkles size={13} className="text-primary-600" />
-              <span>Student & Parent Portal</span>
+              <span>Student Learning Gateway</span>
             </div>
             <h3 className="text-2xl font-black text-slate-900 leading-tight">
               Timetable, Attendance & Homework Matrix
@@ -358,7 +278,7 @@ export default function StudentLogin() {
                 </div>
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center relative shrink-0 shadow-xs">
-                  <Smartphone size={20} className="text-white" />
+                  <GraduationCap size={20} className="text-white" />
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-secondary-500 border border-white"></span>
                 </div>
               )}
@@ -381,270 +301,119 @@ export default function StudentLogin() {
             Student Sign In
           </h2>
           <p className="text-slate-500 text-xs sm:text-sm">
-            Enter your Admission Number (e.g. <span className="text-primary-700 font-mono font-bold">ADM-1001</span>) or verify with Mobile OTP.
+            Enter your Admission Number (e.g. <span className="text-primary-700 font-mono font-bold">ADM-1001</span>) and password or DOB to continue.
           </p>
         </div>
 
-        {/* Mode Switcher Tabs */}
-        <div className="flex items-center p-1 bg-slate-100 border border-slate-200 rounded-2xl">
-          <button
-            type="button"
-            onClick={() => { setAuthMode('credentials'); setFieldErrors({}); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              authMode === 'credentials'
-                ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <User size={14} /> Admission Number
-          </button>
-          <button
-            type="button"
-            onClick={() => { setAuthMode('otp'); setFieldErrors({}); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              authMode === 'otp'
-                ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Smartphone size={14} /> Mobile OTP
-          </button>
-        </div>
-
-        {/* ================= MODE 1: ADMISSION NUMBER + PASSWORD ================= */}
-        {authMode === 'credentials' && (
-          <form noValidate onSubmit={handleCredentialsLogin} className="space-y-4 animate-fadeIn">
-            {/* Admission Number */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Admission Number / Roll Number <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                  <User size={18} />
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setFieldErrors((prev) => ({ ...prev, identifier: '' }));
-                  }}
-                  placeholder="ADM-1001 or Roll No."
-                  className={`w-full bg-slate-50/70 border ${
-                    fieldErrors.identifier ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
-                  } rounded-xl py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
-                />
-              </div>
-              {fieldErrors.identifier && (
-                <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.identifier}</p>
-              )}
-            </div>
-
-            {/* Password / DOB */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Password or DOB <span className="text-rose-500">*</span>
-                </label>
-                <Link 
-                  href="/forgot-password" 
-                  className="text-xs text-primary-600 hover:text-primary-700 font-bold transition"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                  <Lock size={18} />
-                </span>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setFieldErrors((prev) => ({ ...prev, password: '' }));
-                  }}
-                  placeholder="•••••••••••• or YYYY-MM-DD"
-                  className={`w-full bg-slate-50/70 border ${
-                    fieldErrors.password ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
-                  } rounded-xl py-3 pl-11 pr-11 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {fieldErrors.password && (
-                <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.password}</p>
-              )}
-            </div>
-
-            {/* Remember Session Toggle */}
-            <div className="flex items-center justify-between pt-1">
-              <Checkbox
-                id="remember-student"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                label="Remember student login session"
+        {/* ================= ADMISSION NUMBER + PASSWORD FORM ================= */}
+        <form noValidate onSubmit={handleCredentialsLogin} className="space-y-4 animate-fadeIn">
+          {/* Admission Number */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Admission Number / Roll Number <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                <User size={18} />
+              </span>
+              <input
+                type="text"
+                required
+                value={identifier}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, identifier: '' }));
+                }}
+                placeholder="ADM-1001 or Roll No."
+                className={`w-full bg-slate-50/70 border ${
+                  fieldErrors.identifier ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                } rounded-xl py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
               />
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  <span>Authenticating Student...</span>
-                </div>
-              ) : (
-                <>
-                  <span>Sign In to Student Hub</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-        )}
-
-        {/* ================= MODE 2: MOBILE OTP LOGIN ================= */}
-        {authMode === 'otp' && (
-          <div className="space-y-4 animate-fadeIn">
-            {/* Phone */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Registered Mobile Number <span className="text-rose-500">*</span>
-              </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                    <Phone size={18} />
-                  </span>
-                  <input
-                    type="tel"
-                    maxLength={10}
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value.replace(/[^0-9]/g, ''));
-                      setFieldErrors((prev) => ({ ...prev, phone: '' }));
-                    }}
-                    placeholder="9876543210"
-                    disabled={otpSent && countdown > 0}
-                    className={`w-full bg-slate-50/70 border ${
-                      fieldErrors.phone ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
-                    } rounded-xl py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
-                  />
-                </div>
-                {!otpSent ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSendOtp()}
-                    disabled={loading || phone.length < 10}
-                    className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-md shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1.5 shrink-0 cursor-pointer"
-                  >
-                    {loading ? <RefreshCw size={14} className="animate-spin" /> : 'Get OTP'}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => { setOtpSent(false); setOtp(''); }}
-                    className="px-3 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-semibold shrink-0 cursor-pointer"
-                  >
-                    Change
-                  </button>
-                )}
-              </div>
-              {fieldErrors.phone && (
-                <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.phone}</p>
-              )}
-            </div>
-
-            {/* OTP Input */}
-            {otpSent && (
-              <form noValidate onSubmit={handleVerifyOtp} className="space-y-4 animate-fadeIn">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Enter 6-Digit OTP <span className="text-rose-500">*</span>
-                    </label>
-                    {devOtpHint && (
-                      <button
-                        type="button"
-                        onClick={() => setOtp(devOtpHint)}
-                        className="text-[11px] text-primary-600 hover:text-primary-700 font-mono font-bold underline cursor-pointer"
-                      >
-                        Auto-Fill ({devOtpHint})
-                      </button>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                      <KeyRound size={18} />
-                    </span>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => {
-                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
-                        setFieldErrors((prev) => ({ ...prev, otp: '' }));
-                      }}
-                      placeholder="123456"
-                      className={`w-full bg-slate-50/70 border ${
-                        fieldErrors.otp ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
-                      } rounded-xl py-3 pl-11 pr-4 text-center text-lg font-mono tracking-widest text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
-                    />
-                  </div>
-                  {fieldErrors.otp && (
-                    <p className="text-xs text-rose-500 font-medium pl-1">{fieldErrors.otp}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  {countdown > 0 ? (
-                    <span>Resend OTP in <span className="text-primary-600 font-bold">{countdown}s</span></span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSendOtp()}
-                      className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 cursor-pointer"
-                    >
-                      <RefreshCw size={12} /> Resend OTP
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading || otp.length < 6}
-                  className="w-full py-3.5 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                      <span>Verifying Student OTP...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <span>Verify & Open Student Hub</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </form>
+            {fieldErrors.identifier && (
+              <p className="text-xs text-rose-500 font-semibold pl-1 animate-fadeIn flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <span>{fieldErrors.identifier}</span>
+              </p>
             )}
           </div>
-        )}
+
+          {/* Password / DOB */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Password or DOB <span className="text-rose-500">*</span>
+              </label>
+              <Link 
+                href="/forgot-password" 
+                className="text-xs text-primary-600 hover:text-primary-700 font-bold transition"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                <Lock size={18} />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, password: '' }));
+                }}
+                placeholder="•••••••••••• or YYYY-MM-DD"
+                className={`w-full bg-slate-50/70 border ${
+                  fieldErrors.password ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 focus:border-primary-500 focus:ring-primary-500/20'
+                } rounded-xl py-3 pl-11 pr-11 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 transition duration-200`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {fieldErrors.password && (
+              <p className="text-xs text-rose-500 font-semibold pl-1 animate-fadeIn flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <span>{fieldErrors.password}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Remember Session Toggle */}
+          <div className="flex items-center justify-between pt-1">
+            <Checkbox
+              id="remember-student"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              label="Remember student login session"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 px-6 rounded-xl text-white font-bold text-sm bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/25 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span>Authenticating Student...</span>
+              </div>
+            ) : (
+              <>
+                <span>Sign In to Student Hub</span>
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </form>
 
         {/* Quick Demo Fill Helper */}
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
@@ -654,32 +423,17 @@ export default function StudentLogin() {
             </span>
             <span className="text-[10px] text-slate-400 font-semibold">1-Click Sign In</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickFill('ADM-1001', 'Welcome@123')}
-              className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold flex items-center justify-between transition cursor-pointer shadow-xs"
-            >
-              <span className="truncate">Student (ADM-1001)</span>
-              <span className="text-[10px] text-primary-600 font-mono font-bold ml-1">Fill</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('otp');
-                setPhone('9876543210');
-                setOtpSent(false);
-                setDevOtpHint('');
-                setOtp('');
-                setFieldErrors({});
-                handleSendOtp('9876543210');
-              }}
-              className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold flex items-center justify-between transition cursor-pointer shadow-xs"
-            >
-              <span className="truncate">Mobile OTP Demo</span>
-              <span className="text-[10px] text-primary-600 font-mono font-bold ml-1">Auto OTP</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleQuickFill('ADM-1001', 'Welcome@123')}
+            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold flex items-center justify-between transition cursor-pointer shadow-xs"
+          >
+            <div className="flex items-center gap-2">
+              <User size={14} className="text-primary-600" />
+              <span>Student Account (<span className="font-mono text-primary-700 font-bold">ADM-1001</span>)</span>
+            </div>
+            <span className="text-[10px] text-primary-600 font-mono font-bold bg-primary-50 px-2 py-0.5 rounded-md border border-primary-200">1-Click Fill</span>
+          </button>
         </div>
 
         {/* Footer Navigation */}
