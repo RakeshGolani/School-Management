@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getSessionAction, getSystemSettingsAction } from '@/actions/school/authActions';
+import { getPlansAction } from '@/actions/school/commonActions';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import LandingPageSkeleton from '@/components/skeletons/landing/LandingPageSkeleton';
+import PricingSection from '@/components/landing/PricingSection';
 import Select from '@/components/ui/Select';
 import FormPhoneInput from '@/components/FormPhoneInput';
 import * as yup from 'yup';
@@ -86,7 +88,6 @@ const inquirySchema = yup.object().shape({
 
 export default function LandingPage() {
   const [activePreviewTab, setActivePreviewTab] = useState('admin');
-  const [billingPeriod, setBillingPeriod] = useState('annual'); // 'monthly' | 'annual'
   const [studentScale, setStudentScale] = useState(850);
   const [expandedFaq, setExpandedFaq] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -104,26 +105,36 @@ export default function LandingPage() {
   });
   const [settingsLoading, setSettingsLoading] = useState(true);
 
+  const [dynamicPlans, setDynamicPlans] = useState([]);
+
   useEffect(() => {
     // Landing page always uses default Admin Theme Palette (#0047AB)
     applyDynamicTheme('#0047AB');
 
-    async function loadSettings() {
+    async function loadData() {
       try {
-        const settingsRes = await getSystemSettingsAction().catch(() => null);
+        const [settingsRes, plansRes] = await Promise.all([
+          getSystemSettingsAction().catch(() => null),
+          getPlansAction().catch(() => null)
+        ]);
+
         if (settingsRes?.success && settingsRes?.data) {
           setSystemSettings(prev => ({
             ...prev,
             ...settingsRes.data
           }));
         }
+
+        if (plansRes?.success && Array.isArray(plansRes?.data?.plans) && plansRes.data.plans.length > 0) {
+          setDynamicPlans(plansRes.data.plans);
+        }
       } catch (err) {
-        console.warn('Could not load settings on landing page:', err);
+        console.warn('Could not load settings or plans on landing page:', err);
       } finally {
         setSettingsLoading(false);
       }
     }
-    loadSettings();
+    loadData();
   }, []);
 
   const toggleFaq = (index) => {
@@ -177,63 +188,28 @@ export default function LandingPage() {
   const estimatedStaff = Math.max(10, Math.round(studentScale * 0.07));
   const hoursSavedPerWeek = Math.round(studentScale * 0.08);
 
-  const packages = [
-    {
-      id: 'transport',
-      name: 'Smart Bus Fleet',
-      tagline: 'GPS Telemetry & Transit Safety',
-      badge: 'Transport Special',
-      badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-      priceMonthly: '$49',
-      priceAnnual: '$39',
-      popular: false,
-      features: [
-        'Live GPS Fleet Tracking (OSRM Navigation)',
-        'NFC/RFID Bus Boarding & Deboarding Logs',
-        'Real-time Parent ETA & Stop Push Alerts',
-        'Driver, Vehicle & Fuel Maintenance Logs',
-        'Speed Alerts & Safe Route Geo-Fencing',
-        'Dedicated Transport Manager Dashboard'
-      ]
-    },
-    {
-      id: 'full_suite',
-      name: 'Full Institutional Suite',
-      tagline: 'Complete School ERP + Smart Bus Fleet',
-      badge: 'Most Popular • All-in-One',
-      badgeColor: 'bg-primary-500/20 text-primary-300 border-primary-500/30',
-      priceMonthly: '$149',
-      priceAnnual: '$119',
-      popular: true,
-      features: [
-        'Everything in Academic ERP + Smart Bus Fleet',
-        'Dynamic Multi-Campus & Multi-Role Access',
-        'NFC Dual Gateway (Campus Gate & Bus Entry)',
-        'Automated Fee Invoicing & Online Gateway (Stripe)',
-        'Zero-Conflict Master Timetable Engine',
-        'Smart PDF Student & Teacher ID Cards with Barcode',
-        'Priority 24/7 SLA Support & Dedicated Training'
-      ]
-    },
-    {
-      id: 'academic',
-      name: 'Academic Core ERP',
-      tagline: 'Academics, Grading & Operations',
-      badge: 'ERP Core',
-      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-      priceMonthly: '$89',
-      priceAnnual: '$69',
-      popular: false,
-      features: [
-        'Class & Section Dynamic Master Management',
-        'Class Teacher & Single Assignment Matrix',
-        'Attendance Tracking (Period & Daily)',
-        'Exams, Grading Scales & Report Cards',
-        'Student Profile 360° Hub & Documents',
-        'Fee Category & Installment Schedule'
-      ]
+  const moduleInterestOptions = dynamicPlans.length > 0
+    ? dynamicPlans.map(p => ({
+        value: (p.code || '').toLowerCase(),
+        label: `${p.name}${p.tagline ? ` (${p.tagline})` : ''}`
+      }))
+    : [
+        { value: 'full_suite', label: 'Full Institutional Suite (ERP + Smart Bus + NFC)' },
+        { value: 'transport_only', label: 'Smart Bus Fleet & Live GPS Only' },
+        { value: 'school_only', label: 'Academic ERP & Fee Management Only' }
+      ];
+
+  const handleSelectPlan = (planCode) => {
+    const formattedCode = (planCode || 'full_suite').toLowerCase();
+    setFormData(prev => ({
+      ...prev,
+      moduleInterest: formattedCode
+    }));
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
     }
-  ];
+  };
 
   const faqs = [
     {
@@ -947,98 +923,7 @@ export default function LandingPage() {
       </section>
 
       {/* Transparent SaaS Packages Pricing (Light Theme) */}
-      <section id="packages" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 space-y-16 relative z-10 scroll-mt-24">
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center space-x-2 bg-primary-50 border border-primary-200 px-3.5 py-1.5 rounded-full text-xs font-bold text-primary-700 uppercase tracking-wider">
-            <Sparkles size={14} />
-            <span>Modular Subscriptions</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-            Predictable Plans for Every Institution
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-            Choose standalone transport logistics, pure academic ERP, or the full unified suite.
-          </p>
-
-          {/* Billing Switch */}
-          <div className="pt-4 flex items-center justify-center space-x-4">
-            <span className={`text-xs font-bold ${billingPeriod === 'monthly' ? 'text-slate-900' : 'text-slate-500'}`}>Monthly</span>
-            <button 
-              onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
-              className="w-14 h-7 rounded-full bg-slate-200 p-1 border border-slate-300 relative transition-colors focus:outline-none cursor-pointer"
-              aria-label="Toggle billing duration"
-            >
-              <div className={`w-5 h-5 rounded-full bg-primary-600 transition-transform ${billingPeriod === 'annual' ? 'translate-x-7' : 'translate-x-0'}`}></div>
-            </button>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs font-bold ${billingPeriod === 'annual' ? 'text-slate-900' : 'text-slate-500'}`}>Yearly</span>
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">SAVE 20%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-          {packages.map((pkg) => (
-            <div 
-              key={pkg.id} 
-              className={`rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 relative border ${
-                pkg.popular 
-                  ? 'bg-white border-2 border-primary-500 shadow-2xl shadow-primary-500/15 lg:-translate-y-2' 
-                  : 'bg-white border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300'
-              }`}
-            >
-              {pkg.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-md">
-                  ★ Institutional Recommendation
-                </div>
-              )}
-
-              <div className="space-y-6">
-                <div>
-                  <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${pkg.popular ? 'bg-primary-50 text-primary-700 border-primary-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
-                    {pkg.badge}
-                  </span>
-                  <h3 className="text-2xl font-black text-slate-900 mt-3">{pkg.name}</h3>
-                  <p className="text-xs text-slate-500 mt-1">{pkg.tagline}</p>
-                </div>
-
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-4xl sm:text-5xl font-black text-slate-900">
-                    {billingPeriod === 'annual' ? pkg.priceAnnual : pkg.priceMonthly}
-                  </span>
-                  <span className="text-xs text-slate-500 font-semibold">/ school / mo</span>
-                </div>
-
-                <div className="border-t border-slate-200 pt-6 space-y-3">
-                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Features Included:</p>
-                  <ul className="space-y-2.5">
-                    {pkg.features.map((feature, i) => (
-                      <li key={i} className="flex items-start text-xs text-slate-600 gap-2.5">
-                        <Check size={16} className="text-accent-600 shrink-0 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="pt-8">
-                <a 
-                  href="#contact"
-                  className={`w-full py-3.5 px-4 rounded-xl text-center text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
-                    pkg.popular
-                      ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-md shadow-primary-600/25'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
-                  }`}
-                >
-                  Choose {pkg.name} <ArrowRight size={14} />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <PricingSection plans={dynamicPlans} onSelectPlan={handleSelectPlan} />
 
       {/* Role Portal Gateway Section (Light Theme) */}
       <section id="portals" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 relative z-10 scroll-mt-24">
@@ -1279,11 +1164,7 @@ export default function LandingPage() {
                     setFormData({ ...formData, moduleInterest: val });
                     setFormErrors(prev => ({ ...prev, moduleInterest: '' }));
                   }}
-                  options={[
-                    { value: 'full_suite', label: 'Full Institutional Suite (ERP + Smart Bus + NFC)' },
-                    { value: 'transport_only', label: 'Smart Bus Fleet & Live GPS Only' },
-                    { value: 'school_only', label: 'Academic ERP & Fee Management Only' }
-                  ]}
+                  options={moduleInterestOptions}
                   searchable={false}
                   clearable={false}
                 />

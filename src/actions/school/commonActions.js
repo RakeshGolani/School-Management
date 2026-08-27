@@ -51,3 +51,20 @@ export async function getSystemSettingsAction() {
   }
 }
 
+export async function getPlansAction() {
+  try {
+    const response = await fetch(`${API_URL}/plans`, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, message: 'Failed to fetch plans' };
+  }
+}
+
+export async function getPackagesAction() {
+  return getPlansAction();
+}
+
