@@ -17,6 +17,7 @@ import {
 import DatePicker from '@/components/ui/DatePicker';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import FormPhoneInput from '@/components/FormPhoneInput';
 
 export default function StudentApplyLeaveDrawer({
   isOpen,
@@ -268,19 +269,12 @@ export default function StudentApplyLeaveDrawer({
 
               {/* Emergency Contact Phone */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
-                  Emergency Contact Number (Optional)
-                </label>
-                <div className="relative">
-                  <PhoneCall size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="tel"
-                    value={formData.emergency_contact}
-                    onChange={(e) => setFormData(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                    placeholder="Parent / Guardian mobile number"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/20 transition font-mono font-medium"
-                  />
-                </div>
+                <FormPhoneInput
+                  label="Emergency Contact Number (Optional)"
+                  value={formData.emergency_contact}
+                  onChange={(phone) => setFormData(prev => ({ ...prev, emergency_contact: phone }))}
+                  defaultCountry="in"
+                />
               </div>
 
               {/* Guidelines Notice */}

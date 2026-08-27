@@ -4,6 +4,7 @@ import { Mail, GraduationCap, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound, Ar
 import Link from 'next/link';
 import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import AuthCardSkeleton from '@/components/skeletons/auth/AuthCardSkeleton';
 
 /**
  * Forgot Password Recovery Page
@@ -57,6 +58,10 @@ export default function ForgotPassword() {
       setSubmitted(true);
     }, 600);
   };
+
+  if (brandingLoading) {
+    return <AuthCardSkeleton mode="single" />;
+  }
 
   return (
     <div className="max-w-xl mx-auto rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden p-6 sm:p-10 relative animate-fadeIn space-y-6">

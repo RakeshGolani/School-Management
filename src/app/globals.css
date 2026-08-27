@@ -137,17 +137,13 @@
 }
 
 /* Custom react-international-phone light theme overrides */
-.react-international-phone-country-selector-dropdown__list-item {
-  color: #0f172a !important;
+.react-international-phone-country-selector-button__dropdown-arrow,
+.react-international-phone-country-selector-dropdown {
+  display: none !important;
 }
-.react-international-phone-country-selector-dropdown__list-item:hover,
-.react-international-phone-country-selector-dropdown__list-item--focused,
-.react-international-phone-country-selector-dropdown__list-item--selected {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-}
-.react-international-phone-country-selector-dropdown__list-item-dial-code {
-  color: #64748b !important;
+.react-international-phone-country-selector-button {
+  cursor: default !important;
+  pointer-events: none !important;
 }
 
 /* ========================================= */

@@ -24,6 +24,7 @@ import { loginSchema } from '@/validators/authSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import Checkbox from '@/components/ui/Checkbox';
+import AuthCardSkeleton from '@/components/skeletons/auth/AuthCardSkeleton';
 
 /**
  * Dedicated School Portal Login Page
@@ -135,6 +136,10 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (brandingLoading) {
+    return <AuthCardSkeleton />;
+  }
 
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative animate-fadeIn">

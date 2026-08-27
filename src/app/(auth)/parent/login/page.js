@@ -29,6 +29,7 @@ import {
 import { getSchoolBrandingAction, getSystemSettingsAction } from '@/actions/school/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import AuthCardSkeleton from '@/components/skeletons/auth/AuthCardSkeleton';
 
 /**
  * Dedicated Parent & Guardian Login Page
@@ -226,6 +227,10 @@ export default function ParentLogin() {
     setFieldErrors({});
     handleSendOtp(demoPhone);
   };
+
+  if (brandingLoading) {
+    return <AuthCardSkeleton />;
+  }
 
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative animate-fadeIn">

@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { getEncryptedCookie } from '@/lib/cookieHelper';
 import ParentFeesClient from './ParentFeesClient';
 import { getParentFeesAction } from '@/actions/parent/feeActions';
 
@@ -8,20 +8,16 @@ export const metadata = {
 };
 
 export default async function ParentFeesPage() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('parent_session')?.value;
   let initialData = null;
 
   try {
-    if (sessionCookie) {
-      const decodedSession = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf-8'));
-      const activeChildId = decodedSession?.children?.[0]?.id;
+    const parentSession = await getEncryptedCookie('parent_session');
+    const activeChildId = parentSession?.user?.children?.[0]?.id || parentSession?.user?.child?.id;
 
-      if (activeChildId) {
-        const res = await getParentFeesAction({ studentId: activeChildId });
-        if (res?.success) {
-          initialData = res.data;
-        }
+    if (activeChildId) {
+      const res = await getParentFeesAction({ studentId: activeChildId });
+      if (res?.success) {
+        initialData = res.data;
       }
     }
   } catch (err) {

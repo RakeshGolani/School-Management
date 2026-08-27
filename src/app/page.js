@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getSessionAction, getSystemSettingsAction } from '@/actions/school/authActions';
 import { applyDynamicTheme } from '@/lib/themeHelper';
+import LandingPageSkeleton from '@/components/skeletons/landing/LandingPageSkeleton';
+import Select from '@/components/ui/Select';
+import FormPhoneInput from '@/components/FormPhoneInput';
 import { 
   GraduationCap, 
   Bus, 
@@ -209,6 +212,10 @@ export default function LandingPage() {
       avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
     }
   ];
+
+  if (settingsLoading) {
+    return <LandingPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-primary-500 selection:text-white relative overflow-hidden">
@@ -1135,29 +1142,29 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Phone Number</label>
-                  <input
-                    type="tel"
+                  <FormPhoneInput
+                    label="Phone Number"
                     required
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
-                    placeholder="+1 (555) 000-0000"
+                    onChange={(phone) => setFormData({ ...formData, phone })}
+                    defaultCountry="in"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Primary Module of Interest</label>
-                <select
+                <Select
+                  label="Primary Module of Interest"
                   value={formData.moduleInterest}
-                  onChange={(e) => setFormData({ ...formData, moduleInterest: e.target.value })}
-                  className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition cursor-pointer"
-                >
-                  <option value="full_suite">Full Institutional Suite (ERP + Smart Bus + NFC)</option>
-                  <option value="transport_only">Smart Bus Fleet & Live GPS Only</option>
-                  <option value="school_only">Academic ERP & Fee Management Only</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, moduleInterest: val })}
+                  options={[
+                    { value: 'full_suite', label: 'Full Institutional Suite (ERP + Smart Bus + NFC)' },
+                    { value: 'transport_only', label: 'Smart Bus Fleet & Live GPS Only' },
+                    { value: 'school_only', label: 'Academic ERP & Fee Management Only' }
+                  ]}
+                  searchable={false}
+                  clearable={false}
+                />
               </div>
 
               <div className="space-y-1.5">

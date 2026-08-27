@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getEncryptedCookie, deleteEncryptedCookie } from '@/lib/cookieHelper';
+import { encryptCookieKey } from '@/lib/cookieKeys';
 import SchoolClientLayout from '@/components/layout/SchoolClientLayout';
 
 /**
@@ -15,7 +16,8 @@ export default async function DashboardLayout({ children }) {
   }
 
   const cookieStore = await cookies();
-  const initialCollapsed = cookieStore.get('school_sidebar_collapsed')?.value === 'true';
+  const encKey = encryptCookieKey('school_sidebar_collapsed');
+  const initialCollapsed = (cookieStore.get(encKey)?.value || cookieStore.get('school_sidebar_collapsed')?.value) === 'true';
 
   return (
     <SchoolClientLayout initialCollapsed={initialCollapsed}>

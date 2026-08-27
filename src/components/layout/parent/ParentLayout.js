@@ -37,6 +37,8 @@ export default function ParentLayout({ user, initialChildIndex = 0, children }) 
   // Restore saved active child from localStorage/cookie on mount
   useEffect(() => {
     try {
+      const encKeyId = encryptCookieKey('parent_active_child_id');
+      const encKeyIdx = encryptCookieKey('parent_active_child_idx');
       const savedChildId = localStorage.getItem('parent_active_child_id');
       const savedIndex = localStorage.getItem('parent_active_child_idx');
       
@@ -44,8 +46,8 @@ export default function ParentLayout({ user, initialChildIndex = 0, children }) 
         const foundIdx = childrenList.findIndex(c => String(c.id) === String(savedChildId));
         if (foundIdx >= 0) {
           setSelectedChildIndexState(foundIdx);
-          document.cookie = `parent_active_child_id=${savedChildId}; path=/; max-age=31536000; SameSite=Lax`;
-          document.cookie = `parent_active_child_idx=${foundIdx}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `${encKeyId}=${savedChildId}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `${encKeyIdx}=${foundIdx}; path=/; max-age=31536000; SameSite=Lax`;
           return;
         }
       }
@@ -54,9 +56,9 @@ export default function ParentLayout({ user, initialChildIndex = 0, children }) 
         const parsed = parseInt(savedIndex, 10);
         if (!isNaN(parsed) && parsed >= 0 && parsed < childrenList.length) {
           setSelectedChildIndexState(parsed);
-          document.cookie = `parent_active_child_idx=${parsed}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `${encKeyIdx}=${parsed}; path=/; max-age=31536000; SameSite=Lax`;
           if (childrenList[parsed]?.id) {
-            document.cookie = `parent_active_child_id=${childrenList[parsed].id}; path=/; max-age=31536000; SameSite=Lax`;
+            document.cookie = `${encKeyId}=${childrenList[parsed].id}; path=/; max-age=31536000; SameSite=Lax`;
           }
         }
       }
@@ -69,12 +71,14 @@ export default function ParentLayout({ user, initialChildIndex = 0, children }) 
   const setSelectedChildIndex = (idx) => {
     setSelectedChildIndexState(idx);
     try {
+      const encKeyId = encryptCookieKey('parent_active_child_id');
+      const encKeyIdx = encryptCookieKey('parent_active_child_idx');
       localStorage.setItem('parent_active_child_idx', String(idx));
       if (childrenList[idx]?.id) {
         localStorage.setItem('parent_active_child_id', String(childrenList[idx].id));
-        document.cookie = `parent_active_child_id=${childrenList[idx].id}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = `${encKeyId}=${childrenList[idx].id}; path=/; max-age=31536000; SameSite=Lax`;
       }
-      document.cookie = `parent_active_child_idx=${idx}; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `${encKeyIdx}=${idx}; path=/; max-age=31536000; SameSite=Lax`;
     } catch (e) {
       console.warn('Could not persist parent active child to localStorage:', e);
     }

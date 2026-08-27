@@ -164,15 +164,29 @@ export default function Sidebar({
         collapsed ? 'justify-center px-2' : 'px-4 justify-between'
       }`}>
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center shadow-2xs shrink-0 overflow-hidden p-0.5" title={userSession?.schoolName || 'Vidyadmin'}>
-            {userSession?.logo ? (
-              <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-contain" />
-            ) : (!mounted || (sessionLoading && !userSession)) ? (
-              <div className="w-full h-full bg-slate-200 rounded-full animate-pulse" />
-            ) : (
-              <BookOpen size={20} className="text-primary-600" />
-            )}
-          </div>
+          {collapsed ? (
+            <SidebarNavPopover label={userSession?.schoolName || 'Vidyadmin'} badge={userSession?.code ? `ID: ${userSession.code}` : undefined} isActive={false}>
+              <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/90 flex items-center justify-center shadow-xs overflow-hidden p-1 cursor-pointer hover:border-primary-400 transition-colors">
+                {userSession?.logo ? (
+                  <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-contain" />
+                ) : (!mounted || (sessionLoading && !userSession)) ? (
+                  <div className="w-full h-full bg-slate-200 rounded-xl animate-pulse" />
+                ) : (
+                  <BookOpen size={20} className="text-primary-600" />
+                )}
+              </div>
+            </SidebarNavPopover>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center shadow-2xs shrink-0 overflow-hidden p-0.5" title={userSession?.schoolName || 'Vidyadmin'}>
+              {userSession?.logo ? (
+                <img src={userSession.logo} alt={userSession?.schoolName || 'Logo'} className="w-full h-full object-contain" />
+              ) : (!mounted || (sessionLoading && !userSession)) ? (
+                <div className="w-full h-full bg-slate-200 rounded-full animate-pulse" />
+              ) : (
+                <BookOpen size={20} className="text-primary-600" />
+              )}
+            </div>
+          )}
           
           {!collapsed && (
             (!mounted || (sessionLoading && !userSession)) ? (
@@ -209,24 +223,26 @@ export default function Sidebar({
         )}
 
         {!mounted || (packageLoading && !packageInfo) ? (
-          <div className={`space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+          <div className="space-y-2">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div
-                key={i}
-                className={`flex items-center ${
-                  collapsed ? 'justify-center p-2' : 'px-3 py-2 rounded-2xl'
-                } animate-pulse gap-3`}
-              >
-                <div className="w-8 h-8 rounded-xl bg-slate-200/80 shrink-0" />
-                {!collapsed && (
+              collapsed ? (
+                <div key={i} className="flex justify-center py-0.5">
+                  <div className="w-11 h-11 rounded-2xl bg-slate-200/80 animate-pulse" />
+                </div>
+              ) : (
+                <div
+                  key={i}
+                  className="flex items-center px-3 py-2 rounded-2xl animate-pulse gap-3"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/80 shrink-0" />
                   <div className="space-y-1 flex-1 min-w-0">
                     <div
                       className="h-3.5 bg-slate-200/80 rounded-md"
                       style={{ width: `${i % 3 === 0 ? 65 : i % 2 === 0 ? 80 : 55}%` }}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+              )
             ))}
           </div>
         ) : (
@@ -234,51 +250,59 @@ export default function Sidebar({
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
-            const linkEl = (
-              <Link
-                href={item.href}
-                onClick={onClose}
-                title={collapsed ? item.label : undefined}
-                className={`flex items-center ${
-                  collapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2 rounded-2xl'
-                } transition-all duration-200 group text-xs font-bold ${
-                  isActive
-                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25'
-                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
-                }`}
-              >
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                    isActive 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-slate-100/80 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-600 group-hover:scale-105'
-                  }`}>
-                    <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
-                  </div>
-                  {!collapsed && <span className="truncate tracking-tight">{item.label}</span>}
+            if (collapsed) {
+              return (
+                <div key={item.label} className="flex justify-center py-0.5">
+                  <SidebarNavPopover icon={Icon} label={item.label} badge={item.badge} isActive={isActive}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 group ${
+                        isActive
+                          ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30 scale-105 ring-2 ring-primary-500/20'
+                          : 'text-slate-500 hover:text-primary-600 hover:bg-slate-100/90 hover:scale-105 active:scale-95'
+                      }`}
+                    >
+                      <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                      {item.badge && (
+                        <span className="w-2.5 h-2.5 rounded-full bg-primary-500 ring-2 ring-white absolute top-1 right-1 animate-pulse" />
+                      )}
+                    </Link>
+                  </SidebarNavPopover>
                 </div>
-
-                {!collapsed && item.badge && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-
-                {collapsed && item.badge && (
-                  <span className="w-2 h-2 rounded-full bg-primary-500 absolute top-2 right-2 ring-2 ring-white"></span>
-                )}
-              </Link>
-            );
+              );
+            }
 
             return (
               <div key={item.label} className="relative">
-                {collapsed ? (
-                  <SidebarNavPopover icon={Icon} label={item.label} badge={item.badge} isActive={isActive}>
-                    {linkEl}
-                  </SidebarNavPopover>
-                ) : linkEl}
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center justify-between px-3 py-2 rounded-2xl transition-all duration-200 group text-xs font-bold ${
+                    isActive
+                      ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25'
+                      : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                      isActive 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-slate-100/80 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-600 group-hover:scale-105'
+                    }`}>
+                      <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                    </div>
+                    <span className="truncate tracking-tight">{item.label}</span>
+                  </div>
+
+                  {item.badge && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
               </div>
             );
           })
@@ -286,14 +310,14 @@ export default function Sidebar({
       </nav>
 
       {/* Logout Action Footer */}
-      <div className={`p-4 border-t border-slate-100 ${collapsed ? 'px-2' : 'px-4'}`}>
+      <div className={`p-4 border-t border-slate-100 ${collapsed ? 'px-2 flex justify-center' : 'px-4'}`}>
         {collapsed ? (
           <SidebarNavPopover icon={LogOut} label="Sign Out" isActive={false}>
             <button
               onClick={handleLogoutTrigger}
-              className="w-full flex items-center justify-center p-2.5 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-200 cursor-pointer bg-rose-50/60"
+              className="w-11 h-11 rounded-2xl flex items-center justify-center text-xs font-bold text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-200 cursor-pointer bg-rose-50/70 hover:scale-105 active:scale-95 shadow-2xs"
             >
-              <LogOut size={16} className="shrink-0" />
+              <LogOut size={18} className="shrink-0" />
             </button>
           </SidebarNavPopover>
         ) : (

@@ -22,6 +22,7 @@ import Skeleton from '@/components/ui/Skeleton';
 import Input from '@/components/ui/Input';
 import Checkbox from '@/components/ui/Checkbox';
 import DatePicker from '@/components/ui/DatePicker';
+import Select from '@/components/ui/Select';
 
 export default function AcademicYearsPage() {
   const { academicYears, activeYear, loading: contextLoading, fetchAcademicYears, changeActiveYear } = useAcademicYear();
@@ -498,17 +499,19 @@ export default function AcademicYearsPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Session Phase Status *</label>
-                <select
+                <Select
+                  label="Session Phase Status *"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-primary-500 focus:bg-white transition"
-                >
-                  <option value="UPCOMING">UPCOMING</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="ARCHIVED">ARCHIVED</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  options={[
+                    { value: 'UPCOMING', label: 'UPCOMING' },
+                    { value: 'ACTIVE', label: 'ACTIVE' },
+                    { value: 'COMPLETED', label: 'COMPLETED' },
+                    { value: 'ARCHIVED', label: 'ARCHIVED' }
+                  ]}
+                  searchable={false}
+                  clearable={false}
+                />
               </div>
 
               <div>

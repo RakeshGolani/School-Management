@@ -547,21 +547,21 @@ export default function SchoolNotificationsPage() {
 
               {/* Specific Class Scope (Optional) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  2. Specific Class Scope (Optional)
-                </label>
-                <select
+                <Select
+                  label="2. Specific Class Scope (Optional)"
                   value={targetClassId}
-                  onChange={(e) => setTargetClassId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-primary-500 cursor-pointer"
-                >
-                  <option value="">All Classes / School-wide</option>
-                  {classesList.map((cls) => (
-                    <option key={cls.id} value={cls.id}>
-                      Class {cls.class_name} - {cls.section} ({cls.room_number || 'Room'})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setTargetClassId(val || '')}
+                  placeholder="All Classes / School-wide"
+                  options={[
+                    { value: '', label: 'All Classes / School-wide' },
+                    ...classesList.map((cls) => ({
+                      value: String(cls.id),
+                      label: `Class ${cls.class_name} - ${cls.section} (${cls.room_number || 'Room'})`
+                    }))
+                  ]}
+                  searchable
+                  clearable
+                />
                 <p className="text-[11px] text-slate-400">
                   Select a class if this circular only pertains to a particular grade/section.
                 </p>

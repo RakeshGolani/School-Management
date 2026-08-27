@@ -5,6 +5,7 @@ import Drawer from '@/components/ui/Drawer';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import FormPhoneInput from '@/components/FormPhoneInput';
 import DatePicker from '@/components/ui/DatePicker';
 import { updateStudentProfileAction } from '@/actions/student/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -219,24 +220,20 @@ export default function StudentProfileEditDrawer({ isOpen, onClose, user, onProf
         />
 
         {/* Guardian Phone */}
-        <Input
+        <FormPhoneInput
           label="Primary Guardian Phone"
-          name="guardian_phone"
           value={formData.guardian_phone}
-          onChange={handleChange}
-          placeholder="e.g. +91 9876543210"
-          icon={Phone}
+          onChange={(phone) => setFormData(prev => ({ ...prev, guardian_phone: phone }))}
           required
+          defaultCountry="in"
         />
 
         {/* Alternate Phone */}
-        <Input
+        <FormPhoneInput
           label="Alternate Contact Phone"
-          name="alternate_phone"
           value={formData.alternate_phone}
-          onChange={handleChange}
-          placeholder="e.g. +91 9876543211"
-          icon={Phone}
+          onChange={(phone) => setFormData(prev => ({ ...prev, alternate_phone: phone }))}
+          defaultCountry="in"
         />
 
         <div className="grid grid-cols-2 gap-4">

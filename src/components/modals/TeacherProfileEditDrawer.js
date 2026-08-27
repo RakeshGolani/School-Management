@@ -5,6 +5,7 @@ import Drawer from '@/components/ui/Drawer';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import FormPhoneInput from '@/components/FormPhoneInput';
 import { updateTeacherProfileAction } from '@/actions/teacher/authActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
@@ -196,14 +197,12 @@ export default function TeacherProfileEditDrawer({ isOpen, onClose, user, onProf
         />
 
         {/* Phone Number */}
-        <Input
+        <FormPhoneInput
           label="Contact Phone"
-          name="phone"
           value={formData.phone}
-          onChange={handleChange}
-          placeholder="e.g. +91 9876543210"
-          icon={Phone}
+          onChange={(phone) => setFormData(prev => ({ ...prev, phone }))}
           required
+          defaultCountry="in"
         />
 
         {/* Qualification */}

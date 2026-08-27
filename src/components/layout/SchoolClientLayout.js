@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { encryptCookieKey } from '@/lib/cookieKeys';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -26,7 +27,8 @@ export default function SchoolClientLayout({ initialCollapsed = false, children 
     setSidebarCollapsed((prev) => {
       const nextState = !prev;
       localStorage.setItem('school_sidebar_collapsed', String(nextState));
-      document.cookie = `school_sidebar_collapsed=${nextState}; path=/; max-age=31536000; SameSite=Lax`;
+      const encKey = encryptCookieKey('school_sidebar_collapsed');
+      document.cookie = `${encKey}=${nextState}; path=/; max-age=31536000; SameSite=Lax`;
       return nextState;
     });
   };

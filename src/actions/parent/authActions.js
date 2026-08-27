@@ -173,8 +173,10 @@ export async function getParentActiveChildAction(sessionUser) {
     }
 
     const cookieStore = await cookies();
-    const savedChildId = cookieStore.get('parent_active_child_id')?.value;
-    const savedChildIdx = cookieStore.get('parent_active_child_idx')?.value;
+    const encKeyId = encryptCookieKey('parent_active_child_id');
+    const encKeyIdx = encryptCookieKey('parent_active_child_idx');
+    const savedChildId = cookieStore.get(encKeyId)?.value || cookieStore.get('parent_active_child_id')?.value;
+    const savedChildIdx = cookieStore.get(encKeyIdx)?.value || cookieStore.get('parent_active_child_idx')?.value;
 
     if (savedChildId) {
       const idx = childrenList.findIndex(c => String(c.id) === String(savedChildId));
