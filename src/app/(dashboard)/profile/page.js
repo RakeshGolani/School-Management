@@ -28,7 +28,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import FormPhoneInput from '@/components/FormPhoneInput';
 import { getSessionAction, logoutAction } from '@/actions/school/authActions';
-import { updateProfileAction, changePasswordAction } from '@/actions/school/profileActions';
+import { updateProfileAction, changePasswordAction, getSchoolProfileAction } from '@/actions/school/profileActions';
 import { schoolProfileSchema, changePasswordSchema } from '@/validators/authSchemas';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import SchoolProfileSkeleton from '@/components/skeletons/school/SchoolProfileSkeleton';
@@ -78,17 +78,13 @@ export default function SchoolProfilePage() {
         if (session && session.user) {
           let u = session.user;
 
-          if (session.user.id) {
-            try {
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-              const res = await fetch(`${apiUrl}/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
-              const profileRes = await res.json();
-              if (profileRes.success && profileRes.data) {
-                u = profileRes.data;
-              }
-            } catch (e) {
-              console.warn('Could not fetch fresh profile in Profile page:', e);
+          try {
+            const profileRes = await getSchoolProfileAction();
+            if (profileRes?.success && profileRes?.data) {
+              u = profileRes.data;
             }
+          } catch (e) {
+            console.warn('Could not fetch fresh profile in Profile page:', e);
           }
 
           const currentLogo = u.logo || '';

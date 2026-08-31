@@ -24,7 +24,9 @@ import {
   Bell
 } from 'lucide-react';
 
-import { logoutAction, getSessionAction } from '@/actions/school/authActions';
+import { getSessionAction, logoutAction } from '@/actions/school/authActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
+import { getDashboardCountsAction } from '@/actions/school/dashboardActions';
 import { getStudentsAction } from '@/actions/school/studentActions';
 import { getTeachersAction } from '@/actions/school/teacherActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
@@ -85,10 +87,8 @@ export default function Sidebar({
           setUserSession(sessionData.user);
 
           if (sessionData.user.id) {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-            const res = await fetch(`${apiUrl}/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
-            const profileRes = await res.json();
-            if (profileRes.success && profileRes.data) {
+            const profileRes = await getSchoolProfileAction();
+            if (profileRes?.success && profileRes?.data) {
               setUserSession(profileRes.data);
             }
           }

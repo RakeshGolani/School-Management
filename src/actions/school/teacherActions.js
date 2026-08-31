@@ -204,3 +204,32 @@ export async function deleteTeacherAction(id) {
     };
   }
 }
+
+/**
+ * Fetch a single teacher profile by ID / UUID
+ */
+export async function getTeacherByIdAction(id) {
+  try {
+    const schoolId = await getSchoolIdFromSession();
+    const query = schoolId ? `?schoolId=${schoolId}` : '';
+
+    const response = await fetch(`${API_URL}/teachers/${id}${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(schoolId ? { 'x-school-id': String(schoolId) } : {})
+      },
+      cache: 'no-store'
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('Error in getTeacherByIdAction:', error.message);
+    return {
+      success: false,
+      message: 'Failed to fetch teacher details'
+    };
+  }
+}
+

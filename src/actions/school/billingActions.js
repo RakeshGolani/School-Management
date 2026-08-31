@@ -61,10 +61,13 @@ export async function checkoutSubscriptionAction(checkoutData) {
 
 export async function triggerMockPaymentAction(payload) {
   try {
-    const res = await fetch(`${API_URL}/subscription/webhook`, {
+    const schoolId = await getSchoolIdFromSession();
+
+    const res = await fetch(`${API_URL}/subscription/webhook?schoolId=${schoolId || ''}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-school-id': String(schoolId || '')
       },
       body: JSON.stringify({
         status: 'success',

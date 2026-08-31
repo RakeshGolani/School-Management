@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Eye,
   CheckCircle2,
-  Check
+  Check,
+  Boxes,
+  BookOpen
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -24,11 +26,13 @@ import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
 import Tooltip from '@/components/ui/Tooltip';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import SubscriptionRenewalModal from '@/components/modals/SubscriptionRenewalModal';
 import { 
   getSubscriptionDetailsAction, 
   checkoutSubscriptionAction, 
   triggerMockPaymentAction 
 } from '@/actions/school/billingActions';
+import { openRazorpayCheckout } from '@/lib/razorpayHelper';
 import { notifySuccess, notifyError } from '@/lib/notify';
 
 export default function BillingPage() {
@@ -37,6 +41,7 @@ export default function BillingPage() {
   const [data, setData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [renewalModalOpen, setRenewalModalOpen] = useState(false);
 
   // Upgrade form state
   const [planType, setPlanType] = useState('monthly');
@@ -100,20 +105,29 @@ export default function BillingPage() {
 
   // Pricing Calculator
   const isYearly = planType === 'yearly';
-  const baseFee = isYearly 
-    ? Number(activePkg.annual_price || config.base_fee_yearly || 7999) 
-    : Number(activePkg.monthly_price || config.base_fee_monthly || 9999);
+  const rawMonthlyPrice = Number(activePkg.monthly_price || config.base_fee_monthly || 9999);
+  const rawAnnualPrice = Number(activePkg.annual_price || config.base_fee_yearly || 7999);
+
+  // For Yearly, annual base is 12 months
+  const baseAnnualPrice = rawAnnualPrice < 15000 ? rawAnnualPrice * 12 : rawAnnualPrice;
+  const baseFee = isYearly ? baseAnnualPrice : rawMonthlyPrice;
+
+  const monthlyStudentFee = Number(config.student_fee_monthly || 10);
+  const monthlyBusFee = Number(config.bus_fee_monthly || 100);
 
   const studentFee = isYearly 
-    ? Number(config.student_fee_yearly || 100) 
-    : Number(config.student_fee_monthly || 10);
+    ? (Number(config.student_fee_yearly) > 0 ? Number(config.student_fee_yearly) : monthlyStudentFee * 12)
+    : monthlyStudentFee;
 
   const busFee = isYearly 
-    ? Number(config.bus_fee_yearly || 1000) 
-    : Number(config.bus_fee_monthly || 100);
+    ? (Number(config.bus_fee_yearly) > 0 ? Number(config.bus_fee_yearly) : monthlyBusFee * 12)
+    : monthlyBusFee;
 
-  const extraStudents = Math.max(0, studentsLimit - 50);
-  const extraBuses = Math.max(0, busesLimit - 5);
+  const baseStudentsQuota = activePkg.base_students_limit !== undefined ? Number(activePkg.base_students_limit) : 50;
+  const baseBusesQuota = activePkg.base_buses_limit !== undefined ? Number(activePkg.base_buses_limit) : 5;
+
+  const extraStudents = Math.max(0, studentsLimit - baseStudentsQuota);
+  const extraBuses = Math.max(0, busesLimit - baseBusesQuota);
 
   const studentsCost = extraStudents * studentFee;
   const busesCost = extraBuses * busFee;
@@ -127,7 +141,7 @@ export default function BillingPage() {
   const preTaxTotal = Math.max(0, subtotal - discountAmount);
   const taxRate = Number(config.tax_rate_percent || 18);
   const taxAmount = (preTaxTotal * taxRate) / 100;
-  const finalPrice = preTaxTotal + taxAmount;
+  const finalPrice = Math.round(preTaxTotal + taxAmount);
 
   // Safe Progress calculations
   const sLimit = usage.students?.limit || 50;
@@ -151,18 +165,23 @@ export default function BillingPage() {
     {
       header: 'Transaction / Invoice Ref',
       accessor: 'gateway_transaction_id',
-      render: (row) => (
-        <div>
-          <span className="font-mono font-bold text-slate-800 text-xs">
-            {row.invoice?.invoice_number || row.invoice_number || row.gateway_transaction_id || `INV-${row.id}`}
-          </span>
-          {row.gateway_transaction_id && row.invoice?.invoice_number && (
-            <div className="text-[10px] text-slate-400 font-mono">
-              {row.gateway_transaction_id}
-            </div>
-          )}
-        </div>
-      )
+      render: (row) => {
+        const invNum = row.invoice?.invoice_number || row.invoice_number;
+        const payId = row.reference_number || (row.gateway_transaction_id?.startsWith('pay_') ? row.gateway_transaction_id : null) || row.gateway_transaction_id;
+
+        return (
+          <div className="space-y-0.5">
+            <span className="font-mono font-bold text-slate-800 text-xs block">
+              {invNum || payId || `TXN-${row.id}`}
+            </span>
+            {payId && invNum && (
+              <span className="text-[11px] font-mono text-slate-500 font-medium block">
+                {payId}
+              </span>
+            )}
+          </div>
+        );
+      }
     },
     {
       header: 'Plan',
@@ -246,7 +265,7 @@ export default function BillingPage() {
     }
   ];
 
-  // Initiate Upgrade
+  // Initiate Upgrade with Razorpay Checkout
   const handleUpgradeSubmit = async (e) => {
     e.preventDefault();
     setProcessing(true);
@@ -261,15 +280,40 @@ export default function BillingPage() {
         package_code: activePkg.code
       });
 
-      if (res.success && res.data) {
-        setPendingCheckout(res.data);
-        setConfirmModalOpen(true);
-      } else {
+      if (!res.success || !res.data) {
         setErrorMsg(res.message || 'Failed to initiate checkout session.');
+        notifyError(res.message || 'Failed to initiate checkout session.');
+        setProcessing(false);
+        return;
       }
+
+      // Open official Razorpay Checkout modal
+      await openRazorpayCheckout({
+        checkoutResponse: res.data,
+        planType,
+        packageCode: activePkg.code,
+        studentsLimit,
+        busesLimit,
+        onSuccess: async () => {
+          notifySuccess('Subscription upgraded / renewed successfully!');
+          setSuccessMsg(`Subscription upgraded successfully! Active capacity updated to ${studentsLimit} students & ${busesLimit} buses.`);
+          await fetchBillingData();
+          setTimeout(() => setSuccessMsg(''), 8000);
+          setProcessing(false);
+        },
+        onError: (errMsg) => {
+          setErrorMsg(errMsg || 'Payment failed.');
+          notifyError(errMsg || 'Payment failed.');
+          setProcessing(false);
+        },
+        onDismiss: () => {
+          setProcessing(false);
+        }
+      });
     } catch (err) {
+      console.error('Error during upgrade:', err);
       setErrorMsg('Failed to process upgrade request');
-    } finally {
+      notifyError('Failed to process upgrade request');
       setProcessing(false);
     }
   };
@@ -306,34 +350,141 @@ export default function BillingPage() {
     }
   };
 
+  // Package details helper
+  const getPackageDetails = (pkg) => {
+    const code = pkg?.code || 'FULL_SUITE';
+    if (code === 'TRANSPORT_ONLY' || code === 'transport') {
+      return {
+        label: 'Transport Only (Smart Bus Fleet)',
+        badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+        icon: Bus,
+        iconBg: 'bg-sky-50 text-sky-600 border-sky-200',
+        description: 'Smart Bus Live GPS Tracking, Route Management, Parent Alerts & Driver NFC Logs.',
+        modulesText: 'Smart Bus Fleet & GPS Tracking Active'
+      };
+    }
+    if (code === 'SCHOOL_ONLY' || code === 'academic') {
+      return {
+        label: 'School ERP Only (Academics & Operations)',
+        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: BookOpen,
+        iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+        description: 'Classrooms, Teacher Allocations, Timetable Grid, Student Hub & Fee Accounts.',
+        modulesText: 'Academics & Operations ERP Active'
+      };
+    }
+    return {
+      label: 'Full Institutional Suite (ERP + Smart Bus Fleet)',
+      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
+      icon: Sparkles,
+      iconBg: 'bg-gradient-to-tr from-amber-500/10 to-primary-500/10 text-primary-600 border-primary-200',
+      description: 'Complete all-in-one institutional ERP integrated with real-time GPS Fleet Telemetry & NFC Gateways.',
+      modulesText: 'All 8 System Modules Active (All-In-One)'
+    };
+  };
+
+  const pkgInfo = getPackageDetails(activePkg);
+  const PkgIcon = pkgInfo.icon;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 animate-fadeIn text-xs sm:text-sm">
       
-      {/* 🌟 Standard Header Banner */}
-      <div className="glass-panel rounded-2xl p-5 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-50 via-white to-primary-50/40">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <Badge variant="emerald" dot>
+      {/* 🌟 Standard Header Banner with Active Plan Edition Badge */}
+      <div className="glass-panel rounded-3xl p-6 border border-slate-200/80 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 bg-gradient-to-r from-slate-50 via-white to-primary-50/40 shadow-xs relative overflow-hidden">
+        
+        {/* Left Side: Title & Status */}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={subStatus === 'active' ? 'emerald' : 'danger'} dot>
               {subStatus === 'active' ? 'Active SaaS License' : 'License Inactive'}
             </Badge>
-            <Badge variant="primary">{activePkg.name || 'Institutional Edition'}</Badge>
+            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border shadow-xs ${pkgInfo.badgeColor}`}>
+              {activePkg.code || 'FULL_SUITE'}
+            </span>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+              {subscription.plan_type === 'yearly' ? 'Annual Plan' : 'Monthly Plan'}
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-wide flex items-center gap-2">
-            <CreditCard className="text-primary-600" size={24} /> Subscription &amp; Billing Portal
+
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+            <CreditCard className="text-primary-600" size={26} /> 
+            Subscription &amp; Billing Portal
           </h1>
-          <p className="text-slate-500 text-xs">
-            Manage student seats, smart bus fleet licenses, and dynamic billing transactions.
+          <p className="text-slate-500 text-xs sm:text-sm max-w-xl leading-relaxed">
+            {pkgInfo.description}
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchBillingData}
-          icon={RefreshCw}
-        >
-          Refresh Status
-        </Button>
+        {/* Right Side: Active Plan Quick Details Widget & Refresh Button */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 w-full lg:w-auto">
+          {/* Active Plan Detail Box */}
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3.5 w-full sm:w-auto">
+            <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 ${pkgInfo.iconBg}`}>
+              <PkgIcon size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black text-slate-900">{activePkg.name}</span>
+              </div>
+              <p className="text-[11px] font-bold text-primary-600 mt-0.5">
+                {pkgInfo.label}
+              </p>
+              {subscription?.ends_at && (
+                <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                  <Calendar size={10} />
+                  Valid till {new Date(subscription.ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {subStatus !== 'active' && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setRenewalModalOpen(true)}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md shadow-rose-600/20 shrink-0"
+              >
+                <Sparkles size={14} className="mr-1.5" />
+                Renew License Now
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchBillingData}
+              icon={RefreshCw}
+              className="shrink-0"
+            >
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* 🌟 Active Plan Inclusion & Quota Information Strip */}
+      <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-800">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+            <Boxes size={15} className="text-primary-400" />
+            <span>Active Package Tier:</span>
+            <span className="text-emerald-400 font-extrabold">{pkgInfo.label}</span>
+          </div>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <div className="text-xs text-slate-300">
+            Base Quota: <strong className="text-white">{baseStudentsQuota} Students</strong>
+            {baseBusesQuota > 0 ? (
+              <> + <strong className="text-white">{baseBusesQuota} Smart Buses</strong> Included</>
+            ) : (
+              <span className="text-slate-400 font-normal"> Included (ERP Only • No Bus Fleet)</span>
+            )}
+          </div>
+        </div>
+        <div className="text-xs text-slate-400 flex items-center gap-1.5 shrink-0">
+          <ShieldCheck size={14} className="text-emerald-400" />
+          <span>{pkgInfo.modulesText}</span>
+        </div>
       </div>
 
       {successMsg && (
@@ -360,7 +511,7 @@ export default function BillingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Student Limit Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-200">
+            <div className={`bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-200 ${!activePkg.modules?.includes('transport') && activePkg.code === 'SCHOOL_ONLY' ? 'md:col-span-2' : ''}`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Student Seats</p>
@@ -386,32 +537,34 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* Bus Limit Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Bus Route Licenses</p>
-                  <h3 className="text-2xl font-black text-slate-800 mt-1">
-                    {bCurrent} <span className="text-xs font-semibold text-slate-400">/ {bLimit} buses</span>
-                  </h3>
+            {/* Bus Limit Card (Only for Plans with Transport) */}
+            {(activePkg.modules?.includes('transport') || activePkg.code !== 'SCHOOL_ONLY') && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Bus Route Licenses</p>
+                    <h3 className="text-2xl font-black text-slate-800 mt-1">
+                      {bCurrent} <span className="text-xs font-semibold text-slate-400">/ {bLimit} buses</span>
+                    </h3>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
+                    <Bus size={20} />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
-                  <Bus size={20} />
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-sky-400 to-sky-500 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, bPct)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center mt-3 text-[10px] text-slate-500 font-medium">
+                  <span>{Math.max(0, bLimit - bCurrent)} routes remaining</span>
+                  <span className="bg-slate-100 px-2 py-0.5 rounded-md font-bold text-slate-600">
+                    {bPct}% Used
+                  </span>
                 </div>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-sky-400 to-sky-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, bPct)}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center mt-3 text-[10px] text-slate-500 font-medium">
-                <span>{Math.max(0, bLimit - bCurrent)} routes remaining</span>
-                <span className="bg-slate-100 px-2 py-0.5 rounded-md font-bold text-slate-600">
-                  {bPct}% Used
-                </span>
-              </div>
-            </div>
+            )}
 
           </div>
 
@@ -510,43 +663,45 @@ export default function BillingPage() {
                   type="range"
                   min={Math.max(50, sCurrent)}
                   max="2500"
-                  step="50"
+                  step="10"
                   value={studentsLimit}
                   onChange={(e) => setStudentsLimit(Number(e.target.value))}
                   className="w-full accent-primary-600 cursor-pointer h-2 bg-slate-100 rounded-lg"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
-                  <span>Min: 50</span>
-                  <span>₹{studentFee}/extra seat</span>
+                  <span>Included: {baseStudentsQuota}</span>
+                  <span>₹{studentFee}/extra seat (+10 step)</span>
                   <span>Max: 2,500</span>
                 </div>
               </div>
 
-              {/* Bus Capacity Selector */}
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Bus Fleet Licenses
-                  </label>
-                  <span className="font-mono font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100 text-xs">
-                    {busesLimit} Buses
-                  </span>
+              {/* Bus Capacity Selector (Only for plans with transport) */}
+              {(activePkg.modules?.includes('transport') || activePkg.code !== 'SCHOOL_ONLY') && (
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Bus Fleet Licenses
+                    </label>
+                    <span className="font-mono font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100 text-xs">
+                      {busesLimit} Buses
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={busesLimit}
+                    onChange={(e) => setBusesLimit(Number(e.target.value))}
+                    className="w-full accent-sky-600 cursor-pointer h-2 bg-slate-100 rounded-lg"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
+                    <span>Included: {baseBusesQuota}</span>
+                    <span>₹{busFee}/extra bus (+1 step)</span>
+                    <span>Max: 50</span>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  step="5"
-                  value={busesLimit}
-                  onChange={(e) => setBusesLimit(Number(e.target.value))}
-                  className="w-full accent-sky-600 cursor-pointer h-2 bg-slate-100 rounded-lg"
-                />
-                <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
-                  <span>Min: 0</span>
-                  <span>₹{busFee}/extra bus</span>
-                  <span>Max: 50</span>
-                </div>
-              </div>
+              )}
 
               {/* Price Breakdown Calculation Box */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
@@ -581,12 +736,14 @@ export default function BillingPage() {
                   <span className="font-bold text-slate-800">₹{Math.round(taxAmount).toLocaleString()}</span>
                 </div>
 
-                <div className="border-t border-slate-200 pt-2 flex justify-between items-baseline">
+                <div className="border-t border-slate-200 pt-2.5 flex justify-between items-baseline">
                   <span className="font-black text-slate-900 text-sm">Total Billed:</span>
-                  <span className="font-black text-primary-600 text-lg">
-                    ₹{Math.round(finalPrice).toLocaleString('en-IN')}
-                    <span className="text-[10px] font-normal text-slate-500">/{isYearly ? 'yr' : 'mo'}</span>
-                  </span>
+                  <div className="text-right">
+                    <span className="font-black text-primary-600 text-lg font-mono">
+                      ₹{Math.round(finalPrice).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 ml-1">/{isYearly ? 'yr' : 'mo'}</span>
+                  </div>
                 </div>
               </div>
 
@@ -628,6 +785,18 @@ export default function BillingPage() {
         confirmText="Confirm &amp; Activate License"
         cancelText="Cancel"
         type="primary"
+      />
+
+      {/* Subscription Renewal Modal for Expired / Inactive School */}
+      <SubscriptionRenewalModal
+        isOpen={renewalModalOpen}
+        onClose={() => setRenewalModalOpen(false)}
+        subscription={subscription}
+        currentPackage={activePkg}
+        billingConfig={config}
+        onSuccess={async () => {
+          await fetchBillingData();
+        }}
       />
 
     </div>

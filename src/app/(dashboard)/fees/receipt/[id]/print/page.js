@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getFeeReceiptAction } from '@/actions/school/feeActions';
 import { getSessionAction } from '@/actions/school/authActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 
 export default function StandalonePrintReceiptPage() {
   const params = useParams();
@@ -35,12 +36,10 @@ export default function StandalonePrintReceiptPage() {
 
         const schoolId = session.user.id;
 
-        // 2. Fetch school profile for header
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-        const profileResponse = await fetch(`${apiUrl}/profile?schoolId=${schoolId}`, { cache: 'no-store' });
-        const profileData = await profileResponse.json();
+        // 2. Fetch fresh School Profile via Server Action
+        const profileData = await getSchoolProfileAction();
         let fetchedSchool = {};
-        if (profileData.success && profileData.data) {
+        if (profileData?.success && profileData.data) {
           fetchedSchool = profileData.data;
         }
 

@@ -4,6 +4,7 @@ import { usePackage } from '@/context/PackageContext';
 import { ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { getModuleInfo } from '@/config/modules';
+import PageWiseSkeleton from '@/components/skeletons/school/PageWiseSkeleton';
 
 /**
  * Route prefix to Module Key mapping
@@ -44,11 +45,19 @@ const ROUTE_MODULE_MAP = [
  * included in the school's assigned SaaS package / modules.
  */
 export default function PackageRouteGuard({ children }) {
-  const { packageInfo, hasModule, loading } = usePackage();
+  const { packageInfo, hasModule, isExpired, loading } = usePackage();
   const pathname = usePathname();
   const router = useRouter();
 
-  // Find if current route requires a specific module
+  // 1. Initial Loading or Subscription Lockout: Render PageWiseSkeleton immediately (Zero Content Flash & Zero premature API calls)
+  if (loading || isExpired) {
+    const isBillingPath = pathname === '/billing' || pathname?.startsWith('/billing/');
+    if (!isBillingPath) {
+      return <PageWiseSkeleton />;
+    }
+  }
+
+  // 2. Find if current route requires a specific module
   const matchedRoute = ROUTE_MODULE_MAP.find(route => pathname === route.prefix || pathname?.startsWith(`${route.prefix}/`));
 
   if (matchedRoute && !loading) {

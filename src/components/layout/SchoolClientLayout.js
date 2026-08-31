@@ -12,6 +12,7 @@ import PackageRouteGuard from '@/components/layout/PackageRouteGuard';
 
 import { BackendStatusProvider } from '@/context/BackendStatusContext';
 import BackendOfflineScreen from '@/components/ui/BackendOfflineScreen';
+import SubscriptionAlertBanner from '@/components/layout/SubscriptionAlertBanner';
 
 /**
  * School Dashboard Client Layout
@@ -65,6 +66,9 @@ export default function SchoolClientLayout({ initialCollapsed = false, children 
                 sidebarCollapsed={sidebarCollapsed}
                 onToggleSidebarCollapse={handleToggleCollapse}
               />
+
+              {/* Subscription Expiration Alert Banner */}
+              <SubscriptionAlertBanner />
 
               {/* Dynamic Page View */}
               <main className="flex-1 px-4 md:px-8 py-6 relative">

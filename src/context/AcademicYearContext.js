@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
+import { getAcademicYearsAction } from '@/actions/school/academicYearActions';
 
 const AcademicYearContext = createContext(null);
 
@@ -11,9 +12,7 @@ export function AcademicYearProvider({ children }) {
   const fetchAcademicYears = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-      const res = await fetch(`${apiUrl}/academic-years`, { cache: 'no-store' });
-      const data = await res.json();
+      const data = await getAcademicYearsAction();
       
       if (data.success && Array.isArray(data.data)) {
         setAcademicYears(data.data);

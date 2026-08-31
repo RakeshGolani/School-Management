@@ -36,6 +36,8 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import { getClassTimetableAction } from '@/actions/school/timetableActions';
 import { getAttendanceAction } from '@/actions/school/attendanceActions';
 import { getFeeAllocationsAction } from '@/actions/school/feeActions';
+import { getStudentByIdAction } from '@/actions/school/studentActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 
 export default function StudentDetailsPage() {
   const router = useRouter();
@@ -67,18 +69,14 @@ export default function StudentDetailsPage() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-        const res = await fetch(`${apiUrl}/students/${studentId}`, { cache: 'no-store' });
-        const resData = await res.json();
-        const studentInfo = resData.data || resData;
+        const res = await getStudentByIdAction(studentId);
+        const studentInfo = res.data || res;
 
         if (studentInfo && (studentInfo.id || studentInfo.first_name)) {
           setStudent(studentInfo);
 
-          // Fetch School Profile for Logo & Name
-          const targetSchoolId = studentInfo.school_id || studentInfo.schoolId || 1;
-          fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
-            .then(sRes => sRes.json())
+          // Fetch School Profile for Logo & Name via Server Action
+          getSchoolProfileAction()
             .then(sData => {
               if (sData?.success && sData.data) setSchoolInfo(sData.data);
             })

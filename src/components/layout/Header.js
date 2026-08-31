@@ -15,6 +15,7 @@ import {
   Command
 } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/actions/school/authActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 import { notifySuccess, notifyError } from '@/lib/notify';
 import { applyDynamicTheme } from '@/lib/themeHelper';
 import { usePathname } from 'next/navigation';
@@ -63,15 +64,8 @@ export default function Header({
         applyDynamicTheme(sessionData.user.primaryColor);
 
         if (sessionData.user.id) {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-          const res = await fetch(`${apiUrl}/profile?schoolId=${sessionData.user.id}`, { cache: 'no-store' });
-          if (res.status === 401 || res.status === 403) {
-            await logoutAction();
-            router.push('/login');
-            return;
-          }
-          const profileRes = await res.json();
-          if (profileRes.success && profileRes.data) {
+          const profileRes = await getSchoolProfileAction();
+          if (profileRes?.success && profileRes?.data) {
             setUserSession(profileRes.data);
             applyDynamicTheme(profileRes.data.primaryColor || profileRes.data.primary_color);
           }

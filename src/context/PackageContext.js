@@ -1,38 +1,55 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getSessionAction } from '@/actions/school/authActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
+
+import { getSubscriptionDetailsAction } from '@/actions/school/billingActions';
 
 const PackageContext = createContext(null);
 
 export function PackageProvider({ children }) {
   const [packageInfo, setPackageInfo] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [billingConfig, setBillingConfig] = useState({});
   const [loading, setLoading] = useState(true);
+  const [renewalModalOpen, setRenewalModalOpen] = useState(false);
 
-  const fetchPackageInfo = async () => {
+  const fetchPackageAndSubscription = async () => {
     try {
       setLoading(true);
       const session = await getSessionAction();
-      if (session?.user?.id) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-        const res = await fetch(`${apiUrl}/profile?schoolId=${session.user.id}`, { cache: 'no-store' });
-        const data = await res.json();
-        
-        let resolvedPkg = null;
-        if (data?.success && data?.data?.package) {
-          resolvedPkg = data.data.package;
-        } else if (session?.user?.package) {
-          resolvedPkg = session.user.package;
-        }
+      let resolvedPkg = session?.user?.package || null;
 
-        if (resolvedPkg) {
-          setPackageInfo(resolvedPkg);
-          try {
-            localStorage.setItem('school_package_info', JSON.stringify(resolvedPkg));
-          } catch (e) {}
+      if (!resolvedPkg && session?.user?.id) {
+        const res = await getSchoolProfileAction();
+        if (res?.success && res?.data?.package) {
+          resolvedPkg = res.data.package;
+        }
+      }
+
+      if (resolvedPkg) {
+        setPackageInfo(resolvedPkg);
+        try {
+          localStorage.setItem('school_package_info', JSON.stringify(resolvedPkg));
+        } catch (e) {}
+      }
+
+      // Fetch subscription details
+      if (session?.user?.id) {
+        const subRes = await getSubscriptionDetailsAction();
+        if (subRes?.success && subRes.data) {
+          if (subRes.data.subscription) {
+            setSubscription(subRes.data.subscription);
+            try {
+              localStorage.setItem('school_subscription_info', JSON.stringify(subRes.data.subscription));
+            } catch (e) {}
+          }
+          if (subRes.data.currentPackage) setPackageInfo(subRes.data.currentPackage);
+          if (subRes.data.billingConfig) setBillingConfig(subRes.data.billingConfig);
         }
       }
     } catch (err) {
-      console.warn('Could not load package info in PackageContext:', err);
+      console.warn('Could not load package/subscription in PackageContext:', err);
     } finally {
       setLoading(false);
     }
@@ -44,11 +61,15 @@ export function PackageProvider({ children }) {
       if (cached) {
         setPackageInfo(JSON.parse(cached));
       }
+      const cachedSub = localStorage.getItem('school_subscription_info');
+      if (cachedSub) {
+        setSubscription(JSON.parse(cachedSub));
+      }
     } catch (e) {}
 
-    fetchPackageInfo();
-    window.addEventListener('sessionUpdated', fetchPackageInfo);
-    return () => window.removeEventListener('sessionUpdated', fetchPackageInfo);
+    fetchPackageAndSubscription();
+    window.addEventListener('sessionUpdated', fetchPackageAndSubscription);
+    return () => window.removeEventListener('sessionUpdated', fetchPackageAndSubscription);
   }, []);
 
   const modules = Array.isArray(packageInfo?.modules) ? packageInfo.modules : [];
@@ -63,17 +84,29 @@ export function PackageProvider({ children }) {
   const isSchoolOnly = packageInfo?.code === 'SCHOOL_ONLY' || (!hasModule('transport') && hasModule('academics'));
   const isFullSuite = packageInfo?.code === 'FULL_SUITE' || (hasModule('transport') && hasModule('academics'));
 
+  const isExpired = subscription && (
+    subscription.status === 'expired' || 
+    subscription.status === 'inactive' || 
+    (subscription.ends_at && new Date(subscription.ends_at) < new Date())
+  );
+
   return (
     <PackageContext.Provider
       value={{
         packageInfo,
+        subscription,
+        billingConfig,
         modules,
         loading,
         hasModule,
         isTransportOnly,
         isSchoolOnly,
         isFullSuite,
-        refreshPackage: fetchPackageInfo
+        isExpired,
+        renewalModalOpen,
+        openRenewalModal: () => setRenewalModalOpen(true),
+        closeRenewalModal: () => setRenewalModalOpen(false),
+        refreshPackage: fetchPackageAndSubscription
       }}
     >
       {children}

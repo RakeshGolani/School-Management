@@ -16,6 +16,12 @@ import {
   Filter
 } from 'lucide-react';
 import { useAcademicYear } from '@/context/AcademicYearContext';
+import { 
+  createAcademicYearAction, 
+  updateAcademicYearAction, 
+  setActiveAcademicYearAction, 
+  deleteAcademicYearAction 
+} from '@/actions/school/academicYearActions';
 import DataTable from '@/components/ui/DataTable';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import Skeleton from '@/components/ui/Skeleton';
@@ -83,20 +89,9 @@ export default function AcademicYearsPage() {
     setLoadingSubmit(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-      const url = editingYear
-        ? `${apiUrl}/academic-years/${editingYear.id}`
-        : `${apiUrl}/academic-years`;
-
-      const method = editingYear ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
+      const data = editingYear
+        ? await updateAcademicYearAction(editingYear.id, formData)
+        : await createAcademicYearAction(formData);
 
       if (data.success) {
         showNotify(editingYear ? 'Academic Year updated successfully!' : 'Academic Year created successfully!');
@@ -115,11 +110,7 @@ export default function AcademicYearsPage() {
 
   const handleSetActive = async (year) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-      const res = await fetch(`${apiUrl}/academic-years/${year.id}/active`, {
-        method: 'PATCH'
-      });
-      const data = await res.json();
+      const data = await setActiveAcademicYearAction(year.id);
 
       if (data.success) {
         showNotify(`Academic Year '${year.year_name}' set as Active!`);
@@ -159,11 +150,7 @@ export default function AcademicYearsPage() {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, loading: true }));
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-          const res = await fetch(`${apiUrl}/academic-years/${year.id}`, {
-            method: 'DELETE'
-          });
-          const data = await res.json();
+          const data = await deleteAcademicYearAction(year.id);
 
           if (data.success) {
             showNotify('Academic year deleted successfully');

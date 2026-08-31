@@ -253,3 +253,32 @@ export async function promoteStudentsAction(payload) {
     return { success: false, message: 'Server error: ' + error.message };
   }
 }
+
+/**
+ * Fetch a single student profile by ID / UUID
+ */
+export async function getStudentByIdAction(id) {
+  try {
+    const schoolId = await getSchoolIdFromSession();
+    const query = schoolId ? `?schoolId=${schoolId}` : '';
+
+    const response = await fetch(`${API_URL}/students/${id}${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(schoolId ? { 'x-school-id': String(schoolId) } : {})
+      },
+      cache: 'no-store'
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('Error in getStudentByIdAction:', error.message);
+    return {
+      success: false,
+      message: 'Failed to fetch student details'
+    };
+  }
+}
+

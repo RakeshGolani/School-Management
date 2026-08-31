@@ -46,26 +46,19 @@ export const BackendStatusProvider = ({ children }) => {
     }
   }, [apiUrl]);
 
-  // Initial check on mount + set interval
+  // Listen to browser network online/offline events without aggressive background API polling
   useEffect(() => {
-    checkHealth();
-
-    const interval = setInterval(() => {
-      checkHealth();
-    }, 10000); // Check every 10s
-
-    const handleOnline = () => checkHealth();
+    const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [checkHealth]);
+  }, []);
 
 
   return (

@@ -49,6 +49,7 @@ import {
 } from '@/actions/school/classActions';
 import { getTeachersAction } from '@/actions/school/teacherActions';
 import { promoteStudentsAction } from '@/actions/school/studentActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 import PromoteStudentsModal from '@/components/modals/PromoteStudentsModal';
 import BatchStudentIdCardModal from '@/components/modals/BatchStudentIdCardModal';
 
@@ -202,11 +203,8 @@ export default function ClassDetailsPage({ params }) {
   const [schoolInfo, setSchoolInfo] = useState(null);
 
   useEffect(() => {
-    // Fetch School Profile for Logo & Name in batch print preview
-    const targetSchoolId = 1;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-    fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
-      .then(sRes => sRes.json())
+    // Fetch School Profile for Logo & Name in batch print preview via Server Action
+    getSchoolProfileAction()
       .then(sData => {
         if (sData?.success && sData.data) setSchoolInfo(sData.data);
       })

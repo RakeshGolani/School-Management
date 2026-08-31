@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { io } from 'socket.io-client';
 import 'leaflet/dist/leaflet.css';
 import { getLiveLocationsAction, getRoutesAction } from '@/actions/school/transportActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 import { hexToRgba } from '@/lib/themeHelper';
 import { Route, Navigation } from 'lucide-react';
 import StudentAvatarStack from '@/components/ui/StudentAvatarHover';
@@ -207,7 +208,7 @@ export default function LiveTrackingMap({ initialSchoolLocation, initialRoutes }
         const [busRes, routesRes, schoolRes] = await Promise.all([
           getLiveLocationsAction(),
           !initialRoutes ? getRoutesAction() : Promise.resolve(null),
-          !initialSchoolLocation ? fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school'}/profile?schoolId=1`, { cache: 'no-store' }).then(r => r.json()) : Promise.resolve(null)
+          !initialSchoolLocation ? getSchoolProfileAction() : Promise.resolve(null)
         ]);
 
         if (busRes && busRes.success && Array.isArray(busRes.data)) {

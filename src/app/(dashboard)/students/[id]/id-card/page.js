@@ -20,6 +20,8 @@ import Button from '@/components/ui/Button';
 import { notifyError } from '@/lib/notify';
 import { useAcademicYear } from '@/context/AcademicYearContext';
 import StudentIdCard from '@/components/ui/StudentIdCard';
+import { getStudentByIdAction } from '@/actions/school/studentActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 
 export default function StudentIdCardPage() {
   const router = useRouter();
@@ -70,23 +72,19 @@ export default function StudentIdCardPage() {
     const fetchStudentAndSchool = async () => {
       setLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-        const res = await fetch(`${apiUrl}/students/${studentId}`, { cache: 'no-store' });
-        const resData = await res.json();
-        const info = resData.data || resData;
+        const res = await getStudentByIdAction(studentId);
+        const info = res.data || res;
 
         if (info && (info.id || info.first_name)) {
           setStudent(info);
 
-          // Fetch School Profile for Logo & School Name
-          const targetSchoolId = info.school_id || info.schoolId || 1;
-          const schoolRes = await fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' });
-          const schoolData = await schoolRes.json();
-          if (schoolData.success && schoolData.data) {
-            setSchoolInfo(schoolData.data);
+          // Fetch School Profile for Logo & School Name via Server Action
+          const schoolRes = await getSchoolProfileAction();
+          if (schoolRes?.success && schoolRes.data) {
+            setSchoolInfo(schoolRes.data);
           }
         } else {
-          notifyError(resData.message || 'Student profile not found');
+          notifyError(res.message || 'Student profile not found');
         }
       } catch (err) {
         console.error('Error loading student for ID card:', err);

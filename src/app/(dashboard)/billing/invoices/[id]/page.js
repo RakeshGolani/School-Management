@@ -19,6 +19,7 @@ import Link from 'next/link';
 import InvoiceSkeleton from '@/components/skeletons/school/InvoiceSkeleton';
 import { getSubscriptionDetailsAction } from '@/actions/school/billingActions';
 import { getSessionAction } from '@/actions/school/authActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 
 export default function InvoiceDetailPage() {
   const router = useRouter();
@@ -44,14 +45,11 @@ export default function InvoiceDetailPage() {
       if (!session || !session.user || !session.user.id) {
         throw new Error('Active session not found.');
       }
-      
-      const schoolId = session.user.id;
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-      const profileResponse = await fetch(`${apiUrl}/profile?schoolId=${schoolId}`, { cache: 'no-store' });
-      const profileData = await profileResponse.json();
+      // 2. Fetch school profile via Server Action
+      const profileData = await getSchoolProfileAction();
       let fetchedSchool = {};
-      if (profileData.success && profileData.data) {
+      if (profileData?.success && profileData.data) {
         fetchedSchool = profileData.data;
       }
 
@@ -60,26 +58,37 @@ export default function InvoiceDetailPage() {
       if (billingRes.success && billingRes.data) {
         const { invoices, transactions, subscription: sub, systemSettings: sysSettings } = billingRes.data;
         
-        // Find matching invoice
-        const foundInvoice = invoices.find(
+        let foundInvoice = invoices.find(
           (inv) => String(inv.uuid) === String(id) || String(inv.id) === String(id) || String(inv.invoice_number) === String(id)
-        ) || invoices.find(
-          (inv) => {
-            const txn = transactions.find(t => String(t.uuid) === String(id) || String(t.id) === String(id));
-            return txn && txn.id === inv.transaction_id;
-          }
         );
 
-        if (foundInvoice) {
-          // Find matching transaction
-          const foundTxn = transactions.find(
-            (t) => t.id === foundInvoice.transaction_id
-          );
+        let foundTxn = transactions.find(
+          (t) => String(t.uuid) === String(id) || String(t.id) === String(id) || String(t.gateway_transaction_id) === String(id) || String(t.reference_number) === String(id)
+        );
 
+        if (!foundInvoice && foundTxn) {
+          foundInvoice = invoices.find(inv => inv.transaction_id === foundTxn.id) || {
+            id: foundTxn.id,
+            uuid: foundTxn.uuid,
+            invoice_number: `IW-${new Date(foundTxn.createdAt).getFullYear()}-${String(foundTxn.id).padStart(4, '0')}`,
+            billing_date: foundTxn.createdAt,
+            amount_due: foundTxn.amount,
+            amount_paid: foundTxn.amount,
+            tax_amount: (Number(foundTxn.amount) * 0.18 / 1.18).toFixed(2),
+            status: foundTxn.status === 'success' ? 'paid' : (foundTxn.status || 'paid')
+          };
+        }
+
+        if (foundInvoice && !foundTxn) {
+          foundTxn = transactions.find((t) => t.id === foundInvoice.transaction_id);
+        }
+
+        if (foundInvoice) {
           setInvoice(foundInvoice);
           setTransaction(foundTxn || {
-            gateway_transaction_id: 'TXN-UNKNOWN',
-            payment_method: 'Online Gateway',
+            gateway_transaction_id: foundInvoice.invoice_number || 'TXN-UNKNOWN',
+            reference_number: foundInvoice.invoice_number,
+            payment_method: 'Razorpay / Online',
             amount: foundInvoice.amount_paid,
             status: 'success',
             createdAt: foundInvoice.billing_date

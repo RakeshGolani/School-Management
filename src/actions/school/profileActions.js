@@ -141,3 +141,32 @@ export async function changePasswordAction(passwordData) {
     };
   }
 }
+
+/**
+ * Server Action: Get School Profile Details
+ */
+export async function getSchoolProfileAction() {
+  try {
+    const session = await getEncryptedCookie('school_session');
+    const schoolId = session?.user?.id;
+    if (!schoolId) {
+      return { success: false, message: 'No active school session found', data: null };
+    }
+
+    const response = await fetch(`${API_URL}/profile?schoolId=${schoolId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-school-id': String(schoolId)
+      },
+      cache: 'no-store'
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('Error in getSchoolProfileAction:', error.message);
+    return { success: false, message: 'Failed to fetch school profile', data: null };
+  }
+}
+

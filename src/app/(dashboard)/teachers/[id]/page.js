@@ -31,6 +31,8 @@ import TeacherDetailsSkeleton from '@/components/skeletons/school/TeacherDetails
 import TeacherIdCardModal from '@/components/modals/TeacherIdCardModal';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { getTeacherTimetableAction } from '@/actions/school/timetableActions';
+import { getTeacherByIdAction } from '@/actions/school/teacherActions';
+import { getSchoolProfileAction } from '@/actions/school/profileActions';
 
 export default function TeacherDetailsPage() {
   const router = useRouter();
@@ -51,18 +53,14 @@ export default function TeacherDetailsPage() {
     const fetchTeacherAndData = async () => {
       setLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/school';
-        const res = await fetch(`${apiUrl}/teachers/${teacherId}`, { cache: 'no-store' });
-        const resData = await res.json();
-        const teacherInfo = resData.data || resData;
+        const res = await getTeacherByIdAction(teacherId);
+        const teacherInfo = res.data || res;
 
         if (teacherInfo && (teacherInfo.id || teacherInfo.name || teacherInfo.first_name)) {
           setTeacher(teacherInfo);
 
           // Fetch School Profile for Logo & Name
-          const targetSchoolId = teacherInfo.school_id || teacherInfo.schoolId || 1;
-          fetch(`${apiUrl}/profile?schoolId=${targetSchoolId}`, { cache: 'no-store' })
-            .then(sRes => sRes.json())
+          getSchoolProfileAction()
             .then(sData => {
               if (sData?.success && sData.data) setSchoolInfo(sData.data);
             })
@@ -77,7 +75,7 @@ export default function TeacherDetailsPage() {
             .finally(() => setTimetableLoading(false));
 
         } else {
-          notifyError(resData.message || 'Teacher not found');
+          notifyError(res.message || 'Teacher not found');
         }
       } catch (err) {
         console.error('Error fetching teacher detail:', err);
