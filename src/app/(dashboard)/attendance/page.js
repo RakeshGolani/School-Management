@@ -472,6 +472,20 @@ export default function AttendancePage() {
               </button>
             </div>
 
+            {/* Status Indicator Badge */}
+            <div className="flex items-center gap-1.5 pt-0.5">
+              {row.is_marked ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                  <CheckCircle2 size={10} className="text-emerald-600" />
+                  Marked by Class Teacher
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/50">
+                  Pending Roll Call
+                </span>
+              )}
+            </div>
+
             {/* Remark Display under Leave */}
             {isLeave && (() => {
               const rawText = row.remarks || row.leave_details?.reason || '';
